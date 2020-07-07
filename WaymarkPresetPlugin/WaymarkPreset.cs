@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace WaymarkPresetPlugin
 {
@@ -168,7 +169,8 @@ namespace WaymarkPresetPlugin
 		}
 
 		public string Name { get; set; } = "Unknown";
-		public UInt16 MapID { get; set; } = 0;//TODO: PP serializes this as an Int32, so we'll have to watch whether that affects us.  It looks like it does when we try to deserialize a bad map ID.
+		public UInt16 MapID { get; set; } = 0;//*****TODO: PP serializes this as an Int32, so we'll have to watch whether that affects us.  It looks like it does when we try to deserialize a bad map ID.*****
+		[JsonIgnore]	//*****TODO: Maybe store time as a unix timestamp just to make it easier.*****
 		public DateTimeOffset Time { get; set; } = new DateTimeOffset( DateTimeOffset.Now.UtcDateTime );
 		public Waymark A { get; set; } = new Waymark();
 		public Waymark B { get; set; } = new Waymark();
