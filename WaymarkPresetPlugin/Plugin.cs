@@ -63,6 +63,7 @@ namespace WaymarkPresetPlugin
 		//	Text Commands
 		protected void ProcessTextCommand( string command, string args )
 		{
+			//*****TODO: Don't split, just substring off of the first space so that other stuff is preserved verbatim.
 			//	Seperate into sub-command and paramters.
 			string subCommand = "";
 			string subCommandArgs = "";
@@ -291,20 +292,65 @@ namespace WaymarkPresetPlugin
 		
 		public string ProcessTextCommand_WriteSlot( string args )
 		{
-			//*****TODO: Implement this.*****
-			return "Unimplemented Command";
-			/*byte[] gamePreset1 = mConfiguration.PresetLibrary.Presets[0].ConstructGamePreset();
-				if( gamePreset1.Length == 104 )
+			if( args.Trim().Split( ' ' ).Length > 0 )
+			{
+				string firstArg = args.Trim().Split( ' ' )[0];
+				string nextArgs = args.Substring( args.IndexOf( firstArg ) + firstArg.Length ).Trim( ' ' );
+
+				if( nextArgs.Length > 0 )
 				{
-					mpWaymarkMemory = mfpGetConfigSection.Invoke( mfpGetConfigFile.Invoke( 0x9 ), 0x11 );
-					mpWaymarkMemory = new IntPtr( mpWaymarkMemory.ToInt64() + 64L );
-					Marshal.Copy( gamePreset1, 0, mpWaymarkMemory, 104 );
-					mPluginInterface.Framework.Gui.Chat.Print( "Game Slot 1 Updated." );
+					int targetGameSlot;
+					int sourceLibraryIndex;
+					if( int.TryParse( firstArg, out targetGameSlot ) && targetGameSlot >= 1 && targetGameSlot <= 5 )
+					{
+						if( int.TryParse( nextArgs, out sourceLibraryIndex ) && sourceLibraryIndex >=0 && sourceLibraryIndex < mConfiguration.PresetLibrary.Presets.Count )
+						{
+							//Copy from library
+							if( CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[sourceLibraryIndex], targetGameSlot - 1 ) )
+							{
+								return "Library index " + sourceLibraryIndex.ToString() + " successfully copied to game slot " + targetGameSlot.ToString() + ".";
+							}
+							else
+							{
+								return "Failed to copy library index " + sourceLibraryIndex.ToString() + " to game slot " + targetGameSlot.ToString() + "!";
+							}
+						}
+						else
+						{
+							//deserialize json into temporary waymark, and import that.
+							try
+							{
+								WaymarkPreset tempPreset = JsonConvert.DeserializeObject<WaymarkPreset>( nextArgs );
+								if( CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[sourceLibraryIndex], targetGameSlot - 1 ) )
+								{
+									return "Successfully imported the provided preset data to slot " + targetGameSlot.ToString() + ".";
+								}
+								else
+								{
+									return "Failed to import the provided preset to data slot " + targetGameSlot.ToString() + "!";
+								}
+							}
+							catch( Exception e )
+							{
+								//*****TODO: Log the error.*****
+								return "An unexpected error occured while trying to import the provided preset to data slot " + targetGameSlot.ToString() + "!";
+							}
+						}
+					}
+					else
+					{
+						return "Invalid game slot number specified.";
+					}
 				}
 				else
 				{
-					mPluginInterface.Framework.Gui.Chat.Print( "Improper game data size; not copied to game." );
-				}*/
+					return "No source preset specified.  Use \"/pwaymark help writeslot\" for proper command format.";
+				}
+			}
+			else
+			{
+				return "No arguments provided.  Use \"/pwaymark help writeslot\" for proper command format.";
+			}
 		}
 		
 		public string ProcessTextCommand_LibraryInfo( string args )
@@ -320,12 +366,52 @@ namespace WaymarkPresetPlugin
 			return str;
 		}
 
-		private void DrawUI()
+		protected bool CopyPresetToGameSlot( WaymarkPreset preset, int slot )
+		{
+			IntPtr pWaymarkMemory = mfpGetConfigSection.Invoke( mfpGetConfigFile.Invoke( 0x9 ), 0x11 );
+			if( pWaymarkMemory != IntPtr.Zero )
+			{
+				if( slot >= 0 && slot < 5 )
+				{
+					byte[] gamePresetData = preset.ConstructGamePreset();
+					if( gamePresetData.Length == 104 )
+					{
+						try
+						{
+							Marshal.Copy( gamePresetData, 104 * slot, pWaymarkMemory, 104 );
+							return true;
+						}
+						catch( Exception e )
+						{
+							//*****TODO: Log problem.*****
+							return false;
+						}
+					}
+					else
+					{
+						//*****TODO: Log problem.*****
+						return false;
+					}
+				}
+				else
+				{
+					//*****TODO: Log problem.*****
+					return false;
+				}
+			}
+			else 
+			{
+				//*****TODO: Log error.*****
+				return false;
+			}
+		}
+
+		protected void DrawUI()
 		{
 			mUI.Draw();
 		}
 
-		private void DrawConfigUI()
+		protected void DrawConfigUI()
 		{
 			mUI.SettingsVisible = true;
 		}
@@ -335,6 +421,7 @@ namespace WaymarkPresetPlugin
 			//*****TODO: Check that function pointers were assigned properly.*****
 			IntPtr pWaymarksLocation = mfpGetConfigSection.Invoke( mfpGetConfigFile.Invoke( 0x9 ), 0x11 );
 
+			//*****TODO: We don't know if it will always be 48 bytes to the start of FMARKER.DAT.  Maybe searching forward a bit in memory from the address we get to find that string is safer.*****
 			//	64 additional bytes from the pointer given to us until the actual preset data.
 			if( pWaymarksLocation != IntPtr.Zero )
 			{
