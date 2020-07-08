@@ -157,6 +157,8 @@ namespace UIDev
 				{
 				}
 				ImGui.EndGroup();
+				bool dummyBool = false;
+				ImGui.Checkbox( "Use current zone.", ref dummyBool );
 				ImGui.Text( "Preset Info:" );
 				ImGui.Text( @"A:  099.94,  000.00,  081.81
 B: 107.88, 000.00, 099.95 

@@ -1,106 +1,109 @@
 ﻿using ImGuiNET;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace WaymarkPresetPlugin
 {
-    // It is good to have this be disposable in general, in case you ever need it
-    // to do any cleanup
-    public class PluginUI : IDisposable
-    {
-        private Configuration configuration;
+	// It is good to have this be disposable in general, in case you ever need it
+	// to do any cleanup
+	public class PluginUI : IDisposable
+	{
+		//	Construction
+		public PluginUI( Configuration configuration )
+		{
+			mConfiguration = configuration;
+		}
 
-        private ImGuiScene.TextureWrap goatImage;
+		//	Destruction
+		public void Dispose()
+		{
+		}
 
-        // this extra bool exists for ImGui, since you can't ref a property
-        private bool visible = false;
-        public bool Visible
-        {
-            get { return this.visible; }
-            set { this.visible = value; }
-        }
+		public void Draw()
+		{
+			//	Draw the sub-windows.
+			DrawMainWindow();
+			DrawInfoWindow();
+			DrawSettingsWindow();
+		}
 
-        private bool settingsVisible = false;
-        public bool SettingsVisible
-        {
-            get { return this.settingsVisible; }
-            set { this.settingsVisible = value; }
-        }
+		protected void DrawMainWindow()
+		{
+			//Title bar
+			//list/tree view
+			//header list if configured
+			//list of headers or sub-headers under zone headers with an item per preset, buttons to copy to slot (1,2,3,4,5 buttons).
+			//expanding preset lists coords and other information.  Consider having a drawing of marks around barycenter?
+			if( !MainWindowVisible )
+			{
+				return;
+			}
 
-        // passing in the image here just for simplicity
-        public PluginUI(Configuration configuration, ImGuiScene.TextureWrap goatImage)
-        {
-            this.configuration = configuration;
-            this.goatImage = goatImage;
-        }
+			ImGui.SetNextWindowSize( new Vector2( 375, 330 ), ImGuiCond.FirstUseEver );
 
-        public void Dispose()
-        {
-            this.goatImage.Dispose();
-        }
+			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 330 ), new Vector2( float.MaxValue, float.MaxValue ) );
 
-        public void Draw()
-        {
-            // This is our only draw handler attached to UIBuilder, so it needs to be
-            // able to draw any windows we might have open.
-            // Each method checks its own visibility/state to ensure it only draws when
-            // it actually makes sense.
-            // There are other ways to do this, but it is generally best to keep the number of
-            // draw delegates as low as possible.
+			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
+			{
+				//*****TODO: Do the filtering.*****
+				/*bool dummyBool = false;
+				ImGui.Checkbox( "Filter on current zone", ref dummyBool );*/
 
-            DrawMainWindow();
-            DrawSettingsWindow();
-        }
+				//	Just drop in the dat
+				var dict = mConfiguration.PresetLibrary.GetSortedIndices();
+				foreach( KeyValuePair<UInt16, List<int>> zone in dict )
+				{
+					if( ImGui.CollapsingHeader( "test zone" ) )
+					{
+						foreach( int index in zone.Value )
+						{
+							//*****TODO: How do we handle showing the item as selected?*****
+							ImGui.Selectable( mConfiguration.PresetLibrary.Presets[index].Name );
+						}
+					}
+				}
+			}
 
-        public void DrawMainWindow()
-        {
-            if (!Visible)
-            {
-                return;
-            }
+			ImGui.End();
+		}
 
-            ImGui.SetNextWindowSize(new Vector2(375, 330), ImGuiCond.FirstUseEver);
-            ImGui.SetNextWindowSizeConstraints(new Vector2(375, 330), new Vector2(float.MaxValue, float.MaxValue));
-            if (ImGui.Begin("My Amazing Window", ref this.visible, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
-            {
-                ImGui.Text($"The random config bool is {this.configuration.SomePropertyToBeSavedAndWithADefault}");
+		protected void DrawInfoWindow()
+		{
 
-                if (ImGui.Button("Show Settings"))
-                {
-                    SettingsVisible = true;
-                }
+		}
 
-                ImGui.Spacing();
+		protected void DrawSettingsWindow()
+		{
+			if( !SettingsWindowVisible )
+			{
+				return;
+			}
 
-                ImGui.Text("Have a goat:");
-                ImGui.Indent(55);
-                ImGui.Image(this.goatImage.ImGuiHandle, new Vector2(this.goatImage.Width, this.goatImage.Height));
-                ImGui.Unindent(55);
-            }
-            ImGui.End();
-        }
+			ImGui.SetNextWindowSize( new Vector2( 232, 75 ), ImGuiCond.Always );
+			if( ImGui.Begin( "Waymark Settings", ref this.mSettingsWindowVisible,
+				ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
+			{
+				ImGui.Text( "No settings currently." );
+			}
+			ImGui.End();
+		}
 
-        public void DrawSettingsWindow()
-        {
-            if (!SettingsVisible)
-            {
-                return;
-            }
+		private Configuration mConfiguration;
 
-            ImGui.SetNextWindowSize(new Vector2(232, 75), ImGuiCond.Always);
-            if (ImGui.Begin("A Wonderful Configuration Window", ref this.settingsVisible,
-                ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
-            {
-                // can't ref a property, so use a local copy
-                var configValue = this.configuration.SomePropertyToBeSavedAndWithADefault;
-                if (ImGui.Checkbox("Random Config Bool", ref configValue))
-                {
-                    this.configuration.SomePropertyToBeSavedAndWithADefault = configValue;
-                    // can save immediately on change, if you don't want to provide a "Save and Close" button
-                    this.configuration.Save();
-                }
-            }
-            ImGui.End();
-        }
-    }
+		//	Need a real backing field on the following properties for use with ImGui.
+		protected bool mMainWindowVisible = false;
+		public bool MainWindowVisible
+		{
+			get { return this.mMainWindowVisible; }
+			set { this.mMainWindowVisible = value; }
+		}
+
+		protected bool mSettingsWindowVisible = false;
+		public bool SettingsWindowVisible
+		{
+			get { return this.mSettingsWindowVisible; }
+			set { this.mSettingsWindowVisible = value; }
+		}
+	}
 }

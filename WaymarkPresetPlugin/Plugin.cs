@@ -43,11 +43,8 @@ namespace WaymarkPresetPlugin
 				HelpMessage = "Performs waymark preset commands.  Use \"/pwaymark help\" for detailed usage information."
 			} );
 
-			//*****TODO: Get rid of sample plugin stuff.*****
 			//	UI Initialization
-			//var imagePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"goat.png");
-			var goatImage = this.mPluginInterface.UiBuilder.LoadImage("Z:\\goat.png");
-			mUI = new PluginUI( this.mConfiguration, goatImage );
+			mUI = new PluginUI( this.mConfiguration );
 			mPluginInterface.UiBuilder.OnBuildUi += DrawUI;
 			mPluginInterface.UiBuilder.OnOpenConfigUi += ( sender, args ) => DrawConfigUI();
 		}
@@ -87,7 +84,7 @@ namespace WaymarkPresetPlugin
 			if( subCommand.Length == 0 )
 			{
 				//*****TODO: Open the GUI if nothing is provided.*****
-				commandResponse = "The GUI hasn't yet been implemented!";
+				mUI.MainWindowVisible = true;
 			}
 			else if( subCommand.ToLower() == "import" )
 			{
@@ -150,7 +147,7 @@ namespace WaymarkPresetPlugin
 			}
 			else
 			{
-				return "args: \"" + args + "\".  Valid commands are as follows: import, export, slotinfo, writeslot, libraryinfo.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
+				return "Valid commands are as follows: import, export, slotinfo, writeslot, libraryinfo.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
 			}
 		}
 
@@ -165,14 +162,34 @@ namespace WaymarkPresetPlugin
 				int gameSlotToCopy;
 				if( int.TryParse( args, out gameSlotToCopy ) && gameSlotToCopy >= 1 && gameSlotToCopy <= 5 )
 				{
-					int importedIndex = mConfiguration.PresetLibrary.ImportPreset( (uint)gameSlotToCopy - 1 );
-					if( importedIndex >= 0 )
+					byte[] gamePreset = new byte[104];
+					IntPtr pGameData = GetGameWaymarkDataPointer();
+					if( pGameData != IntPtr.Zero )
 					{
-						return "Waymark preset imported as libary index " + importedIndex.ToString() + ".";
+						try
+						{
+							Marshal.Copy( new IntPtr( pGameData.ToInt64() + ( gameSlotToCopy - 1 ) * 104 ), gamePreset, 0, 104 );
+							WaymarkPreset tempPreset = WaymarkPreset.Parse( gamePreset );
+							int importedIndex = mConfiguration.PresetLibrary.ImportPreset( tempPreset );
+
+							if( importedIndex >= 0 )
+							{
+								return "Slot " + gameSlotToCopy.ToString() + " added to library as index " + importedIndex + ".";
+							}
+							else
+							{
+								return "An unknown error occured while trying to import the game's waymark data.";
+							}
+						}
+						catch( Exception e )
+						{
+							//*****TODO: Log exception somewhere.
+							return "An unknown error occured while trying to read the game's waymark data.";
+						}
 					}
 					else
 					{
-						return "Unknown error while importing preset.";
+						return "Unable to locate game's waymark data!";
 					}
 				}
 				else
@@ -305,6 +322,18 @@ namespace WaymarkPresetPlugin
 					{
 						if( int.TryParse( nextArgs, out sourceLibraryIndex ) && sourceLibraryIndex >=0 && sourceLibraryIndex < mConfiguration.PresetLibrary.Presets.Count )
 						{
+							/*IntPtr pWaymarkMemory = GetGameWaymarkDataPointer();
+							if( pWaymarkMemory != IntPtr.Zero )
+							{
+								if( targetGameSlot >= 1 && targetGameSlot <= 5 )
+								{
+
+								}
+							}
+							return	"Want to write data to slot " + targetGameSlot.ToString() +
+									" at address 0x" + new IntPtr( pWaymarkMemory.ToInt64() + ( ( targetGameSlot - 1 ) * 104 ) ).ToString( "X" ) +
+									" (raw address 0x " + pWaymarkMemory.ToString( "X" ) + ")";*/
+							
 							//Copy from library
 							if( CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[sourceLibraryIndex], targetGameSlot - 1 ) )
 							{
@@ -368,7 +397,7 @@ namespace WaymarkPresetPlugin
 
 		protected bool CopyPresetToGameSlot( WaymarkPreset preset, int slot )
 		{
-			IntPtr pWaymarkMemory = mfpGetConfigSection.Invoke( mfpGetConfigFile.Invoke( 0x9 ), 0x11 );
+			IntPtr pWaymarkMemory = GetGameWaymarkDataPointer();
 			if( pWaymarkMemory != IntPtr.Zero )
 			{
 				if( slot >= 0 && slot < 5 )
@@ -378,7 +407,7 @@ namespace WaymarkPresetPlugin
 					{
 						try
 						{
-							Marshal.Copy( gamePresetData, 104 * slot, pWaymarkMemory, 104 );
+							Marshal.Copy( gamePresetData, 0, new IntPtr( pWaymarkMemory.ToInt64() + ( slot * 104 ) ), 104 );
 							return true;
 						}
 						catch( Exception e )
@@ -399,7 +428,7 @@ namespace WaymarkPresetPlugin
 					return false;
 				}
 			}
-			else 
+			else
 			{
 				//*****TODO: Log error.*****
 				return false;
@@ -413,7 +442,7 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawConfigUI()
 		{
-			mUI.SettingsVisible = true;
+			mUI.SettingsWindowVisible = true;
 		}
 
 		protected IntPtr GetGameWaymarkDataPointer()
