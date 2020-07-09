@@ -8,6 +8,10 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Xml.Serialization;
 using Newtonsoft.Json;
+using Lumina.Excel;
+using Lumina.Excel.GeneratedSheets;
+using System.Collections.Generic;
+using Newtonsoft.Json.Schema;
 
 namespace WaymarkPresetPlugin
 {
@@ -37,6 +41,26 @@ namespace WaymarkPresetPlugin
 				mfpGetConfigSection = Marshal.GetDelegateForFunctionPointer<GetConfigSectionDelegate>( getConfigSectionAddress );
 			}
 
+			//*****TODO: Handle different client languages.*****
+			ExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType> territorySheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>( /*set language?*/ );
+			ExcelSheet<Lumina.Excel.GeneratedSheets.PlaceName> placeNameSheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.PlaceName>( /*set language?*/ );
+			
+			//	Get the name for every "MapID" that is an instance zone.
+			Dictionary<UInt16, string> zoneNames = new Dictionary<UInt16, string>();
+			foreach( TerritoryType zone in territorySheet.GetRows() )
+			{
+				//*****TODO: unknown24 should be changed to unknown10 for new version of Dalamud.  Currently unknown10 in test version.*****
+				if( zone.ExclusiveType == 2 && !zoneNames.ContainsKey( zone.unknown24 ) )
+				{
+					zoneNames.Add( zone.unknown24, placeNameSheet.GetRow( zone.PlaceName ).Name );
+				}
+			}
+			//	There are several zones with an "ID" of zero, but none of them allow waymarks to be saved, so change the name of that zone to reflect this.
+			if( zoneNames.ContainsKey( 0 ) )
+			{
+				zoneNames[0] = "Unknown Zone";
+			}
+
 			//	Text Command Initialization
 			mPluginInterface.CommandManager.AddHandler( mTextCommandName, new CommandInfo( ProcessTextCommand )
 			{
@@ -44,7 +68,7 @@ namespace WaymarkPresetPlugin
 			} );
 
 			//	UI Initialization
-			mUI = new PluginUI( this.mConfiguration );
+			mUI = new PluginUI( this.mConfiguration, zoneNames );
 			mPluginInterface.UiBuilder.OnBuildUi += DrawUI;
 			mPluginInterface.UiBuilder.OnOpenConfigUi += ( sender, args ) => DrawConfigUI();
 		}

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Security.Policy;
 
 namespace WaymarkPresetPlugin
 {
@@ -10,9 +11,10 @@ namespace WaymarkPresetPlugin
 	public class PluginUI : IDisposable
 	{
 		//	Construction
-		public PluginUI( Configuration configuration )
+		public PluginUI( Configuration configuration, Dictionary<UInt16, string> zoneNames )
 		{
 			mConfiguration = configuration;
+			ZoneNames = zoneNames;
 		}
 
 		//	Destruction
@@ -35,6 +37,7 @@ namespace WaymarkPresetPlugin
 			//header list if configured
 			//list of headers or sub-headers under zone headers with an item per preset, buttons to copy to slot (1,2,3,4,5 buttons).
 			//expanding preset lists coords and other information.  Consider having a drawing of marks around barycenter?
+			//*****TODO: Allow direct place only with filter to current zone active (If we can even find a function to direct place).*****
 			if( !MainWindowVisible )
 			{
 				return;
@@ -50,11 +53,11 @@ namespace WaymarkPresetPlugin
 				/*bool dummyBool = false;
 				ImGui.Checkbox( "Filter on current zone", ref dummyBool );*/
 
-				//	Just drop in the dat
+				//	Just drop in the data.
 				var dict = mConfiguration.PresetLibrary.GetSortedIndices();
 				foreach( KeyValuePair<UInt16, List<int>> zone in dict )
 				{
-					if( ImGui.CollapsingHeader( "test zone" ) )
+					if( ImGui.CollapsingHeader( ZoneNames.ContainsKey( zone.Key ) ? ZoneNames[zone.Key].ToString() : "Unknown Zone" ) )
 					{
 						foreach( int index in zone.Value )
 						{
@@ -105,5 +108,7 @@ namespace WaymarkPresetPlugin
 			get { return this.mSettingsWindowVisible; }
 			set { this.mSettingsWindowVisible = value; }
 		}
+
+		public Dictionary<UInt16, string> ZoneNames { get; protected set; }
 	}
 }
