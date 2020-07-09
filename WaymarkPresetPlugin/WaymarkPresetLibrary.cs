@@ -51,6 +51,19 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
+		public bool DeletePreset( int index )
+		{
+			if( index >= 0 && index < Presets.Count )
+			{
+				Presets.RemoveAt( index );
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
 		public Dictionary<UInt16, List<int>> GetSortedIndices()
 		{
 			Dictionary<UInt16, List<int>> sortedIndices = new Dictionary<ushort, List<int>>();

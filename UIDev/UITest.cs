@@ -43,7 +43,7 @@ namespace UIDev
 		// don't want to imply that is easy or the best way to go usually, so it's not done here either
 		private void Draw()
 		{
-			//ImGui.ShowDemoWindow();
+			ImGui.ShowDemoWindow();
 
 			DrawMainWindow();
 			DrawSettingsWindow();

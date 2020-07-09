@@ -32,21 +32,15 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawMainWindow()
 		{
-			//Title bar
-			//list/tree view
-			//header list if configured
-			//list of headers or sub-headers under zone headers with an item per preset, buttons to copy to slot (1,2,3,4,5 buttons).
-			//expanding preset lists coords and other information.  Consider having a drawing of marks around barycenter?
-			//*****TODO: Allow direct place only with filter to current zone active (If we can even find a function to direct place).*****
+			//*****TODO: Add a filter to current zone checkbox to the list if we can find the zone that we are in.*****
 			if( !MainWindowVisible )
 			{
 				return;
 			}
 
+			//	Draw the window.
 			ImGui.SetNextWindowSize( new Vector2( 375, 330 ), ImGuiCond.FirstUseEver );
-
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 330 ), new Vector2( float.MaxValue, float.MaxValue ) );
-
 			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
 				//*****TODO: Do the filtering.*****
@@ -55,29 +49,106 @@ namespace WaymarkPresetPlugin
 
 				//	Just drop in the data.
 				var dict = mConfiguration.PresetLibrary.GetSortedIndices();
-				foreach( KeyValuePair<UInt16, List<int>> zone in dict )
+				if( dict.Count > 0 )
 				{
-					if( ImGui.CollapsingHeader( ZoneNames.ContainsKey( zone.Key ) ? ZoneNames[zone.Key].ToString() : "Unknown Zone" ) )
+					foreach( KeyValuePair<UInt16, List<int>> zone in dict )
 					{
-						foreach( int index in zone.Value )
+						if( ImGui.CollapsingHeader( ZoneNames.ContainsKey( zone.Key ) ? ZoneNames[zone.Key].ToString() : "Unknown Zone" ) )
 						{
-							//*****TODO: How do we handle showing the item as selected?*****
-							ImGui.Selectable( mConfiguration.PresetLibrary.Presets[index].Name );
+							foreach( int index in zone.Value )
+							{
+								//	Unfortunately, ImGui seems to track selectables by the label string, so we will insert the index to make each one have a unique label.
+								if( ImGui.Selectable( index.ToString() + ": " + mConfiguration.PresetLibrary.Presets[index].Name, index == SelectedPreset ) )
+								{
+									SelectedPreset = index;
+								}
+							}
 						}
 					}
+				}
+				else
+				{
+					ImGui.Text( "Preset library empty!" );
+				}
+			}
+
+			//	Store the position and size so that we can keep the companion info window in the right place.
+			MainWindowPos = ImGui.GetWindowPos();
+			MainWindowSize = ImGui.GetWindowSize();
+
+			//	We're done.
+			ImGui.End();
+		}
+
+		protected void DrawInfoWindow()
+		{
+			//*****TODO: Consider having a drawing of marks around barycenter?*****
+			//*****TODO: Allow direct place only with filter to current zone active (If we can even find a function to direct place).*****
+			//*****TODO: Add editor button/window.*****
+
+			ImGui.SetNextWindowSize( new Vector2( 375, 330 ), ImGuiCond.FirstUseEver );
+			ImGui.SetNextWindowSizeConstraints( new Vector2( 250, 330 ), new Vector2( 250, MainWindowSize.Y ) );
+			ImGui.SetNextWindowPos( new Vector2( MainWindowPos.X + MainWindowSize.X, MainWindowPos.Y ) );
+			if( MainWindowVisible && ImGui.Begin( "Preset Info", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize /*| ImGuiWindowFlags.NoTitleBar*/ ) )
+			{
+				if( SelectedPreset >= 0 && SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
+				{
+					ImGui.BeginGroup();
+					ImGui.Text( "Copy to slot:" );
+					ImGui.SameLine();
+					ImGui.BeginGroup();
+					if( ImGui.Button( "1" ) )
+					{
+						//*****TODO: Hook up these buttons!*****
+					}
+					ImGui.SameLine();
+					if( ImGui.Button( "2" ) )
+					{
+					}
+					ImGui.SameLine();
+					if( ImGui.Button( "3" ) )
+					{
+					}
+					ImGui.SameLine();
+					if( ImGui.Button( "4" ) )
+					{
+					}
+					ImGui.SameLine();
+					if( ImGui.Button( "5" ) )
+					{
+					}
+					ImGui.EndGroup();
+					//*****TODO: 
+					/*bool dummyBool = false;
+					ImGui.Checkbox( "Use current zone.", ref dummyBool );*/
+					ImGui.Text( "Preset Info:" );
+					//*****TODO: At some point it would be nice to make this a monospaced font.*****
+					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString() );
+					ImGui.Spacing();
+					ImGui.Spacing();
+					ImGui.Spacing();
+					ImGui.Spacing();
+					ImGui.Spacing();
+					ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
+					if( ImGui.Button( "Delete Preset" ) )
+					{
+						mConfiguration.PresetLibrary.DeletePreset( SelectedPreset );
+					}
+					ImGui.PopStyleColor();
+				}
+				else
+				{
+					ImGui.Text( "No preset selected." );
 				}
 			}
 
 			ImGui.End();
 		}
 
-		protected void DrawInfoWindow()
-		{
-
-		}
-
 		protected void DrawSettingsWindow()
 		{
+			//*****TODO: Probably have an option to turn off zone categories and just do a straight list.*****
+			//*****TODO: *If* it ever becomes possible to do direct placement, probably make it an option that people have to turn on.
 			if( !SettingsWindowVisible )
 			{
 				return;
@@ -109,6 +180,10 @@ namespace WaymarkPresetPlugin
 			set { this.mSettingsWindowVisible = value; }
 		}
 
+		public Vector2 MainWindowPos { get; protected set; }
+		public Vector2 MainWindowSize { get; protected set; }
+
+		public int SelectedPreset { get; protected set; } = -1;
 		public Dictionary<UInt16, string> ZoneNames { get; protected set; }
 	}
 }

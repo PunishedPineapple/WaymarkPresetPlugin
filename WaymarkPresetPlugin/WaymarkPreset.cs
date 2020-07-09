@@ -164,7 +164,7 @@ namespace WaymarkPresetPlugin
 			str += "3: " + Three.GetWaymarkDataString() + "\r\n";
 			str += "4: " + Four.GetWaymarkDataString() + "\r\n";
 			str += "MapID: " + MapID.ToString() + "\r\n";
-			str += "Last Modified: " + Time.ToString( "g" );
+			str += "Last Modified: " + Time.LocalDateTime.ToString();
 			return str;
 		}
 

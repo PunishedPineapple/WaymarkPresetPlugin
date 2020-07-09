@@ -23,7 +23,8 @@ namespace WaymarkPresetPlugin
 		public string GetWaymarkDataString()
 		{
 			//*****TODO: Try PadLeft instead of using zeroes.*****
-			return Active ? ( X.ToString( " 000.00;-000.00" ) + ", " + Y.ToString( " 000.00;-000.00" ) + ", " + Z.ToString( " 000.00;-000.00" ) ) : "Unused";
+			return Active ? ( X.ToString( "0.00" ).PadLeft( 7 ) + ", " + Y.ToString( "0.00" ).PadLeft( 7 ) + ", " + Z.ToString( "0.00" ).PadLeft( 7 ) ) : "Unused";
+			//return Active ? ( X.ToString( " 000.00;-000.00" ) + ", " + Y.ToString( " 000.00;-000.00" ) + ", " + Z.ToString( " 000.00;-000.00" ) ) : "Unused";
 		}
 
 		public float X { get; set; } = 0.0f;
