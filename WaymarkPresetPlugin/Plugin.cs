@@ -17,31 +17,16 @@ namespace WaymarkPresetPlugin
 {
 	public class Plugin : IDalamudPlugin
 	{
-		//	Types
-		public delegate IntPtr GetConfigFileDelegate( byte fileIndex );
-		public delegate IntPtr GetConfigSectionDelegate( IntPtr pConfigFile, byte sectionIndex );
-
 		//	Initialization
 		public void Initialize( DalamudPluginInterface pluginInterface )
 		{
 			//	Configuration
 			mPluginInterface = pluginInterface;
 			mConfiguration = mPluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-			mConfiguration.Initialize( this.mPluginInterface );
+			mConfiguration.Initialize( mPluginInterface );
+			mGameMemoryHandler = new MemoryHandler( mPluginInterface );
 
-			//	Get Function Pointers
-			var getConfigFileAddress = mPluginInterface.TargetModuleScanner.ScanText( "E8 ?? ?? ?? ?? 48 85 C0 74 14 83 7B 44 00" );
-			if( getConfigFileAddress != IntPtr.Zero )
-			{
-				mfpGetConfigFile = Marshal.GetDelegateForFunctionPointer<GetConfigFileDelegate>( getConfigFileAddress );
-			}
-			var getConfigSectionAddress = mPluginInterface.TargetModuleScanner.ScanText( "40 53 48 83 EC 20 48 8B 0D ?? ?? ?? ?? 0F B7 DA" );
-			if( getConfigSectionAddress != IntPtr.Zero )
-			{
-				mfpGetConfigSection = Marshal.GetDelegateForFunctionPointer<GetConfigSectionDelegate>( getConfigSectionAddress );
-			}
-
-			//*****TODO: Handle different client languages.*****
+			//	Get the game sheets that we need to populate a zone dictionary.
 			ExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType> territorySheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>( /*set language?*/ );
 			ExcelSheet<Lumina.Excel.GeneratedSheets.PlaceName> placeNameSheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.PlaceName>( /*set language?*/ );
 			
@@ -68,7 +53,7 @@ namespace WaymarkPresetPlugin
 			} );
 
 			//	UI Initialization
-			mUI = new PluginUI( this.mConfiguration, zoneNames );
+			mUI = new PluginUI( this.mConfiguration, zoneNames, mGameMemoryHandler );
 			mPluginInterface.UiBuilder.OnBuildUi += DrawUI;
 			mPluginInterface.UiBuilder.OnOpenConfigUi += ( sender, args ) => DrawConfigUI();
 		}
@@ -107,7 +92,6 @@ namespace WaymarkPresetPlugin
 			string commandResponse = "";
 			if( subCommand.Length == 0 )
 			{
-				//*****TODO: Open the GUI if nothing is provided.*****
 				mUI.MainWindowVisible = true;
 			}
 			else if( subCommand.ToLower() == "import" )
@@ -130,7 +114,7 @@ namespace WaymarkPresetPlugin
 			{
 				commandResponse = ProcessTextCommand_LibraryInfo( subCommandArgs );
 			}
-			else if( args.Trim().StartsWith( "save" ) )	//*****TODO: Remove Dev Command.  Figure out when saving should be done and do it automatically.
+			else if( args.Trim().StartsWith( "save" ) )
 			{
 				mConfiguration.Save();
 				commandResponse = "Saved Config";
@@ -186,34 +170,25 @@ namespace WaymarkPresetPlugin
 				int gameSlotToCopy;
 				if( int.TryParse( args, out gameSlotToCopy ) && gameSlotToCopy >= 1 && gameSlotToCopy <= 5 )
 				{
-					byte[] gamePreset = new byte[104];
-					IntPtr pGameData = GetGameWaymarkDataPointer();
-					if( pGameData != IntPtr.Zero )
+					try
 					{
-						try
-						{
-							Marshal.Copy( new IntPtr( pGameData.ToInt64() + ( gameSlotToCopy - 1 ) * 104 ), gamePreset, 0, 104 );
-							WaymarkPreset tempPreset = WaymarkPreset.Parse( gamePreset );
-							int importedIndex = mConfiguration.PresetLibrary.ImportPreset( tempPreset );
+						WaymarkPreset tempPreset = WaymarkPreset.Parse( mGameMemoryHandler.ReadSlot( gameSlotToCopy ) );
+						tempPreset.Name = "Imported";//*****TODO*****
+						int importedIndex = mConfiguration.PresetLibrary.ImportPreset( tempPreset );
 
-							if( importedIndex >= 0 )
-							{
-								return "Slot " + gameSlotToCopy.ToString() + " added to library as index " + importedIndex + ".";
-							}
-							else
-							{
-								return "An unknown error occured while trying to import the game's waymark data.";
-							}
-						}
-						catch( Exception e )
+						if( importedIndex >= 0 )
 						{
-							//*****TODO: Log exception somewhere.
-							return "An unknown error occured while trying to read the game's waymark data.";
+							return "Slot " + gameSlotToCopy.ToString() + " added to library as index " + importedIndex + ".";
+						}
+						else
+						{
+							return "An unknown error occured while trying to import the game's waymark data.";
 						}
 					}
-					else
+					catch( Exception e )
 					{
-						return "Unable to locate game's waymark data!";
+						//*****TODO: Log exception somewhere.
+						return "An unknown error occured while trying to read the game's waymark data.";
 					}
 				}
 				else
@@ -245,34 +220,27 @@ namespace WaymarkPresetPlugin
 
 		public string ProcessTextCommand_Export( string args )
 		{
-			int slotIndex;
+			int slotNum;
 			if( args.Length > 0 )
 			{
 				if( args[0] == 'g' )
 				{
 					args = args.Substring( 1 );
-					if( int.TryParse( args, out slotIndex ) && slotIndex >= 1 && slotIndex <= 5 )
+					if( int.TryParse( args, out slotNum ) && slotNum >= 1 && slotNum <= 5 )
 					{
 						byte[] gamePreset = new byte[104];
-						IntPtr pGameData = GetGameWaymarkDataPointer();
-						if( pGameData != IntPtr.Zero )
+						IntPtr pGameData = mGameMemoryHandler.GetGameWaymarkDataPointer();
+						try
 						{
-							try
-							{
-								Marshal.Copy( new IntPtr( pGameData.ToInt64() + ( slotIndex - 1 ) * 104 ), gamePreset, 0, 104 );
-								WaymarkPreset tempPreset = WaymarkPreset.Parse( gamePreset );
-								//*****TODO: Set the preset name to something useful before serializing.*****
-								return JsonConvert.SerializeObject( tempPreset );
-							}
-							catch( Exception e )
-							{
-								//*****TODO: Log exception somewhere.*****
-								return "An unknown error occured while trying to read the game's waymark data.";
-							}
+							mGameMemoryHandler.ReadSlot( slotNum );
+							WaymarkPreset tempPreset = WaymarkPreset.Parse( gamePreset );
+							tempPreset.Name = "Exported preset";//*****TODO*****
+							return JsonConvert.SerializeObject( tempPreset );
 						}
-						else
+						catch( Exception e )
 						{
-							return "Unable to locate game's waymark data!";
+							//*****TODO: Log exception somewhere.*****
+							return "An unknown error occured while trying to read the game's waymark data.";
 						}
 					}
 					else
@@ -280,9 +248,9 @@ namespace WaymarkPresetPlugin
 						return "An invalid slot number was specified.";
 					}
 				}
-				else if( int.TryParse( args, out slotIndex ) && slotIndex >= 0 && slotIndex < mConfiguration.PresetLibrary.Presets.Count )
+				else if( int.TryParse( args, out slotNum ) && slotNum >= 0 && slotNum < mConfiguration.PresetLibrary.Presets.Count )
 				{
-					return mConfiguration.PresetLibrary.ExportPreset( slotIndex );
+					return mConfiguration.PresetLibrary.ExportPreset( slotNum );
 				}
 				else
 				{
@@ -304,25 +272,16 @@ namespace WaymarkPresetPlugin
 				gameSlotToCopy <= 5 )
 			{
 				byte[] gamePreset = new byte[104];
-				IntPtr pGameData = GetGameWaymarkDataPointer();
-				if( pGameData != IntPtr.Zero )
-				{
-					try
-					{
-						Marshal.Copy( new IntPtr( pGameData.ToInt64() + ( gameSlotToCopy - 1 ) * 104 ), gamePreset, 0, 104 );
-						WaymarkPreset tempPreset = WaymarkPreset.Parse( gamePreset );
 
-						return "Slot " + gameSlotToCopy.ToString() + " Contents:\r\n" + tempPreset.GetPresetDataString();
-					}
-					catch( Exception e )
-					{
-						//*****TODO: Log exception somewhere.
-						return "An unknown error occured while trying to read the game's waymark data.";
-					}
-				}
-				else
+				try
 				{
-					return "Unable to locate game's waymark data!";
+					WaymarkPreset tempPreset = WaymarkPreset.Parse( mGameMemoryHandler.ReadSlot( gameSlotToCopy ) );
+					return "Slot " + gameSlotToCopy.ToString() + " Contents:\r\n" + tempPreset.GetPresetDataString();
+				}
+				catch( Exception e )
+				{
+					//*****TODO: Log exception somewhere.
+					return "An unknown error occured while trying to read the game's waymark data.";
 				}
 			}
 			else
@@ -346,20 +305,8 @@ namespace WaymarkPresetPlugin
 					{
 						if( int.TryParse( nextArgs, out sourceLibraryIndex ) && sourceLibraryIndex >=0 && sourceLibraryIndex < mConfiguration.PresetLibrary.Presets.Count )
 						{
-							/*IntPtr pWaymarkMemory = GetGameWaymarkDataPointer();
-							if( pWaymarkMemory != IntPtr.Zero )
-							{
-								if( targetGameSlot >= 1 && targetGameSlot <= 5 )
-								{
-
-								}
-							}
-							return	"Want to write data to slot " + targetGameSlot.ToString() +
-									" at address 0x" + new IntPtr( pWaymarkMemory.ToInt64() + ( ( targetGameSlot - 1 ) * 104 ) ).ToString( "X" ) +
-									" (raw address 0x " + pWaymarkMemory.ToString( "X" ) + ")";*/
-							
 							//Copy from library
-							if( CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[sourceLibraryIndex], targetGameSlot - 1 ) )
+							if( CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[sourceLibraryIndex], targetGameSlot ) )
 							{
 								return "Library index " + sourceLibraryIndex.ToString() + " successfully copied to game slot " + targetGameSlot.ToString() + ".";
 							}
@@ -374,7 +321,7 @@ namespace WaymarkPresetPlugin
 							try
 							{
 								WaymarkPreset tempPreset = JsonConvert.DeserializeObject<WaymarkPreset>( nextArgs );
-								if( CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[sourceLibraryIndex], targetGameSlot - 1 ) )
+								if( CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[sourceLibraryIndex], targetGameSlot ) )
 								{
 									return "Successfully imported the provided preset data to slot " + targetGameSlot.ToString() + ".";
 								}
@@ -421,26 +368,16 @@ namespace WaymarkPresetPlugin
 
 		protected bool CopyPresetToGameSlot( WaymarkPreset preset, int slot )
 		{
-			IntPtr pWaymarkMemory = GetGameWaymarkDataPointer();
-			if( pWaymarkMemory != IntPtr.Zero )
+			if( slot >= 1 && slot <= 5 )
 			{
-				if( slot >= 0 && slot < 5 )
+				byte[] gamePresetData = preset.ConstructGamePreset();
+				if( gamePresetData.Length == 104 )
 				{
-					byte[] gamePresetData = preset.ConstructGamePreset();
-					if( gamePresetData.Length == 104 )
+					try
 					{
-						try
-						{
-							Marshal.Copy( gamePresetData, 0, new IntPtr( pWaymarkMemory.ToInt64() + ( slot * 104 ) ), 104 );
-							return true;
-						}
-						catch( Exception e )
-						{
-							//*****TODO: Log problem.*****
-							return false;
-						}
+						return mGameMemoryHandler.WriteSlot( slot, gamePresetData );
 					}
-					else
+					catch( Exception e )
 					{
 						//*****TODO: Log problem.*****
 						return false;
@@ -454,7 +391,7 @@ namespace WaymarkPresetPlugin
 			}
 			else
 			{
-				//*****TODO: Log error.*****
+				//*****TODO: Log problem.*****
 				return false;
 			}
 		}
@@ -469,29 +406,12 @@ namespace WaymarkPresetPlugin
 			mUI.SettingsWindowVisible = true;
 		}
 
-		protected IntPtr GetGameWaymarkDataPointer()
-		{
-			//*****TODO: Check that function pointers were assigned properly.*****
-			IntPtr pWaymarksLocation = mfpGetConfigSection.Invoke( mfpGetConfigFile.Invoke( 0x9 ), 0x11 );
-
-			//*****TODO: We don't know if it will always be 48 bytes to the start of FMARKER.DAT.  Maybe searching forward a bit in memory from the address we get to find that string is safer.*****
-			//	64 additional bytes from the pointer given to us until the actual preset data.
-			if( pWaymarksLocation != IntPtr.Zero )
-			{
-				pWaymarksLocation = new IntPtr( pWaymarksLocation.ToInt64() + 64L );
-			}
-
-			return pWaymarksLocation;
-		}
-
-		protected static GetConfigFileDelegate mfpGetConfigFile;
-		protected static GetConfigSectionDelegate mfpGetConfigSection;
-
 		public string Name => "WaymarkPresetPlugin";
 		protected const string mTextCommandName = "/pwaymark";
 
 		protected DalamudPluginInterface mPluginInterface;
 		protected Configuration mConfiguration;
 		protected PluginUI mUI;
+		protected MemoryHandler mGameMemoryHandler;
 	}
 }

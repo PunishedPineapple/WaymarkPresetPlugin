@@ -11,10 +11,11 @@ namespace WaymarkPresetPlugin
 	public class PluginUI : IDisposable
 	{
 		//	Construction
-		public PluginUI( Configuration configuration, Dictionary<UInt16, string> zoneNames )
+		public PluginUI( Configuration configuration, Dictionary<UInt16, string> zoneNames, MemoryHandler gameMemoryHandler )
 		{
 			mConfiguration = configuration;
 			ZoneNames = zoneNames;
+			mGameMemoryHandler = gameMemoryHandler;
 		}
 
 		//	Destruction
@@ -32,7 +33,6 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawMainWindow()
 		{
-			//*****TODO: Add a filter to current zone checkbox to the list if we can find the zone that we are in.*****
 			if( !MainWindowVisible )
 			{
 				return;
@@ -43,10 +43,6 @@ namespace WaymarkPresetPlugin
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 330 ), new Vector2( float.MaxValue, float.MaxValue ) );
 			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
-				//*****TODO: Do the filtering.*****
-				/*bool dummyBool = false;
-				ImGui.Checkbox( "Filter on current zone", ref dummyBool );*/
-
 				//	Just drop in the data.
 				var dict = mConfiguration.PresetLibrary.GetSortedIndices();
 				if( dict.Count > 0 )
@@ -82,10 +78,6 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawInfoWindow()
 		{
-			//*****TODO: Consider having a drawing of marks around barycenter?*****
-			//*****TODO: Allow direct place only with filter to current zone active (If we can even find a function to direct place).*****
-			//*****TODO: Add editor button/window.*****
-
 			ImGui.SetNextWindowSize( new Vector2( 375, 330 ), ImGuiCond.FirstUseEver );
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 250, 330 ), new Vector2( 250, MainWindowSize.Y ) );
 			ImGui.SetNextWindowPos( new Vector2( MainWindowPos.X + MainWindowSize.X, MainWindowPos.Y ) );
@@ -99,30 +91,30 @@ namespace WaymarkPresetPlugin
 					ImGui.BeginGroup();
 					if( ImGui.Button( "1" ) )
 					{
-						//*****TODO: Hook up these buttons!*****
+						mGameMemoryHandler.WriteSlot( 1, mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "2" ) )
 					{
+						mGameMemoryHandler.WriteSlot( 2, mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "3" ) )
 					{
+						mGameMemoryHandler.WriteSlot( 3, mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "4" ) )
 					{
+						mGameMemoryHandler.WriteSlot( 4, mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "5" ) )
 					{
+						mGameMemoryHandler.WriteSlot( 5, mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
 					}
 					ImGui.EndGroup();
-					//*****TODO: 
-					/*bool dummyBool = false;
-					ImGui.Checkbox( "Use current zone.", ref dummyBool );*/
 					ImGui.Text( "Preset Info:" );
-					//*****TODO: At some point it would be nice to make this a monospaced font.*****
 					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString() );
 					ImGui.Spacing();
 					ImGui.Spacing();
@@ -147,8 +139,6 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawSettingsWindow()
 		{
-			//*****TODO: Probably have an option to turn off zone categories and just do a straight list.*****
-			//*****TODO: *If* it ever becomes possible to do direct placement, probably make it an option that people have to turn on.
 			if( !SettingsWindowVisible )
 			{
 				return;
@@ -163,7 +153,26 @@ namespace WaymarkPresetPlugin
 			ImGui.End();
 		}
 
-		private Configuration mConfiguration;
+		protected void CopyPresetToGameSlot( WaymarkPreset preset, int slot )
+		{
+			if( slot >= 1 && slot <= 5 )
+			{
+				byte[] gamePresetData = preset.ConstructGamePreset();
+				if( gamePresetData.Length == 104 )
+				{
+					try
+					{
+						mGameMemoryHandler.WriteSlot( slot, gamePresetData );
+					}
+					catch( Exception e )
+					{
+					}
+				}
+			}
+		}
+
+		protected Configuration mConfiguration;
+		protected MemoryHandler mGameMemoryHandler;
 
 		//	Need a real backing field on the following properties for use with ImGui.
 		protected bool mMainWindowVisible = false;

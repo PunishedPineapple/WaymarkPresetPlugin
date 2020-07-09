@@ -81,7 +81,6 @@ namespace WaymarkPresetPlugin
 			return sortedIndices;
 		}
 
-		//*****TODO: Implement deleting presets by index and reordering/sorting them.*****
 		public List<WaymarkPreset> Presets { get; protected set; } = new List<WaymarkPreset>();
 	}
 }

@@ -22,15 +22,13 @@ namespace WaymarkPresetPlugin
 		}
 		public string GetWaymarkDataString()
 		{
-			//*****TODO: Try PadLeft instead of using zeroes.*****
 			return Active ? ( X.ToString( "0.00" ).PadLeft( 7 ) + ", " + Y.ToString( "0.00" ).PadLeft( 7 ) + ", " + Z.ToString( "0.00" ).PadLeft( 7 ) ) : "Unused";
-			//return Active ? ( X.ToString( " 000.00;-000.00" ) + ", " + Y.ToString( " 000.00;-000.00" ) + ", " + Z.ToString( " 000.00;-000.00" ) ) : "Unused";
 		}
 
 		public float X { get; set; } = 0.0f;
 		public float Y { get; set; } = 0.0f;
 		public float Z { get; set; } = 0.0f;
-		public int ID { get; set; } = 0;//This is kind of a BS field, but keep it so that PP presets can be a direct import.  *****TODO: Actually, can we get rid of this safely?*****
+		public int ID { get; set; } = 0;	//This is kind of a BS field, but keep it for import/export interop with PP.
 		public bool Active { get; set; } = false;
 	}
 }

@@ -93,9 +93,10 @@ namespace WaymarkPresetPlugin
 
 		public byte[] ConstructGamePreset()
 		{
-			//	This looks gross, but it's easier to be compatible with PP presets if we have each waymark be a named member instead of in a collection :(
+			//	List is easy because we can just push data on to it.
 			List<byte> byteData = new List<byte>();
 
+			//	Waymark coordinates.
 			byteData.AddRange( BitConverter.GetBytes( A.Active ? (Int32)( A.X * 1000.0 ) : 0 ) );
 			byteData.AddRange( BitConverter.GetBytes( A.Active ? (Int32)( A.Y * 1000.0 ) : 0 ) );
 			byteData.AddRange( BitConverter.GetBytes( A.Active ? (Int32)( A.Z * 1000.0 ) : 0 ) );
@@ -149,6 +150,13 @@ namespace WaymarkPresetPlugin
 			//	Time last modified.
 			byteData.AddRange( BitConverter.GetBytes( (Int32)Time.ToUnixTimeSeconds() ) );
 
+			//	Shouldn't ever come up with the wrong length, but just in case...
+			if( byteData.Count != 104 )
+			{
+				throw new Exception( "Error in WaymarkPreset.ConstructGamePreset(): Constructed byte array was of an unexpected length." );
+			}
+
+			//	Send it out.
 			return byteData.ToArray();
 		}
 
@@ -168,10 +176,10 @@ namespace WaymarkPresetPlugin
 			return str;
 		}
 
+		//	This looks gross, but it's easier to be compatible with PP presets if we have each waymark be a named member instead of in a collection :(
 		public string Name { get; set; } = "Unknown";
-		public UInt16 MapID { get; set; } = 0;//*****TODO: PP serializes this as an Int32, so we'll have to watch whether that affects us.  It looks like it does when we try to deserialize a bad map ID.*****
-		[JsonIgnore]	//*****TODO: Maybe store time as a unix timestamp just to make it easier.*****
-		public DateTimeOffset Time { get; set; } = new DateTimeOffset( DateTimeOffset.Now.UtcDateTime );
+		/*[JsonConverter( typeof( MapIDJsonConverter ) )]*/ public UInt16 MapID { get; set; } = 0;	//PP sometimes gives bogus MapIDs that are outside the UInt16 so use a converter to handle those.
+		[JsonIgnore] public DateTimeOffset Time { get; set; } = new DateTimeOffset( DateTimeOffset.Now.UtcDateTime );	//There's no really compelling reason to import/export the timestamp.
 		public Waymark A { get; set; } = new Waymark();
 		public Waymark B { get; set; } = new Waymark();
 		public Waymark C { get; set; } = new Waymark();
@@ -180,5 +188,25 @@ namespace WaymarkPresetPlugin
 		public Waymark Two { get; set; } = new Waymark();
 		public Waymark Three { get; set; } = new Waymark();
 		public Waymark Four { get; set; } = new Waymark();
+	}
+
+	//	We may be getting the MapID as something that won't fit in UInt16, so this class helps us handle that.
+	public class MapIDJsonConverter : JsonConverter<UInt16>
+	{
+		public override void WriteJson( JsonWriter writer, ushort value, JsonSerializer serializer )
+		{
+			writer.WriteValue( value );
+		}
+		public override ushort ReadJson( JsonReader reader, Type objectType, ushort existingValue, bool hasExistingValue, JsonSerializer serializer )
+		{
+			if( (int)reader.Value > UInt16.MaxValue || (int)reader.Value < 0 )
+			{
+				return 0;
+			}
+			else
+			{
+				return (UInt16)reader.Value;
+			}
+		}
 	}
 }
