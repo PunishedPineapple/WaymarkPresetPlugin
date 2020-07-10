@@ -8,7 +8,6 @@
 Low Priority:
 
 - Add a filter to current zone checkbox to the list if we can find the zone that we are in.
-- Handle different client languages for the Lumina sheets?  Does DataManager already handle getting the same language as the game client?
 - Make the preset info use a monospace font for coordinate alignment.
 
 
