@@ -64,9 +64,9 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public Dictionary<UInt16, List<int>> GetSortedIndices()
+		public SortedDictionary<UInt16, List<int>> GetSortedIndices()
 		{
-			Dictionary<UInt16, List<int>> sortedIndices = new Dictionary<ushort, List<int>>();
+			SortedDictionary<UInt16, List<int>> sortedIndices = new SortedDictionary<ushort, List<int>>();
 
 			for( int i = 0; i < Presets.Count; ++i )
 			{

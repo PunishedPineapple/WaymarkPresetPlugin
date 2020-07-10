@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Windows;
 using System.Security.Policy;
+using Newtonsoft.Json;
 
 namespace WaymarkPresetPlugin
 {
@@ -43,7 +45,8 @@ namespace WaymarkPresetPlugin
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 330 ), new Vector2( float.MaxValue, float.MaxValue ) );
 			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
-				//	Just drop in the data.
+				//	Populate the preset list
+				ImGui.BeginGroup();
 				var dict = mConfiguration.PresetLibrary.GetSortedIndices();
 				if( dict.Count > 0 )
 				{
@@ -65,6 +68,54 @@ namespace WaymarkPresetPlugin
 				else
 				{
 					ImGui.Text( "Preset library empty!" );
+				}
+				ImGui.EndGroup();
+
+				//	Input box for import.
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				if( ImGui.CollapsingHeader( "Import Options" ) )
+				{
+					ImGui.BeginGroup();	//Buttons don't seem to work under a header without being in a group.
+					ImGui.InputText( "", ref mPresetImportString, 1024 );   //Most exports max out around 500 characters with all waymarks, so this leaves heaps of room for a long name.
+					if( ImGui.Button( "Import JSON" ) )
+					{
+						if( mConfiguration.PresetLibrary.ImportPreset( PresetImportString ) >= 0 )
+						{
+							PresetImportString = "";
+						}
+					}
+					ImGui.SameLine();
+					ImGui.Text( " or slot " );
+					ImGui.SameLine();
+					if( ImGui.Button( "1" ) )
+					{
+						mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 1 ) );
+					}
+					ImGui.SameLine();
+					if( ImGui.Button( "2" ) )
+					{
+						mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 2 ) );
+					}
+					ImGui.SameLine();
+					if( ImGui.Button( "3" ) )
+					{
+						mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 3 ) );
+					}
+					ImGui.SameLine();
+					if( ImGui.Button( "4" ) )
+					{
+						mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 4 ) );
+					}
+					ImGui.SameLine();
+					if( ImGui.Button( "5" ) )
+					{
+						mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 5 ) );
+					}
+					ImGui.EndGroup();
 				}
 			}
 
@@ -121,6 +172,14 @@ namespace WaymarkPresetPlugin
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
+					if( ImGui.Button( "Export to Clipboard" ) )
+					{
+						if( SelectedPreset >= 0 && SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
+						{
+							Clipboard.SetText( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
+						}
+					}
+					ImGui.SameLine();
 					ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
 					if( ImGui.Button( "Delete Preset" ) )
 					{
@@ -178,15 +237,22 @@ namespace WaymarkPresetPlugin
 		protected bool mMainWindowVisible = false;
 		public bool MainWindowVisible
 		{
-			get { return this.mMainWindowVisible; }
-			set { this.mMainWindowVisible = value; }
+			get { return mMainWindowVisible; }
+			set { mMainWindowVisible = value; }
 		}
 
 		protected bool mSettingsWindowVisible = false;
 		public bool SettingsWindowVisible
 		{
-			get { return this.mSettingsWindowVisible; }
-			set { this.mSettingsWindowVisible = value; }
+			get { return mSettingsWindowVisible; }
+			set { mSettingsWindowVisible = value; }
+		}
+
+		protected string mPresetImportString = "";
+		public string PresetImportString
+		{
+			get { return mPresetImportString; }
+			set { mPresetImportString = value; }
 		}
 
 		public Vector2 MainWindowPos { get; protected set; }
