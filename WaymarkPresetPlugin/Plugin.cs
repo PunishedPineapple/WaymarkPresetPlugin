@@ -27,23 +27,29 @@ namespace WaymarkPresetPlugin
 			mGameMemoryHandler = new MemoryHandler( mPluginInterface );
 
 			//	Get the game sheets that we need to populate a zone dictionary.
-			ExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType> territorySheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>( /*set language?*/ );
-			ExcelSheet<Lumina.Excel.GeneratedSheets.PlaceName> placeNameSheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.PlaceName>( /*set language?*/ );
+			ExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType> territorySheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>();
+			ExcelSheet<Lumina.Excel.GeneratedSheets.PlaceName> placeNameSheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.PlaceName>();
+			ExcelSheet<Lumina.Excel.GeneratedSheets.ContentFinderCondition> contentFinderSheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.ContentFinderCondition>();
 			
 			//	Get the name for every "MapID" that is an instance zone.
-			Dictionary<UInt16, string> zoneNames = new Dictionary<UInt16, string>();
+			Dictionary<UInt16, Tuple<string, string>> zoneNames = new Dictionary<UInt16, Tuple<string, string>>();
 			foreach( TerritoryType zone in territorySheet.GetRows() )
 			{
 				//*****TODO: unknown24 should be changed to unknown10 for new version of Dalamud.  Currently unknown10 in test version.*****
 				if( zone.ExclusiveType == 2 && !zoneNames.ContainsKey( zone.unknown24 ) )
 				{
-					zoneNames.Add( zone.unknown24, placeNameSheet.GetRow( zone.PlaceName ).Name );
+					string dutyName = contentFinderSheet.GetRow( zone.unknown24 ).Name.Trim();
+					if( dutyName.Length > 0 )
+					{
+						dutyName = dutyName.First().ToString().ToUpper() + dutyName.Substring( 1 );
+					}
+					zoneNames.Add( zone.unknown24, Tuple.Create( dutyName, placeNameSheet.GetRow( zone.PlaceName ).Name ) );
 				}
 			}
 			//	There are several zones with an "ID" of zero, but none of them allow waymarks to be saved, so change the name of that zone to reflect this.
 			if( zoneNames.ContainsKey( 0 ) )
 			{
-				zoneNames[0] = "Unknown Zone";
+				zoneNames[0] = Tuple.Create( "Unknown Zone", "Unknown Zone" );
 			}
 
 			//	Text Command Initialization
@@ -94,6 +100,10 @@ namespace WaymarkPresetPlugin
 			{
 				mUI.MainWindowVisible = true;
 			}
+			else if( subCommand.ToLower() == "config" )
+			{
+				mUI.SettingsWindowVisible = true;
+			}
 			else if( subCommand.ToLower() == "import" )
 			{
 				commandResponse = ProcessTextCommand_Import( subCommandArgs );
@@ -114,11 +124,6 @@ namespace WaymarkPresetPlugin
 			{
 				commandResponse = ProcessTextCommand_LibraryInfo( subCommandArgs );
 			}
-			else if( args.Trim().StartsWith( "save" ) )
-			{
-				mConfiguration.Save();
-				commandResponse = "Saved Config";
-			}
 			else
 			{
 				commandResponse = ProcessTextCommand_Help( subCommandArgs );
@@ -133,7 +138,15 @@ namespace WaymarkPresetPlugin
 
 		public string ProcessTextCommand_Help( string args )
 		{
-			if( args.ToLower() == "import" )
+			if( args.ToLower() == "commands" )
+			{
+				return "Valid commands are as follows: import, export, slotinfo, writeslot, libraryinfo, config.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
+			}
+			else if( args.ToLower() == "config" )
+			{
+				return "Opens the settings window.";
+			}
+			else if( args.ToLower() == "import" )
 			{
 				return "Imports a preset into the library.  Usage \"/pwaymark import <dataToImport>\".  If dataToImport is a single number, it copies that slot from the game's presets.  If a PP-formatted JSON string is provided instead, it will attempt to create a preset from that data.";
 			}
@@ -155,7 +168,7 @@ namespace WaymarkPresetPlugin
 			}
 			else
 			{
-				return "Valid commands are as follows: import, export, slotinfo, writeslot, libraryinfo.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
+				return "Use \"/pwaymark\" to open the GUI.  Use \"/pwaymark commands\" for a list of text commands.";
 			}
 		}
 
@@ -178,6 +191,7 @@ namespace WaymarkPresetPlugin
 
 						if( importedIndex >= 0 )
 						{
+							mConfiguration.Save();
 							return "Slot " + gameSlotToCopy.ToString() + " added to library as index " + importedIndex + ".";
 						}
 						else
@@ -203,6 +217,7 @@ namespace WaymarkPresetPlugin
 					int importedIndex = mConfiguration.PresetLibrary.ImportPreset( args );
 					if( importedIndex >= 0 )
 					{
+						mConfiguration.Save();
 						return "Waymark preset imported as libary index " + importedIndex.ToString() + ".";
 					}
 					else

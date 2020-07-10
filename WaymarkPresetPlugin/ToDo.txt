@@ -1,6 +1,5 @@
 ﻿High Priority:
 
-- Figure out where/how to do automatic saving, and then remove the "save" command.
 - Get an exception log figured out.
 - Probably do searching for FMARKER.DAT after getting memory location instead of always assuming a constant offset.  Ask people about this.
 - Update territory sheet field use for testing/new Dalamud.
@@ -11,12 +10,10 @@ Low Priority:
 - Add a filter to current zone checkbox to the list if we can find the zone that we are in.
 - Handle different client languages for the Lumina sheets?  Does DataManager already handle getting the same language as the game client?
 - Make the preset info use a monospace font for coordinate alignment.
-- Probably have an option to turn off zone categories and just do a straight list.
 
 
 New Functionality:
 
-- Add editor button/window.
 - Consider having a drawing of marks around their barycenter in the editor window.
 - If we can find a function to directly place a waymark set, add it, and allow direct place only with the filter to current zone checkbox active.  Or maybe just ignore the place command if the preset MapID doesn't match the current zone.
 - *If* it ever becomes possible to do direct placement, probably make it an option that people have to turn on.
