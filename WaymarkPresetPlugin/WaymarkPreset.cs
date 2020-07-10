@@ -178,7 +178,7 @@ namespace WaymarkPresetPlugin
 
 		//	This looks gross, but it's easier to be compatible with PP presets if we have each waymark be a named member instead of in a collection :(
 		public string Name { get; set; } = "Unknown";
-		/*[JsonConverter( typeof( MapIDJsonConverter ) )]*/ public UInt16 MapID { get; set; } = 0;	//PP sometimes gives bogus MapIDs that are outside the UInt16 so use a converter to handle those.
+		[JsonConverter( typeof( MapIDJsonConverter ) )] public UInt16 MapID { get; set; } = 0;	//PP sometimes gives bogus MapIDs that are outside the UInt16, so use a converter to handle those.
 		[JsonIgnore] public DateTimeOffset Time { get; set; } = new DateTimeOffset( DateTimeOffset.Now.UtcDateTime );	//There's no really compelling reason to import/export the timestamp.
 		public Waymark A { get; set; } = new Waymark();
 		public Waymark B { get; set; } = new Waymark();
@@ -193,19 +193,20 @@ namespace WaymarkPresetPlugin
 	//	We may be getting the MapID as something that won't fit in UInt16, so this class helps us handle that.
 	public class MapIDJsonConverter : JsonConverter<UInt16>
 	{
-		public override void WriteJson( JsonWriter writer, ushort value, JsonSerializer serializer )
+		public override void WriteJson( JsonWriter writer, UInt16 value, JsonSerializer serializer )
 		{
 			writer.WriteValue( value );
 		}
-		public override ushort ReadJson( JsonReader reader, Type objectType, ushort existingValue, bool hasExistingValue, JsonSerializer serializer )
+		public override UInt16 ReadJson( JsonReader reader, Type objectType, UInt16 existingValue, bool hasExistingValue, JsonSerializer serializer )
 		{
-			if( (int)reader.Value > UInt16.MaxValue || (int)reader.Value < 0 )
+			long val = (long)reader.Value;
+			if( val > UInt16.MaxValue || val < 0 )
 			{
 				return 0;
 			}
 			else
 			{
-				return (UInt16)reader.Value;
+				return (UInt16)val;
 			}
 		}
 	}
