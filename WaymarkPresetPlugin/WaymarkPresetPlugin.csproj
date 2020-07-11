@@ -71,10 +71,6 @@
     <Compile Include="WaymarkPresetLibrary.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\Data\goat.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Visible>false</Visible>
-    </Content>
     <Content Include="ToDo.txt" />
   </ItemGroup>
   <ItemGroup>
