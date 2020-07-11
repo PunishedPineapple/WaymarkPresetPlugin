@@ -33,17 +33,17 @@ namespace WaymarkPresetPlugin
 			
 			//	Get the name for every "MapID" that is an instance zone.
 			Dictionary<UInt16, Tuple<string, string>> zoneNames = new Dictionary<UInt16, Tuple<string, string>>();
-			foreach( TerritoryType zone in territorySheet.GetRows() )
+			foreach( TerritoryType zone in territorySheet.ToList() )
 			{
 				//*****TODO: unknown24 should be changed to unknown10 for new version of Dalamud.  Currently unknown10 in test version.*****
-				if( zone.ExclusiveType == 2 && !zoneNames.ContainsKey( zone.unknown24 ) )
+				if( zone.ExclusiveType == 2 && !zoneNames.ContainsKey( zone.Unknown10 ) )
 				{
-					string dutyName = contentFinderSheet.GetRow( zone.unknown24 ).Name.Trim();
+					string dutyName = contentFinderSheet.GetRow( zone.Unknown10 ).Name.Trim();
 					if( dutyName.Length > 0 )
 					{
 						dutyName = dutyName.First().ToString().ToUpper() + dutyName.Substring( 1 );
 					}
-					zoneNames.Add( zone.unknown24, Tuple.Create( dutyName, placeNameSheet.GetRow( zone.PlaceName ).Name ) );
+					zoneNames.Add( zone.Unknown10, Tuple.Create( dutyName, zone.PlaceName.Value.Name ) );
 				}
 			}
 			//	There are several zones with an "ID" of zero, but none of them allow waymarks to be saved, so change the name of that zone to reflect this.
