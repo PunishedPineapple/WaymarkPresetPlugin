@@ -138,40 +138,50 @@ namespace WaymarkPresetPlugin
 						if( mConfiguration.PresetLibrary.ImportPreset( PresetImportString ) >= 0 )
 						{
 							PresetImportString = "";
+							mConfiguration.Save();
 						}
-						mConfiguration.Save();
 					}
 					ImGui.SameLine();
 					ImGui.Text( " or slot " );
 					ImGui.SameLine();
 					if( ImGui.Button( "1" ) )
 					{
-						mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 1 ) );
-						mConfiguration.Save();
+						if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 1 ) ) >= 0 )
+						{
+							mConfiguration.Save();
+						}
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "2" ) )
 					{
-						mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 2 ) );
-						mConfiguration.Save();
+						if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 2 ) ) >= 0 )
+						{
+							mConfiguration.Save();
+						}
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "3" ) )
 					{
-						mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 3 ) );
-						mConfiguration.Save();
+						if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 3 ) ) >= 0 )
+						{
+							mConfiguration.Save();
+						}
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "4" ) )
 					{
-						mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 4 ) );
-						mConfiguration.Save();
+						if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 4 ) ) >= 0 )
+						{
+							mConfiguration.Save();
+						}
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "5" ) )
 					{
-						mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 5 ) );
-						mConfiguration.Save();
+						if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 5 ) ) >= 0 )
+						{
+							mConfiguration.Save();
+						}
 					}
 					ImGui.EndGroup();
 				}
@@ -333,7 +343,7 @@ namespace WaymarkPresetPlugin
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Text( "Zone: " );
-					if( ImGui.BeginCombo( "###MapID", mConfiguration.mShowDutyNames ? ZoneNames[ScratchEditingPreset.MapID].Item1.ToString() : ZoneNames[ScratchEditingPreset.MapID].Item2.ToString() ) )
+					if( ImGui.BeginCombo( "###MapID", ZoneNames.ContainsKey( ScratchEditingPreset.MapID ) ? mConfiguration.mShowDutyNames ? ZoneNames[ScratchEditingPreset.MapID].Item1.ToString() : ZoneNames[ScratchEditingPreset.MapID].Item2.ToString() : "Unknown Zone" ) )
 					{
 						foreach( var zone in ZoneNames )
 						{
