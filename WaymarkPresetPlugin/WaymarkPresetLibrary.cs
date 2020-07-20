@@ -34,9 +34,23 @@ namespace WaymarkPresetPlugin
 
 		public int ImportPreset( string importStr )
 		{
-			WaymarkPreset importedPreset = JsonConvert.DeserializeObject<WaymarkPreset>( importStr );
-			Presets.Add( importedPreset );
-			return Presets.Count - 1;
+			try
+			{
+				WaymarkPreset importedPreset = JsonConvert.DeserializeObject<WaymarkPreset>( importStr );
+				if( importedPreset != null )
+				{
+					Presets.Add( importedPreset );
+					return Presets.Count - 1;
+				}
+				else
+				{
+					return -1;
+				}
+			}
+			catch
+			{
+				return -1;
+			}
 		}
 
 		public string ExportPreset( int index )
@@ -81,6 +95,7 @@ namespace WaymarkPresetPlugin
 			return sortedIndices;
 		}
 
+		[JsonProperty( NullValueHandling = NullValueHandling.Ignore )]	//	It shouldn't happen, but never let the deserializer overwrite this with null.
 		public List<WaymarkPreset> Presets { get; protected set; } = new List<WaymarkPreset>();
 	}
 }

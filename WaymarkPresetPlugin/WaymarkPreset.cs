@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 
 namespace WaymarkPresetPlugin
 {
+	[JsonObject( ItemNullValueHandling = NullValueHandling.Ignore )]	//	Shouldn't have any null waymarks, but just in case...
 	public class WaymarkPreset
 	{
 		public WaymarkPreset()
@@ -15,17 +16,20 @@ namespace WaymarkPresetPlugin
 
 		public WaymarkPreset( WaymarkPreset objToCopy )
 		{
-			Name = objToCopy.Name;
-			MapID = objToCopy.MapID;
-			Time = objToCopy.Time;
-			A = new Waymark( objToCopy.A );
-			B = new Waymark( objToCopy.B );
-			C = new Waymark( objToCopy.C );
-			D = new Waymark( objToCopy.D );
-			One = new Waymark( objToCopy.One );
-			Two = new Waymark( objToCopy.Two );
-			Three = new Waymark( objToCopy.Three );
-			Four = new Waymark( objToCopy.Four );
+			if( objToCopy != null )
+			{
+				Name = objToCopy.Name;
+				MapID = objToCopy.MapID;
+				Time = objToCopy.Time;
+				A = new Waymark( objToCopy.A );
+				B = new Waymark( objToCopy.B );
+				C = new Waymark( objToCopy.C );
+				D = new Waymark( objToCopy.D );
+				One = new Waymark( objToCopy.One );
+				Two = new Waymark( objToCopy.Two );
+				Three = new Waymark( objToCopy.Three );
+				Four = new Waymark( objToCopy.Four );
+			}
 		}
 
 		public static WaymarkPreset Parse( byte[] rawData )

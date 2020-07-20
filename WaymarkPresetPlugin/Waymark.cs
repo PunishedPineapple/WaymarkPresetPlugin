@@ -14,11 +14,14 @@ namespace WaymarkPresetPlugin
 
 		public Waymark( Waymark objToCopy )
 		{
-			X = objToCopy.X;
-			Y = objToCopy.Y;
-			Z = objToCopy.Z;
-			ID = objToCopy.ID;
-			Active = objToCopy.Active;
+			if( objToCopy != null )
+			{
+				X = objToCopy.X;
+				Y = objToCopy.Y;
+				Z = objToCopy.Z;
+				ID = objToCopy.ID;
+				Active = objToCopy.Active;
+			}
 		}
 		public string GetWaymarkDataString()
 		{
