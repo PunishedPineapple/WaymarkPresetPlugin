@@ -1,8 +1,6 @@
 ﻿High Priority:
 
-- Get an exception log figured out.
-- Probably do searching for FMARKER.DAT after getting memory location instead of always assuming a constant offset.  Ask people about this.
-- Update territory sheet field use for testing/new Dalamud.
+- Nothing for now.
 
 
 Low Priority:
