@@ -25,36 +25,40 @@ namespace WaymarkPresetPlugin
 			{
 				mfpGetConfigSection = Marshal.GetDelegateForFunctionPointer<GetConfigSectionDelegate>( getConfigSectionAddress );
 			}
-
-			//	Get the offset from the function's returned pointer to the actual marker data.
-			MarkerDataAdditionalOffset = 64L;
+			var getPresetAddressForSlot = pluginInterface.TargetModuleScanner.ScanText( "4C 8B C9 85 D2 78 0A 83 FA 08 73 05" );
+			if( getPresetAddressForSlot != IntPtr.Zero )
+			{
+				mfpGetPresetAddressForSlot = Marshal.GetDelegateForFunctionPointer<GetPresetAddressForSlotDelegate>( getPresetAddressForSlot );
+			}
 		}
 
-		public byte[] ReadSlot( int slotNum )
+		public bool FoundAllSigs()
 		{
-			IntPtr pWaymarkData = GetGameWaymarkDataPointer();
+			return	mfpGetConfigFile != null &&
+					mfpGetConfigSection != null &&
+					mfpGetPresetAddressForSlot != null;
+		}
+
+		public byte[] ReadSlot( uint slotNum )
+		{
+			IntPtr pWaymarkData = GetGameWaymarkDataPointerForSlot( slotNum );
 			byte[] data = new byte[104];
-			if( slotNum >= 1 &&
-				slotNum <= 5 &&
-				pWaymarkData != IntPtr.Zero )
+			if( pWaymarkData != IntPtr.Zero )
 			{
 				//	Don't catch exceptions here; better to have the caller do it probably.
-				Marshal.Copy( new IntPtr( pWaymarkData.ToInt64() + ( slotNum - 1 ) * 104 ), data, 0, 104 );
+				Marshal.Copy( pWaymarkData, data, 0, 104 );
 			}
 
 			return data;
 		}
 
-		public bool WriteSlot( int slotNum, byte[] data )
+		public bool WriteSlot( uint slotNum, byte[] data )
 		{
-			IntPtr pWaymarkData = GetGameWaymarkDataPointer();
-			if( slotNum >= 1 &&
-				slotNum <= 5 &&
-				data.Length >= 104 &&
-				pWaymarkData != IntPtr.Zero )
+			IntPtr pWaymarkData = GetGameWaymarkDataPointerForSlot( slotNum );
+			if( data.Length >= 104 && pWaymarkData != IntPtr.Zero )
 			{
 				//	Don't catch exceptions here; better to have the caller do it probably.
-				Marshal.Copy( data, 0, new IntPtr( pWaymarkData.ToInt64() + ( slotNum - 1 ) * 104 ), 104 );
+				Marshal.Copy( data, 0, pWaymarkData, 104 );
 				return true;
 			}
 			else
@@ -63,9 +67,9 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public IntPtr GetGameWaymarkDataPointer()
+		public IntPtr GetGameWaymarkDataPointerForSlot( uint slotNum )
 		{
-			if( mfpGetConfigFile == null || mfpGetConfigSection == null )
+			if( !FoundAllSigs() || slotNum < 1 || slotNum > 5 )
 			{
 				return IntPtr.Zero;
 			}
@@ -75,19 +79,24 @@ namespace WaymarkPresetPlugin
 
 				if( pWaymarksLocation != IntPtr.Zero )
 				{
-					pWaymarksLocation = new IntPtr( pWaymarksLocation.ToInt64() + MarkerDataAdditionalOffset );
+					pWaymarksLocation = mfpGetPresetAddressForSlot( pWaymarksLocation, slotNum - 1 );
 				}
 
 				return pWaymarksLocation;
 			}
 		}
 
+		public IntPtr GetAlternateWaymarkDataPointer( uint slotNum )
+		{
+			return mfpGetPresetAddressForSlot != null ? mfpGetPresetAddressForSlot.Invoke( mfpGetConfigSection.Invoke( mfpGetConfigFile.Invoke( 0x9 ), 0x11 ), slotNum ) : IntPtr.Zero;
+		}
+
 		protected delegate IntPtr GetConfigFileDelegate( byte fileIndex );
 		protected delegate IntPtr GetConfigSectionDelegate( IntPtr pConfigFile, byte sectionIndex );
+		protected delegate IntPtr GetPresetAddressForSlotDelegate( IntPtr pMarkerDataStart, uint slotNum );
 
 		protected static GetConfigFileDelegate mfpGetConfigFile;
 		protected static GetConfigSectionDelegate mfpGetConfigSection;
-
-		protected Int64 MarkerDataAdditionalOffset { get; set; }
+		protected static GetPresetAddressForSlotDelegate mfpGetPresetAddressForSlot;
 	}
 }

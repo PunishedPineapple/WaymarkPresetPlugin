@@ -59,9 +59,15 @@ namespace WaymarkPresetPlugin
 			} );
 
 			//	UI Initialization
-			mUI = new PluginUI( this.mConfiguration, zoneNames, mGameMemoryHandler );
+			mUI = new PluginUI( mConfiguration, zoneNames, mGameMemoryHandler );
 			mPluginInterface.UiBuilder.OnBuildUi += DrawUI;
 			mPluginInterface.UiBuilder.OnOpenConfigUi += ( sender, args ) => DrawConfigUI();
+
+			//	Tell the user if there's something out of the ordinary.
+			if( !mGameMemoryHandler.FoundAllSigs() )
+			{
+				mPluginInterface.Framework.Gui.Chat.Print( "Error initializing WaymarkPresetPlugin: Cannot write to or read from game." );
+			}
 		}
 
 		//	Cleanup
@@ -104,25 +110,9 @@ namespace WaymarkPresetPlugin
 			{
 				mUI.SettingsWindowVisible = true;
 			}
-			else if( subCommand.ToLower() == "import" )
-			{
-				commandResponse = ProcessTextCommand_Import( subCommandArgs );
-			}
-			else if( subCommand.ToLower() == "export" )
-			{
-				commandResponse = ProcessTextCommand_Export( subCommandArgs );
-			}
 			else if( subCommand.ToLower() == "slotinfo" )
 			{
 				commandResponse = ProcessTextCommand_SlotInfo( subCommandArgs );
-			}
-			else if( args.Trim().StartsWith( "writeslot" ) )
-			{
-				commandResponse = ProcessTextCommand_WriteSlot( subCommandArgs );
-			}
-			else if( subCommand.ToLower() == "libraryinfo" )
-			{
-				commandResponse = ProcessTextCommand_LibraryInfo( subCommandArgs );
 			}
 			else
 			{
@@ -140,274 +130,53 @@ namespace WaymarkPresetPlugin
 		{
 			if( args.ToLower() == "commands" )
 			{
-				return "Valid commands are as follows: import, export, slotinfo, writeslot, libraryinfo, config.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
+				return "Valid commands are as follows: config, slotinfo.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
 			}
 			else if( args.ToLower() == "config" )
 			{
 				return "Opens the settings window.";
 			}
-			else if( args.ToLower() == "import" )
-			{
-				return "Imports a preset into the library.  Usage \"/pwaymark import <dataToImport>\".  If dataToImport is a single number, it copies that slot from the game's presets.  If a PP-formatted JSON string is provided instead, it will attempt to create a preset from that data.";
-			}
-			else if( args.ToLower() == "export" )
-			{
-				return "Exports a preset from the library into the chat window.  Usage \"/pwaymark export (g)<index>\".  If a 'g' precedes the index, it will export the specified game preset slot; otherwise it will export the preset at the specified library index.  Export format is PP-format JSON.";
-			}
 			else if( args.ToLower() == "slotinfo" )
 			{
 				return "Prints the data saved in the game's slots to the chat window.  Usage \"/pwaymark slotinfo <slot>\".  The slot number can be any valid game slot.";
 			}
-			else if( args.ToLower() == "writeslot" )
-			{
-				return "Writes the specified data to the specified preset slot.  Usage \"/pwaymark writeslot <slot> <index>|<json>\".  The slot number can be any valid game slot.  The second parameter can be either a valid library index, or valid PP-format JSON.  Please note that many PP exports have invalid MapIDs, so using this command with JSON data is generally not recommended.";
-			}
-			else if( args.ToLower() == "libraryinfo" )
-			{
-				return "Prints basic info about each preset in the library to the chat window.  Usage \"/pwaymark libraryinfo\".";
-			}
 			else
 			{
-				return "Use \"/pwaymark\" to open the GUI.  Use \"/pwaymark commands\" for a list of text commands.";
-			}
-		}
-
-		public string ProcessTextCommand_Import( string args )
-		{
-			if( args.Length < 1 )
-			{
-				return "No parameters were specified for the import command.  Use \"/pwaymark help import\" for proper command format.";
-			}
-			else if( args.Length == 1 )
-			{
-				int gameSlotToCopy;
-				if( int.TryParse( args, out gameSlotToCopy ) && gameSlotToCopy >= 1 && gameSlotToCopy <= 5 )
-				{
-					try
-					{
-						WaymarkPreset tempPreset = WaymarkPreset.Parse( mGameMemoryHandler.ReadSlot( gameSlotToCopy ) );
-						tempPreset.Name = "Imported";//*****TODO*****
-						int importedIndex = mConfiguration.PresetLibrary.ImportPreset( tempPreset );
-
-						if( importedIndex >= 0 )
-						{
-							mConfiguration.Save();
-							return "Slot " + gameSlotToCopy.ToString() + " added to library as index " + importedIndex + ".";
-						}
-						else
-						{
-							return "An unknown error occured while trying to import the game's waymark data.";
-						}
-					}
-					catch( Exception e )
-					{
-						//*****TODO: Log exception somewhere.
-						return "An unknown error occured while trying to read the game's waymark data.";
-					}
-				}
-				else
-				{
-					return "Invalid waymark slot number passed to import command.  Only the numbers 1-5 are valid slots.";
-				}
-			}
-			else
-			{
-				try
-				{
-					int importedIndex = mConfiguration.PresetLibrary.ImportPreset( args );
-					if( importedIndex >= 0 )
-					{
-						mConfiguration.Save();
-						return "Waymark preset imported as libary index " + importedIndex.ToString() + ".";
-					}
-					else
-					{
-						return "Unknown error while importing preset.";
-					}
-				}
-				catch( Exception e )
-				{
-					//*****TODO: Log exception somewhere.*****
-					return "Invalid JSON passed to import command, unable to import.";
-				}
-			}
-		}
-
-		public string ProcessTextCommand_Export( string args )
-		{
-			int slotNum;
-			if( args.Length > 0 )
-			{
-				if( args[0] == 'g' )
-				{
-					args = args.Substring( 1 );
-					if( int.TryParse( args, out slotNum ) && slotNum >= 1 && slotNum <= 5 )
-					{
-						byte[] gamePreset = new byte[104];
-						IntPtr pGameData = mGameMemoryHandler.GetGameWaymarkDataPointer();
-						try
-						{
-							mGameMemoryHandler.ReadSlot( slotNum );
-							WaymarkPreset tempPreset = WaymarkPreset.Parse( gamePreset );
-							tempPreset.Name = "Exported preset";//*****TODO*****
-							return JsonConvert.SerializeObject( tempPreset );
-						}
-						catch( Exception e )
-						{
-							//*****TODO: Log exception somewhere.*****
-							return "An unknown error occured while trying to read the game's waymark data.";
-						}
-					}
-					else
-					{
-						return "An invalid slot number was specified.";
-					}
-				}
-				else if( int.TryParse( args, out slotNum ) && slotNum >= 0 && slotNum < mConfiguration.PresetLibrary.Presets.Count )
-				{
-					return mConfiguration.PresetLibrary.ExportPreset( slotNum );
-				}
-				else
-				{
-					return "Invalid parameters were specified for the export command.  Use \"/pwaymark help export\" for proper command format.";
-				}
-			}
-			else
-			{
-				return "No parameters were specified for the export command.  Use \"/pwaymark help export\" for proper command format.";
+				return "Use \"/pwaymark\" to open the GUI.  Use \"/pwaymark help commands\" for a list of text commands.";
 			}
 		}
 
 		public string ProcessTextCommand_SlotInfo( string args )
 		{
-			int gameSlotToCopy;
+			uint gameSlotToCopy;
 			if( args.Length == 1 &&
-				int.TryParse( args, out gameSlotToCopy ) &&
+				uint.TryParse( args, out gameSlotToCopy ) &&
 				gameSlotToCopy >= 1 &&
 				gameSlotToCopy <= 5 )
 			{
-				byte[] gamePreset = new byte[104];
+				if( mGameMemoryHandler.FoundAllSigs() )
+				{
+					byte[] gamePreset = new byte[104];
 
-				try
-				{
-					WaymarkPreset tempPreset = WaymarkPreset.Parse( mGameMemoryHandler.ReadSlot( gameSlotToCopy ) );
-					return "Slot " + gameSlotToCopy.ToString() + " Contents:\r\n" + tempPreset.GetPresetDataString();
+					try
+					{
+						WaymarkPreset tempPreset = WaymarkPreset.Parse( mGameMemoryHandler.ReadSlot( gameSlotToCopy ) );
+						return "Slot " + gameSlotToCopy.ToString() + " Contents:\r\n" + tempPreset.GetPresetDataString();
+					}
+					catch( Exception e )
+					{
+						PluginLog.Log( $"An unknown error occured while trying to read the game's waymark data: {e}" );
+						return "An unknown error occured while trying to read the game's waymark data.";
+					}
 				}
-				catch( Exception e )
+				else
 				{
-					//*****TODO: Log exception somewhere.
-					return "An unknown error occured while trying to read the game's waymark data.";
+					return "Unable to read game's waymark data.";
 				}
 			}
 			else
 			{
 				return "An invalid game slot number was provided.";
-			}
-		}
-		
-		public string ProcessTextCommand_WriteSlot( string args )
-		{
-			if( args.Trim().Split( ' ' ).Length > 0 )
-			{
-				string firstArg = args.Trim().Split( ' ' )[0];
-				string nextArgs = args.Substring( args.IndexOf( firstArg ) + firstArg.Length ).Trim( ' ' );
-
-				if( nextArgs.Length > 0 )
-				{
-					int targetGameSlot;
-					int sourceLibraryIndex;
-					if( int.TryParse( firstArg, out targetGameSlot ) && targetGameSlot >= 1 && targetGameSlot <= 5 )
-					{
-						if( int.TryParse( nextArgs, out sourceLibraryIndex ) && sourceLibraryIndex >=0 && sourceLibraryIndex < mConfiguration.PresetLibrary.Presets.Count )
-						{
-							//Copy from library
-							if( CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[sourceLibraryIndex], targetGameSlot ) )
-							{
-								return "Library index " + sourceLibraryIndex.ToString() + " successfully copied to game slot " + targetGameSlot.ToString() + ".";
-							}
-							else
-							{
-								return "Failed to copy library index " + sourceLibraryIndex.ToString() + " to game slot " + targetGameSlot.ToString() + "!";
-							}
-						}
-						else
-						{
-							//deserialize json into temporary waymark, and import that.
-							try
-							{
-								WaymarkPreset tempPreset = JsonConvert.DeserializeObject<WaymarkPreset>( nextArgs );
-								if( CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[sourceLibraryIndex], targetGameSlot ) )
-								{
-									return "Successfully imported the provided preset data to slot " + targetGameSlot.ToString() + ".";
-								}
-								else
-								{
-									return "Failed to import the provided preset to data slot " + targetGameSlot.ToString() + "!";
-								}
-							}
-							catch( Exception e )
-							{
-								//*****TODO: Log the error.*****
-								return "An unexpected error occured while trying to import the provided preset to data slot " + targetGameSlot.ToString() + "!";
-							}
-						}
-					}
-					else
-					{
-						return "Invalid game slot number specified.";
-					}
-				}
-				else
-				{
-					return "No source preset specified.  Use \"/pwaymark help writeslot\" for proper command format.";
-				}
-			}
-			else
-			{
-				return "No arguments provided.  Use \"/pwaymark help writeslot\" for proper command format.";
-			}
-		}
-		
-		public string ProcessTextCommand_LibraryInfo( string args )
-		{
-			//*****TODO: Print more detailed information about a single preset if an index is provided.*****
-			string str = "Waymark Libary Contents:";
-			int counter = 0;
-			foreach( WaymarkPreset preset in mConfiguration.PresetLibrary.Presets )
-			{
-				str += "\r\n" + counter.ToString().PadLeft( 3 ) + ": " + preset.Name;
-				++counter;
-			}
-			return str;
-		}
-
-		protected bool CopyPresetToGameSlot( WaymarkPreset preset, int slot )
-		{
-			if( slot >= 1 && slot <= 5 )
-			{
-				byte[] gamePresetData = preset.ConstructGamePreset();
-				if( gamePresetData.Length == 104 )
-				{
-					try
-					{
-						return mGameMemoryHandler.WriteSlot( slot, gamePresetData );
-					}
-					catch( Exception e )
-					{
-						//*****TODO: Log problem.*****
-						return false;
-					}
-				}
-				else
-				{
-					//*****TODO: Log problem.*****
-					return false;
-				}
-			}
-			else
-			{
-				//*****TODO: Log problem.*****
-				return false;
 			}
 		}
 

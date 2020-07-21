@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System.Diagnostics.Eventing.Reader;
 using Lumina.Excel.GeneratedSheets;
 using System.Linq;
+using Dalamud.Plugin;
 
 namespace WaymarkPresetPlugin
 {
@@ -141,46 +142,49 @@ namespace WaymarkPresetPlugin
 							mConfiguration.Save();
 						}
 					}
-					ImGui.SameLine();
-					ImGui.Text( " or slot " );
-					ImGui.SameLine();
-					if( ImGui.Button( "1" ) )
+					if( mGameMemoryHandler.FoundAllSigs() )
 					{
-						if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 1 ) ) >= 0 )
+						ImGui.SameLine();
+						ImGui.Text( " or slot " );
+						ImGui.SameLine();
+						if( ImGui.Button( "1" ) )
 						{
-							mConfiguration.Save();
+							if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 1 ) ) >= 0 )
+							{
+								mConfiguration.Save();
+							}
 						}
-					}
-					ImGui.SameLine();
-					if( ImGui.Button( "2" ) )
-					{
-						if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 2 ) ) >= 0 )
+						ImGui.SameLine();
+						if( ImGui.Button( "2" ) )
 						{
-							mConfiguration.Save();
+							if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 2 ) ) >= 0 )
+							{
+								mConfiguration.Save();
+							}
 						}
-					}
-					ImGui.SameLine();
-					if( ImGui.Button( "3" ) )
-					{
-						if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 3 ) ) >= 0 )
+						ImGui.SameLine();
+						if( ImGui.Button( "3" ) )
 						{
-							mConfiguration.Save();
+							if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 3 ) ) >= 0 )
+							{
+								mConfiguration.Save();
+							}
 						}
-					}
-					ImGui.SameLine();
-					if( ImGui.Button( "4" ) )
-					{
-						if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 4 ) ) >= 0 )
+						ImGui.SameLine();
+						if( ImGui.Button( "4" ) )
 						{
-							mConfiguration.Save();
+							if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 4 ) ) >= 0 )
+							{
+								mConfiguration.Save();
+							}
 						}
-					}
-					ImGui.SameLine();
-					if( ImGui.Button( "5" ) )
-					{
-						if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 5 ) ) >= 0 )
+						ImGui.SameLine();
+						if( ImGui.Button( "5" ) )
 						{
-							mConfiguration.Save();
+							if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 5 ) ) >= 0 )
+							{
+								mConfiguration.Save();
+							}
 						}
 					}
 					ImGui.EndGroup();
@@ -215,27 +219,27 @@ namespace WaymarkPresetPlugin
 					ImGui.BeginGroup();
 					if( ImGui.Button( "1" ) )
 					{
-						mGameMemoryHandler.WriteSlot( 1, mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
+						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[SelectedPreset], 1u );
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "2" ) )
 					{
-						mGameMemoryHandler.WriteSlot( 2, mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
+						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[SelectedPreset], 2u );
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "3" ) )
 					{
-						mGameMemoryHandler.WriteSlot( 3, mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
+						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[SelectedPreset], 3u );
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "4" ) )
 					{
-						mGameMemoryHandler.WriteSlot( 4, mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
+						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[SelectedPreset], 4u );
 					}
 					ImGui.SameLine();
 					if( ImGui.Button( "5" ) )
 					{
-						mGameMemoryHandler.WriteSlot( 5, mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
+						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[SelectedPreset], 5u );
 					}
 					ImGui.EndGroup();
 					ImGui.Text( "Preset Info:" );
@@ -420,7 +424,7 @@ namespace WaymarkPresetPlugin
 			ImGui.End();
 		}
 
-		protected void CopyPresetToGameSlot( WaymarkPreset preset, int slot )
+		protected void CopyPresetToGameSlot( WaymarkPreset preset, uint slot )
 		{
 			if( slot >= 1 && slot <= 5 )
 			{
@@ -433,6 +437,7 @@ namespace WaymarkPresetPlugin
 					}
 					catch( Exception e )
 					{
+						PluginLog.Log( $"Error while copying preset data to game slot: {e}" );
 					}
 				}
 			}
