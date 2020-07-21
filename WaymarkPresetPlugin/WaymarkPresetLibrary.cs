@@ -23,6 +23,7 @@ namespace WaymarkPresetPlugin
 			try
 			{
 				WaymarkPreset importedPreset = WaymarkPreset.Parse( rawData );
+				importedPreset.Name = "Imported";
 				Presets.Add( importedPreset );
 				return Presets.Count - 1;
 			}
