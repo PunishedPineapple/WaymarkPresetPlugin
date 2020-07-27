@@ -8,8 +8,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Xml.Serialization;
 using Newtonsoft.Json;
-using Lumina.Excel;
-using Lumina.Excel.GeneratedSheets;
 using System.Collections.Generic;
 using Newtonsoft.Json.Schema;
 
@@ -24,33 +22,8 @@ namespace WaymarkPresetPlugin
 			mPluginInterface = pluginInterface;
 			mConfiguration = mPluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 			mConfiguration.Initialize( mPluginInterface );
-			mGameMemoryHandler = new MemoryHandler( mPluginInterface );
-
-			//	Get the game sheets that we need to populate a zone dictionary.
-			ExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType> territorySheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>();
-			ExcelSheet<Lumina.Excel.GeneratedSheets.PlaceName> placeNameSheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.PlaceName>();
-			ExcelSheet<Lumina.Excel.GeneratedSheets.ContentFinderCondition> contentFinderSheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.ContentFinderCondition>();
-			
-			//	Get the name for every "MapID" that is an instance zone.
-			Dictionary<UInt16, Tuple<string, string>> zoneNames = new Dictionary<UInt16, Tuple<string, string>>();
-			foreach( TerritoryType zone in territorySheet.ToList() )
-			{
-				//*****TODO: unknown24 should be changed to unknown10 for new version of Dalamud.  Currently unknown10 in test version.*****
-				if( zone.ExclusiveType == 2 && !zoneNames.ContainsKey( zone.Unknown10 ) )
-				{
-					string dutyName = contentFinderSheet.GetRow( zone.Unknown10 ).Name.Trim();
-					if( dutyName.Length > 0 )
-					{
-						dutyName = dutyName.First().ToString().ToUpper() + dutyName.Substring( 1 );
-					}
-					zoneNames.Add( zone.Unknown10, Tuple.Create( dutyName, zone.PlaceName.Value.Name ) );
-				}
-			}
-			//	There are several zones with an "ID" of zero, but none of them allow waymarks to be saved, so change the name of that zone to reflect this.
-			if( zoneNames.ContainsKey( 0 ) )
-			{
-				zoneNames[0] = Tuple.Create( "Unknown Zone", "Unknown Zone" );
-			}
+			MemoryHandler.Init( mPluginInterface );
+			ZoneInfoHandler.Init( mPluginInterface );
 
 			//	Text Command Initialization
 			mPluginInterface.CommandManager.AddHandler( mTextCommandName, new CommandInfo( ProcessTextCommand )
@@ -59,12 +32,16 @@ namespace WaymarkPresetPlugin
 			} );
 
 			//	UI Initialization
-			mUI = new PluginUI( mConfiguration, zoneNames, mGameMemoryHandler );
+			mUI = new PluginUI( mConfiguration );
 			mPluginInterface.UiBuilder.OnBuildUi += DrawUI;
 			mPluginInterface.UiBuilder.OnOpenConfigUi += ( sender, args ) => DrawConfigUI();
+			mUI.SetCurrentTerritoryTypeID( mPluginInterface.ClientState.TerritoryType );
+
+			//	Event Subscription
+			mPluginInterface.ClientState.TerritoryChanged += OnTerritoryChanged;
 
 			//	Tell the user if there's something out of the ordinary.
-			if( !mGameMemoryHandler.FoundAllSigs() )
+			if( !MemoryHandler.FoundSavedPresetSigs() )
 			{
 				mPluginInterface.Framework.Gui.Chat.Print( "Error initializing WaymarkPresetPlugin: Cannot write to or read from game." );
 			}
@@ -154,13 +131,13 @@ namespace WaymarkPresetPlugin
 				gameSlotToCopy >= 1 &&
 				gameSlotToCopy <= 5 )
 			{
-				if( mGameMemoryHandler.FoundAllSigs() )
+				if( MemoryHandler.FoundSavedPresetSigs() )
 				{
 					byte[] gamePreset = new byte[104];
 
 					try
 					{
-						WaymarkPreset tempPreset = WaymarkPreset.Parse( mGameMemoryHandler.ReadSlot( gameSlotToCopy ) );
+						WaymarkPreset tempPreset = WaymarkPreset.Parse( MemoryHandler.ReadSlot( gameSlotToCopy ) );
 						return "Slot " + gameSlotToCopy.ToString() + " Contents:\r\n" + tempPreset.GetPresetDataString();
 					}
 					catch( Exception e )
@@ -190,12 +167,16 @@ namespace WaymarkPresetPlugin
 			mUI.SettingsWindowVisible = true;
 		}
 
+		protected void OnTerritoryChanged( object sender, UInt16 ID )
+		{
+			mUI.SetCurrentTerritoryTypeID( ID );
+		}
+
 		public string Name => "WaymarkPresetPlugin";
 		protected const string mTextCommandName = "/pwaymark";
 
 		protected DalamudPluginInterface mPluginInterface;
 		protected Configuration mConfiguration;
 		protected PluginUI mUI;
-		protected MemoryHandler mGameMemoryHandler;
 	}
 }

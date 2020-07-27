@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Windows;
 using System.Security.Policy;
 using Newtonsoft.Json;
 using System.Diagnostics.Eventing.Reader;
@@ -17,11 +16,9 @@ namespace WaymarkPresetPlugin
 	public class PluginUI : IDisposable
 	{
 		//	Construction
-		public PluginUI( Configuration configuration, Dictionary<UInt16, Tuple<string, string>> zoneNames, MemoryHandler gameMemoryHandler )
+		public PluginUI( Configuration configuration )
 		{
 			mConfiguration = configuration;
-			ZoneNames = zoneNames;
-			mGameMemoryHandler = gameMemoryHandler;
 		}
 
 		//	Destruction
@@ -51,30 +48,66 @@ namespace WaymarkPresetPlugin
 			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
 				//	Populate the preset list
-				ImGui.BeginGroup();
-				if( mConfiguration.mSortPresetsByZone )
+				if( mConfiguration.ShowFilterOnCurrentZoneCheckbox )
 				{
-					var dict = mConfiguration.PresetLibrary.GetSortedIndices();
-					if( dict.Count > 0 )
+					ImGui.Checkbox( "Filter on Current Zone", ref mFilterOnCurrentZone );
+				}
+				ImGui.BeginGroup();
+				if( mConfiguration.PresetLibrary.Presets.Count > 0 )
+				{
+					if( mConfiguration.mSortPresetsByZone )
 					{
-						foreach( KeyValuePair<UInt16, List<int>> zone in dict )
+						var dict = mConfiguration.PresetLibrary.GetSortedIndices();
+						foreach( var zone in dict )
 						{
-							if( ImGui.CollapsingHeader( ZoneNames.ContainsKey( zone.Key ) ? mConfiguration.mShowDutyNames ? ZoneNames[zone.Key].Item1.ToString() : ZoneNames[zone.Key].Item2.ToString() : "Unknown Zone" ) )
+							if( !FilterOnCurrentZone || zone.Key == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) )
 							{
-								foreach( int index in zone.Value )
+								if( ImGui.CollapsingHeader( mConfiguration.mShowDutyNames ? ZoneInfoHandler.GetZoneInfoFromContentFinderID( zone.Key ).DutyName.ToString() : ZoneInfoHandler.GetZoneInfoFromContentFinderID( zone.Key ).ZoneName.ToString() ) )
 								{
-									if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[index].Name}###_{index.ToString()}", index == SelectedPreset ) )
+									foreach( int index in zone.Value )
+									{
+										if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[index].Name}###_{index.ToString()}", index == SelectedPreset ) )
+										{
+											//	It's probably a bad idea to allow the selection to change when a preset's being edited.
+											if( EditingPresetIndex == -1 )
+											{
+												if( mConfiguration.AllowUnselectPreset && index == SelectedPreset )
+												{
+													SelectedPreset = -1;
+												}
+												else
+												{
+													SelectedPreset = index;
+												}
+
+												WantToDeleteSelectedPreset = false;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					else
+					{
+						if( ImGui.CollapsingHeader( "Presets" ) )
+						{
+							for( int i = 0; i < mConfiguration.PresetLibrary.Presets.Count; ++i )
+							{
+								if( !FilterOnCurrentZone || mConfiguration.PresetLibrary.Presets[i].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) )
+								{
+									if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}###_{i.ToString()}", i == SelectedPreset ) )
 									{
 										//	It's probably a bad idea to allow the selection to change when a preset's being edited.
 										if( EditingPresetIndex == -1 )
 										{
-											if( mConfiguration.AllowUnselectPreset && index == SelectedPreset )
+											if( mConfiguration.AllowUnselectPreset && i == SelectedPreset )
 											{
 												SelectedPreset = -1;
 											}
 											else
 											{
-												SelectedPreset = index;
+												SelectedPreset = i;
 											}
 
 											WantToDeleteSelectedPreset = false;
@@ -84,43 +117,10 @@ namespace WaymarkPresetPlugin
 							}
 						}
 					}
-					else
-					{
-						ImGui.Text( "Preset library empty!" );
-					}
 				}
 				else
 				{
-					if( mConfiguration.PresetLibrary.Presets.Count > 0 )
-					{
-						if( ImGui.CollapsingHeader( "Presets" ) )
-						{
-							for( int i = 0; i < mConfiguration.PresetLibrary.Presets.Count; ++i )
-							{
-								if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}###_{i.ToString()}", i == SelectedPreset ) )
-								{
-									//	It's probably a bad idea to allow the selection to change when a preset's being edited.
-									if( EditingPresetIndex == -1 )
-									{
-										if( mConfiguration.AllowUnselectPreset && i == SelectedPreset )
-										{
-											SelectedPreset = -1;
-										}
-										else
-										{
-											SelectedPreset = i;
-										}
-
-										WantToDeleteSelectedPreset = false;
-									}
-								}
-							}
-						}
-					}
-					else
-					{
-						ImGui.Text( "Preset library empty!" );
-					}
+					ImGui.Text( "Preset library empty!" );
 				}
 				ImGui.EndGroup();
 
@@ -132,9 +132,13 @@ namespace WaymarkPresetPlugin
 				ImGui.Spacing();
 				if( ImGui.CollapsingHeader( "Import Options" ) )
 				{
-					ImGui.BeginGroup();	//Buttons don't seem to work under a header without being in a group.
-					ImGui.InputText( "", ref mPresetImportString, 1024 );   //Most exports max out around 500 characters with all waymarks, so this leaves heaps of room for a long name.
-					if( ImGui.Button( "Import JSON" ) )
+					ImGui.BeginGroup(); //Buttons don't seem to work under a header without being in a group.
+					ImGui.Text( "Preset:" );
+					ImGui.SameLine();
+					ImGui.InputText( "##JSONImportTextBox", ref mPresetImportString, 1024 );   //Most exports max out around 500 characters with all waymarks, so this leaves heaps of room for a long name.
+					//ImGui.InputTextWithHint( "##JSONImportTextBox", "Paste Formatted Preset Here", mPresetImportString, 1024 );	//	InputTextWithHint seems to be unusable in the C# bindings due to buf not being a ref.
+					ImGui.SameLine();
+					if( ImGui.Button( "Import" ) )
 					{
 						if( mConfiguration.PresetLibrary.ImportPreset( PresetImportString ) >= 0 )
 						{
@@ -142,14 +146,14 @@ namespace WaymarkPresetPlugin
 							mConfiguration.Save();
 						}
 					}
-					if( mGameMemoryHandler.FoundAllSigs() )
+					if( MemoryHandler.FoundSavedPresetSigs() )
 					{
-						ImGui.SameLine();
-						ImGui.Text( " or slot " );
+						//ImGui.SameLine();
+						ImGui.Text( "Or import slot: " );
 						ImGui.SameLine();
 						if( ImGui.Button( "1" ) )
 						{
-							if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 1 ) ) >= 0 )
+							if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 1 ) ) >= 0 )
 							{
 								mConfiguration.Save();
 							}
@@ -157,7 +161,7 @@ namespace WaymarkPresetPlugin
 						ImGui.SameLine();
 						if( ImGui.Button( "2" ) )
 						{
-							if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 2 ) ) >= 0 )
+							if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 2 ) ) >= 0 )
 							{
 								mConfiguration.Save();
 							}
@@ -165,7 +169,7 @@ namespace WaymarkPresetPlugin
 						ImGui.SameLine();
 						if( ImGui.Button( "3" ) )
 						{
-							if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 3 ) ) >= 0 )
+							if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 3 ) ) >= 0 )
 							{
 								mConfiguration.Save();
 							}
@@ -173,7 +177,7 @@ namespace WaymarkPresetPlugin
 						ImGui.SameLine();
 						if( ImGui.Button( "4" ) )
 						{
-							if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 4 ) ) >= 0 )
+							if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 4 ) ) >= 0 )
 							{
 								mConfiguration.Save();
 							}
@@ -181,7 +185,7 @@ namespace WaymarkPresetPlugin
 						ImGui.SameLine();
 						if( ImGui.Button( "5" ) )
 						{
-							if( mConfiguration.PresetLibrary.ImportPreset( mGameMemoryHandler.ReadSlot( 5 ) ) >= 0 )
+							if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 5 ) ) >= 0 )
 							{
 								mConfiguration.Save();
 							}
@@ -253,7 +257,16 @@ namespace WaymarkPresetPlugin
 					{
 						if( SelectedPreset >= 0 && SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
 						{
-							Clipboard.SetText( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
+							//	ImGui seems to be unable to have more than 256 characters on a line to the clipboard.
+							//ImGui.LogToClipboard();
+							//ImGui.LogText( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
+							//ImGui.LogText( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
+							//ImGui.LogText( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
+							//ImGui.LogFinish();
+							//	Having a dependency on WPF/WinForms seems to mess up the game window for some people that have non-default DPI scaling.
+							//Clipboard.SetText( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
+							//	So I guess we have to use our own clipboard implementation built around the Windows APIs.
+							Win32Clipboard.CopyTextToClipboard( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
 						}
 					}
 					ImGui.SameLine();
@@ -347,11 +360,12 @@ namespace WaymarkPresetPlugin
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Text( "Zone: " );
-					if( ImGui.BeginCombo( "###MapID", ZoneNames.ContainsKey( ScratchEditingPreset.MapID ) ? mConfiguration.mShowDutyNames ? ZoneNames[ScratchEditingPreset.MapID].Item1.ToString() : ZoneNames[ScratchEditingPreset.MapID].Item2.ToString() : "Unknown Zone" ) )
+					if( ImGui.BeginCombo( "##MapID", mConfiguration.mShowDutyNames ? ZoneInfoHandler.GetZoneInfoFromContentFinderID( ScratchEditingPreset.MapID ).DutyName.ToString() : ZoneInfoHandler.GetZoneInfoFromContentFinderID( ScratchEditingPreset.MapID ).ZoneName.ToString() ) )
 					{
-						foreach( var zone in ZoneNames )
+						var zoneInfo = ZoneInfoHandler.GetAllZoneInfo();
+						foreach( var zone in zoneInfo )
 						{
-							if( zone.Key != 0 && ImGui.Selectable( mConfiguration.mShowDutyNames ? ZoneNames[zone.Key].Item1.ToString() : ZoneNames[zone.Key].Item2.ToString(), zone.Key == ScratchEditingPreset.MapID ) )
+							if( zone.Key != 0 && ImGui.Selectable( mConfiguration.mShowDutyNames ? zone.Value.DutyName.ToString() : zone.Value.ZoneName.ToString(), zone.Key == ScratchEditingPreset.MapID ) )
 							{
 								ScratchEditingPreset.MapID = zone.Key;
 							}
@@ -406,7 +420,7 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 300, 180 ) );
+			ImGui.SetNextWindowSize( new Vector2( 300, 210 ) );
 			if( ImGui.Begin( "Waymark Settings", ref mSettingsWindowVisible,
 				ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
@@ -414,6 +428,8 @@ namespace WaymarkPresetPlugin
 				ImGui.Checkbox( "Clicking the selected preset unselects it.", ref mConfiguration.mAllowUnselectPreset );
 				ImGui.Checkbox( "Categorize presets by zone.", ref mConfiguration.mSortPresetsByZone );
 				ImGui.Checkbox( "Show duty names instead of zone names.", ref mConfiguration.mShowDutyNames );
+				ImGui.Checkbox( "Show \"Filter on Current Zone\" checkbox.", ref mConfiguration.mShowFilterOnCurrentZoneCheckbox );
+				if( !mConfiguration.ShowFilterOnCurrentZoneCheckbox ) FilterOnCurrentZone = false;
 				ImGui.Spacing();
 				if( ImGui.Button( "Save and Close" ) )
 				{
@@ -433,7 +449,7 @@ namespace WaymarkPresetPlugin
 				{
 					try
 					{
-						mGameMemoryHandler.WriteSlot( slot, gamePresetData );
+						MemoryHandler.WriteSlot( slot, gamePresetData );
 					}
 					catch( Exception e )
 					{
@@ -443,8 +459,12 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
+		public void SetCurrentTerritoryTypeID( UInt16 ID )
+		{
+			CurrentTerritoryTypeID = ID;
+		}
+
 		protected Configuration mConfiguration;
-		protected MemoryHandler mGameMemoryHandler;
 
 		//	Need a real backing field on the following properties for use with ImGui.
 		protected bool mMainWindowVisible = false;
@@ -468,6 +488,13 @@ namespace WaymarkPresetPlugin
 			set { mPresetImportString = value; }
 		}
 
+		protected bool mFilterOnCurrentZone = false;
+		public bool FilterOnCurrentZone
+		{
+			get { return mFilterOnCurrentZone; }
+			set { mFilterOnCurrentZone = value; }
+		}
+
 		public Vector2 MainWindowPos { get; protected set; }
 		public Vector2 MainWindowSize { get; protected set; }
 
@@ -475,7 +502,7 @@ namespace WaymarkPresetPlugin
 		public bool WantToDeleteSelectedPreset { get; protected set; } = false;
 		public int EditingPresetIndex { get; protected set; } = -1;
 		protected  ScratchPreset ScratchEditingPreset { get; set; }
-		public Dictionary<UInt16, Tuple<string, string>> ZoneNames { get; protected set; }
+		protected UInt16 CurrentTerritoryTypeID { get; set; }
 	}
 
 	//	We need this because we can't pass the properties from the regular Waymark class as refs to ImGui stuff.  It's an absolute dog's breakfast, but whatever at this point honestly.

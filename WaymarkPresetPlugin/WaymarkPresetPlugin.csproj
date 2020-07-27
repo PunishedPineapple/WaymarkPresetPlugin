@@ -52,7 +52,6 @@
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
@@ -66,12 +65,14 @@
   <ItemGroup>
     <Compile Include="Configuration.cs" />
     <Compile Include="MemoryHandler.cs" />
+    <Compile Include="Win32Clipboard.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="PluginUI.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Waymark.cs" />
     <Compile Include="WaymarkPreset.cs" />
     <Compile Include="WaymarkPresetLibrary.cs" />
+    <Compile Include="ZoneInfoHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="ToDo.txt" />

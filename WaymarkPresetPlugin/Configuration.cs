@@ -39,6 +39,13 @@ namespace WaymarkPresetPlugin
 			set { mAllowUnselectPreset = value; }
 		}
 
+		public bool mShowFilterOnCurrentZoneCheckbox = true;
+		public bool ShowFilterOnCurrentZoneCheckbox
+		{
+			get { return mShowFilterOnCurrentZoneCheckbox; }
+			set { mShowFilterOnCurrentZoneCheckbox = value; }
+		}
+
 		//  Plugin framework and related convenience functions below.
 		public void Initialize( DalamudPluginInterface pluginInterface )
 		{
