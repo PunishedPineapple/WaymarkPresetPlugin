@@ -4,7 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace WaymarkPresetPlugin
 {
-	//	This is just enough of an implementation to do what we need.  The C# options require loading in WinForms or WPF dependencies, and that seems to cause problems sometimes.
+	//	The C# clipboard options require loading in WinForms or WPF dependencies, and that brings along unwanted baggage (i.e., suddenly you have to worry about DPI scaling issues).
+	//	The ImGui log to clipboard functionality seems to be hard-capped at 256 characters, and if it encounters an unintentional C string formatting sequence, that causes issues too.
+	//	So we probably have to interact with the OS clipboard ourselves.  This is just enough of an implementation to do what we need.
 	public static class Win32Clipboard
 	{
 		public static void CopyTextToClipboard( string str )
@@ -18,25 +20,23 @@ namespace WaymarkPresetPlugin
 
 					//	Allocate the moveable memory required by the clipboard, and copy the data to the clipboard if everything went ok.
 					bool copiedToClipboardSuccessfully = false;
-					IntPtr hNewMem = GlobalAlloc( GMEM_MOVEABLE, new UIntPtr( (uint)bytes.Length ) );
+					IntPtr hNewMem = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, new UIntPtr( (uint)bytes.Length ) );
 					if( hNewMem != IntPtr.Zero )
 					{
-						IntPtr pNewMem = GlobalLock( hNewMem );
-						if( pNewMem != IntPtr.Zero )
+						IntPtr pLockedMem = GlobalLock( hNewMem );
+						if( pLockedMem != IntPtr.Zero )
 						{
-							//	Ensure that we unlock no matter what happens.
+							//	Catch any exceptions when copying the data to the allocated memory so that we have an opportunity to unlock and free the memory.  If something this simple fails, we can't really correct it anyway, and should just clean up.
 							try
 							{
-								Marshal.Copy( bytes, 0, pNewMem, bytes.Length );
+								Marshal.Copy( bytes, 0, pLockedMem, bytes.Length );
+								copiedToClipboardSuccessfully = SetClipboardData( CF_UNICODETEXT, hNewMem ) != IntPtr.Zero;
 							}
 							catch
 							{
 							}
-							finally
-							{
-								GlobalUnlock( hNewMem );
-							}
-							copiedToClipboardSuccessfully = SetClipboardData( CF_UNICODETEXT, hNewMem ) != IntPtr.Zero;
+
+							GlobalUnlock( hNewMem );
 						}
 						//	If the clipboard data was accepted, we are no longer responsible for the allocated memory, so only free it if something went wrong.
 						if( !copiedToClipboardSuccessfully )
