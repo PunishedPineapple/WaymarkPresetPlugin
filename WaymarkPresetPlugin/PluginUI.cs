@@ -66,7 +66,7 @@ namespace WaymarkPresetPlugin
 								{
 									foreach( int index in zone.Value )
 									{
-										if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[index].Name}###_{index.ToString()}", index == SelectedPreset ) )
+										if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[index].Name}##_{index.ToString()}", index == SelectedPreset ) )
 										{
 											//	It's probably a bad idea to allow the selection to change when a preset's being edited.
 											if( EditingPresetIndex == -1 )
@@ -96,7 +96,7 @@ namespace WaymarkPresetPlugin
 							{
 								if( !FilterOnCurrentZone || mConfiguration.PresetLibrary.Presets[i].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) )
 								{
-									if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}###_{i.ToString()}", i == SelectedPreset ) )
+									if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}##_{i.ToString()}", i == SelectedPreset ) )
 									{
 										//	It's probably a bad idea to allow the selection to change when a preset's being edited.
 										if( EditingPresetIndex == -1 )
@@ -326,7 +326,7 @@ namespace WaymarkPresetPlugin
 				{
 					ImGui.Text( "Name: " );
 					ImGui.SameLine();
-					ImGui.InputText( "###PresetName", ref ScratchEditingPreset.Name, 128 );
+					ImGui.InputText( "##PresetName", ref ScratchEditingPreset.Name, 128 );
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
@@ -341,19 +341,19 @@ namespace WaymarkPresetPlugin
 					ImGui.Text( "X" );
 					foreach( var waymark in ScratchEditingPreset.Waymarks )
 					{
-						ImGui.InputFloat( $"###{waymark.Label}-X", ref waymark.X );
+						ImGui.InputFloat( $"##{waymark.Label}-X", ref waymark.X );
 					}
 					ImGui.NextColumn();
 					ImGui.Text( "Y" );
 					foreach( var waymark in ScratchEditingPreset.Waymarks )
 					{
-						ImGui.InputFloat( $"###{waymark.Label}-Y", ref waymark.Y );
+						ImGui.InputFloat( $"##{waymark.Label}-Y", ref waymark.Y );
 					}
 					ImGui.NextColumn();
 					ImGui.Text( "Z" );
 					foreach( var waymark in ScratchEditingPreset.Waymarks )
 					{
-						ImGui.InputFloat( $"###{waymark.Label}-Z", ref waymark.Z );
+						ImGui.InputFloat( $"##{waymark.Label}-Z", ref waymark.Z );
 					}
 					ImGui.Columns( 1 );
 					ImGui.Spacing();
