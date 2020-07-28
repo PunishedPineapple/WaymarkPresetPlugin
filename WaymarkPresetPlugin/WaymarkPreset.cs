@@ -164,8 +164,23 @@ namespace WaymarkPresetPlugin
 			return byteData.ToArray();
 		}
 
-		public string GetPresetDataString()
+		public string GetPresetDataString( GetZoneNameDelegate dGetZoneName = null, bool showIDToo = false )
 		{
+			//	Try to get the zone name from the function passed to us if we can.
+			string zoneName = "";
+			if( dGetZoneName != null )
+			{
+				try
+				{
+					zoneName = dGetZoneName( MapID, showIDToo );
+				}
+				catch
+				{
+					zoneName = "Error retrieving zone name!";
+				}
+			}
+
+			//	Construct the string.
 			string str = "";
 			str += "A: " + A.GetWaymarkDataString() + "\r\n";
 			str += "B: " + B.GetWaymarkDataString() + "\r\n";
@@ -175,10 +190,12 @@ namespace WaymarkPresetPlugin
 			str += "2: " + Two.GetWaymarkDataString() + "\r\n";
 			str += "3: " + Three.GetWaymarkDataString() + "\r\n";
 			str += "4: " + Four.GetWaymarkDataString() + "\r\n";
-			str += "MapID: " + MapID.ToString() + "\r\n";
+			str += "Zone: " + zoneName + "\r\n";
 			str += "Last Modified: " + Time.LocalDateTime.ToString();
 			return str;
 		}
+
+		public delegate string GetZoneNameDelegate( UInt16 zoneID, bool showID );
 
 		//	This looks gross, but it's easier to be compatible with PP presets if we have each waymark be a named member instead of in a collection :(
 		public string Name { get; set; } = "Unknown";

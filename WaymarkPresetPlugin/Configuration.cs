@@ -1,5 +1,6 @@
 ﻿using Dalamud.Configuration;
 using Dalamud.Plugin;
+using Newtonsoft.Json;
 using System;
 
 namespace WaymarkPresetPlugin
@@ -7,6 +8,11 @@ namespace WaymarkPresetPlugin
 	[Serializable]
 	public class Configuration : IPluginConfiguration
 	{
+		public Configuration()
+		{
+			GetZoneNameDelegate = new WaymarkPreset.GetZoneNameDelegate( GetZoneNameHelperFunc );
+		}
+
 		//  Our own configuration options and data.
 		public WaymarkPresetLibrary PresetLibrary { get; set; } = new WaymarkPresetLibrary();
 
@@ -44,6 +50,28 @@ namespace WaymarkPresetPlugin
 		{
 			get { return mShowFilterOnCurrentZoneCheckbox; }
 			set { mShowFilterOnCurrentZoneCheckbox = value; }
+		}
+
+		public bool mShowIDNumberNextToZoneNames = false;
+		public bool ShowIDNumberNextToZoneNames
+		{
+			get { return mShowIDNumberNextToZoneNames; }
+			set { mShowIDNumberNextToZoneNames = value; }
+		}
+
+		public string GetZoneName( UInt16 ID )
+		{
+			return GetZoneNameDelegate( ID, ShowIDNumberNextToZoneNames );
+		}
+
+		[JsonIgnore]
+		public WaymarkPreset.GetZoneNameDelegate GetZoneNameDelegate { get; protected set; }
+
+		protected string GetZoneNameHelperFunc( UInt16 ID, bool showID )
+		{
+			string str = ShowDutyNames ? ZoneInfoHandler.GetZoneInfoFromContentFinderID( ID ).DutyName : ZoneInfoHandler.GetZoneInfoFromContentFinderID( ID ).ZoneName;
+			str += showID ? $" ({ID})" : "";
+			return str;
 		}
 
 		//  Plugin framework and related convenience functions below.

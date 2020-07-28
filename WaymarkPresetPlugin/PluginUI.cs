@@ -149,7 +149,7 @@ namespace WaymarkPresetPlugin
 					if( MemoryHandler.FoundSavedPresetSigs() )
 					{
 						//ImGui.SameLine();
-						ImGui.Text( "Or import slot: " );
+						ImGui.Text( "Or import from game: " );
 						ImGui.SameLine();
 						if( ImGui.Button( "1" ) )
 						{
@@ -247,7 +247,7 @@ namespace WaymarkPresetPlugin
 					}
 					ImGui.EndGroup();
 					ImGui.Text( "Preset Info:" );
-					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString() );
+					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames ) );
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
@@ -360,12 +360,12 @@ namespace WaymarkPresetPlugin
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Text( "Zone: " );
-					if( ImGui.BeginCombo( "##MapID", mConfiguration.mShowDutyNames ? ZoneInfoHandler.GetZoneInfoFromContentFinderID( ScratchEditingPreset.MapID ).DutyName.ToString() : ZoneInfoHandler.GetZoneInfoFromContentFinderID( ScratchEditingPreset.MapID ).ZoneName.ToString() ) )
+					if( ImGui.BeginCombo( "##MapID", mConfiguration.GetZoneName( ScratchEditingPreset.MapID ) ) )
 					{
 						var zoneInfo = ZoneInfoHandler.GetAllZoneInfo();
 						foreach( var zone in zoneInfo )
 						{
-							if( zone.Key != 0 && ImGui.Selectable( mConfiguration.mShowDutyNames ? zone.Value.DutyName.ToString() : zone.Value.ZoneName.ToString(), zone.Key == ScratchEditingPreset.MapID ) )
+							if( zone.Key != 0 && ImGui.Selectable( mConfiguration.GetZoneName( zone.Key ), zone.Key == ScratchEditingPreset.MapID ) )
 							{
 								ScratchEditingPreset.MapID = zone.Key;
 							}
@@ -420,7 +420,7 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 300, 210 ) );
+			ImGui.SetNextWindowSize( new Vector2( 300, 240 ) );
 			if( ImGui.Begin( "Waymark Settings", ref mSettingsWindowVisible,
 				ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
@@ -429,6 +429,7 @@ namespace WaymarkPresetPlugin
 				ImGui.Checkbox( "Categorize presets by zone.", ref mConfiguration.mSortPresetsByZone );
 				ImGui.Checkbox( "Show duty names instead of zone names.", ref mConfiguration.mShowDutyNames );
 				ImGui.Checkbox( "Show \"Filter on Current Zone\" checkbox.", ref mConfiguration.mShowFilterOnCurrentZoneCheckbox );
+				ImGui.Checkbox( "Show ID numbers next to zone names.", ref mConfiguration.mShowIDNumberNextToZoneNames );
 				if( !mConfiguration.ShowFilterOnCurrentZoneCheckbox ) FilterOnCurrentZone = false;
 				ImGui.Spacing();
 				if( ImGui.Button( "Save and Close" ) )

@@ -23,7 +23,7 @@ namespace WaymarkPresetPlugin
 			mTerritoryTypeIDToContentFinderIDDict.Clear();
 
 			//	Populate the zero entries ahead of time since there may be a many to one relationship with some zero IDs.
-			mZoneInfoDict[0] = new ZoneInfo( "Unknown Duty", "Unknown Zone", 0, 0, 0 );
+			mZoneInfoDict[0] = ZoneInfo.Unknown;
 			mTerritoryTypeIDToContentFinderIDDict[0] = 0;
 
 			//	Get the name for every "MapID" that is an instance zone.  This is spread out over a few different sheets.  The ID number that gets used in the actual preset is the column 10 in
@@ -113,6 +113,8 @@ namespace WaymarkPresetPlugin
 			ContentFinderConditionID = contentFinderConditionID;
 			ContentLinkID = contentLinkID;
 		}
+
+		public static readonly ZoneInfo Unknown = new ZoneInfo( "Unknown Duty", "Unknown Zone", 0, 0, 0 );
 
 		public string ZoneName { get; set; }
 		public string DutyName { get; set; }
