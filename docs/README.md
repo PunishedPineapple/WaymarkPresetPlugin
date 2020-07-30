@@ -22,7 +22,7 @@ One more thing to note about this feature: it performs most of the checks that t
 
 I am sorry that this will not work outside of instances, but there appear to be additional checks further down the chain that prevent this.  If someone else wants to figure it out, go ahead, but I don't personally want to spend the time going deeper into figuring it all out.
 
-** IMPORTANT
+## IMPORTANT
 As is the case with all third-party programs and tools, this plugin *does not* operate through an official API; it digs into the game and operates on the best information available inferred from game behavior and structure.  Something could always go wrong, SE could find out and punish you, something unintended and bad could happen, etc.  Use of this plugin is very much at your own risk.  There are no guarantees, express or implied.  I've made my best effort to keep it as safe as I can, and that's it.
 
 ## License
