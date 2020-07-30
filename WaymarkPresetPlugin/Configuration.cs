@@ -59,6 +59,20 @@ namespace WaymarkPresetPlugin
 			set { mShowIDNumberNextToZoneNames = value; }
 		}
 
+		public bool mShowLibraryIndexInPresetList = false;
+		public bool ShowLibraryIndexInPresetInfo
+		{
+			get { return mShowLibraryIndexInPresetList; }
+			set { mShowLibraryIndexInPresetList = value; }
+		}
+
+		public bool mAllowDirectPlacePreset = false;
+		public bool AllowDirectPlacePreset
+		{
+			get { return mAllowDirectPlacePreset; }
+			set { mAllowDirectPlacePreset = value; }
+		}
+
 		public string GetZoneName( UInt16 ID )
 		{
 			return GetZoneNameDelegate( ID, ShowIDNumberNextToZoneNames );

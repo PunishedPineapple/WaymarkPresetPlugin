@@ -200,7 +200,7 @@ namespace WaymarkPresetPlugin
 		//	This looks gross, but it's easier to be compatible with PP presets if we have each waymark be a named member instead of in a collection :(
 		public string Name { get; set; } = "Unknown";
 		[JsonConverter( typeof( MapIDJsonConverter ) )] public UInt16 MapID { get; set; } = 0;	//PP sometimes gives bogus MapIDs that are outside the UInt16, so use a converter to handle those.
-		[JsonIgnore] public DateTimeOffset Time { get; set; } = new DateTimeOffset( DateTimeOffset.Now.UtcDateTime );	//There's no really compelling reason to import/export the timestamp.
+		public DateTimeOffset Time { get; set; } = new DateTimeOffset( DateTimeOffset.Now.UtcDateTime );
 		public Waymark A { get; set; } = new Waymark();
 		public Waymark B { get; set; } = new Waymark();
 		public Waymark C { get; set; } = new Waymark();
@@ -209,6 +209,11 @@ namespace WaymarkPresetPlugin
 		public Waymark Two { get; set; } = new Waymark();
 		public Waymark Three { get; set; } = new Waymark();
 		public Waymark Four { get; set; } = new Waymark();
+
+		public virtual bool ShouldSerializeTime()	//More JSON bullshit because it has to be polymorphic for the serializer to check it in a derived class apparently.
+		{
+			return true;
+		}
 	}
 
 	//	We may be getting the MapID as something that won't fit in UInt16, so this class helps us handle that.

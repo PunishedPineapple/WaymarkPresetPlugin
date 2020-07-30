@@ -66,7 +66,7 @@ namespace WaymarkPresetPlugin
 								{
 									foreach( int index in zone.Value )
 									{
-										if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[index].Name}##_{index.ToString()}", index == SelectedPreset ) )
+										if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[index].Name}{(mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + index.ToString() + ")" : "")}###_Preset_{index}", index == SelectedPreset ) )
 										{
 											//	It's probably a bad idea to allow the selection to change when a preset's being edited.
 											if( EditingPresetIndex == -1 )
@@ -96,7 +96,7 @@ namespace WaymarkPresetPlugin
 							{
 								if( !FilterOnCurrentZone || mConfiguration.PresetLibrary.Presets[i].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) )
 								{
-									if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}##_{i.ToString()}", i == SelectedPreset ) )
+									if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}###_Preset_{i}", i == SelectedPreset ) )
 									{
 										//	It's probably a bad idea to allow the selection to change when a preset's being edited.
 										if( EditingPresetIndex == -1 )
@@ -213,7 +213,7 @@ namespace WaymarkPresetPlugin
 			ImGui.SetNextWindowSize( new Vector2( 375, 330 ) );
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 250, 330 ), new Vector2( 250, MainWindowSize.Y ) );
 			ImGui.SetNextWindowPos( new Vector2( MainWindowPos.X + MainWindowSize.X, MainWindowPos.Y ) );
-			if( ImGui.Begin( "Preset Info", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize /*| ImGuiWindowFlags.NoTitleBar*/ ) )
+			if( ImGui.Begin( "Preset Info", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize ) )
 			{
 				if( SelectedPreset >= 0 && SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
 				{
@@ -245,6 +245,15 @@ namespace WaymarkPresetPlugin
 					{
 						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[SelectedPreset], 5u );
 					}
+					if( mConfiguration.AllowDirectPlacePreset && MemoryHandler.IsSafeToDirectPlacePreset() )
+					{
+						ImGui.SameLine();
+						if( ImGui.Button( "Place" ) )
+						{
+							MemoryHandler.DirectPlacePreset( mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
+						}
+					}
+
 					ImGui.EndGroup();
 					ImGui.Text( "Preset Info:" );
 					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames ) );
@@ -257,16 +266,7 @@ namespace WaymarkPresetPlugin
 					{
 						if( SelectedPreset >= 0 && SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
 						{
-							//	ImGui seems to be unable to have more than 256 characters on a line to the clipboard.
-							//ImGui.LogToClipboard();
-							//ImGui.LogText( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
-							//ImGui.LogText( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
-							//ImGui.LogText( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
-							//ImGui.LogFinish();
-							//	Having a dependency on WPF/WinForms seems to mess up the game window for some people that have non-default DPI scaling.
-							//Clipboard.SetText( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
-							//	So I guess we have to use our own clipboard implementation built around the Windows APIs.
-							Win32Clipboard.CopyTextToClipboard( JsonConvert.SerializeObject( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
+							Win32Clipboard.CopyTextToClipboard( WaymarkPresetExport.GetExportString( mConfiguration.PresetLibrary.Presets[SelectedPreset] ) );
 						}
 					}
 					ImGui.SameLine();
@@ -420,7 +420,7 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 300, 240 ) );
+			ImGui.SetNextWindowSize( new Vector2( 350, 310 ) );
 			if( ImGui.Begin( "Waymark Settings", ref mSettingsWindowVisible,
 				ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
@@ -430,6 +430,9 @@ namespace WaymarkPresetPlugin
 				ImGui.Checkbox( "Show duty names instead of zone names.", ref mConfiguration.mShowDutyNames );
 				ImGui.Checkbox( "Show \"Filter on Current Zone\" checkbox.", ref mConfiguration.mShowFilterOnCurrentZoneCheckbox );
 				ImGui.Checkbox( "Show ID numbers next to zone names.", ref mConfiguration.mShowIDNumberNextToZoneNames );
+				ImGui.Checkbox( "Show the index of the preset within the library.", ref mConfiguration.mShowLibraryIndexInPresetList );
+				ImGui.Checkbox( "Allow placement of presets directly from the library*.", ref mConfiguration.mAllowDirectPlacePreset );
+				ImGui.Text( "*Please read the plugin site's readme before enabling this." );
 				if( !mConfiguration.ShowFilterOnCurrentZoneCheckbox ) FilterOnCurrentZone = false;
 				ImGui.Spacing();
 				if( ImGui.Button( "Save and Close" ) )
@@ -443,7 +446,7 @@ namespace WaymarkPresetPlugin
 
 		protected void CopyPresetToGameSlot( WaymarkPreset preset, uint slot )
 		{
-			if( slot >= 1 && slot <= 5 )
+			if( ZoneInfoHandler.IsKnownContentFinderID( preset.MapID ) && slot >= 1 && slot <= 5 )
 			{
 				byte[] gamePresetData = preset.ConstructGamePreset();
 				if( gamePresetData.Length == 104 )

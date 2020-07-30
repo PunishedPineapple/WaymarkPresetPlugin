@@ -56,6 +56,11 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
+		public static bool IsKnownContentFinderID( UInt16 ID )
+		{
+			return ID != 0 && mZoneInfoDict.ContainsKey( ID );
+		}
+
 		public static ZoneInfo GetZoneInfoFromContentFinderID( UInt16 ID )
 		{
 			if( mZoneInfoDict.ContainsKey( ID ) )

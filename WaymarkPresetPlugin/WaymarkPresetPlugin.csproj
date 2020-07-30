@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,6 +30,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Dalamud">
@@ -65,6 +67,7 @@
   <ItemGroup>
     <Compile Include="Configuration.cs" />
     <Compile Include="MemoryHandler.cs" />
+    <Compile Include="WaymarkPresetExport.cs" />
     <Compile Include="Win32Clipboard.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="PluginUI.cs" />

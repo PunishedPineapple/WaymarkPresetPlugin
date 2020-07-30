@@ -50,6 +50,7 @@ namespace WaymarkPresetPlugin
 		//	Cleanup
 		public void Dispose()
 		{
+			MemoryHandler.Uninit();
 			mUI.Dispose();
 			mPluginInterface.CommandManager.RemoveHandler( mTextCommandName );
 			mPluginInterface.Dispose();
@@ -91,6 +92,10 @@ namespace WaymarkPresetPlugin
 			{
 				commandResponse = ProcessTextCommand_SlotInfo( subCommandArgs );
 			}
+			else if( subCommand.ToLower() == "place" )
+			{
+				commandResponse = ProcessTextCommand_Place( subCommandArgs );
+			}
 			else
 			{
 				commandResponse = ProcessTextCommand_Help( subCommandArgs );
@@ -103,11 +108,11 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public string ProcessTextCommand_Help( string args )
+		protected string ProcessTextCommand_Help( string args )
 		{
 			if( args.ToLower() == "commands" )
 			{
-				return "Valid commands are as follows: config, slotinfo.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
+				return $"Valid commands are as follows: config, slotinfo{( mConfiguration.AllowDirectPlacePreset ? ", place" : "")}.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
 			}
 			else if( args.ToLower() == "config" )
 			{
@@ -117,13 +122,17 @@ namespace WaymarkPresetPlugin
 			{
 				return "Prints the data saved in the game's slots to the chat window.  Usage \"/pwaymark slotinfo <slot>\".  The slot number can be any valid game slot.";
 			}
+			else if( mConfiguration.AllowDirectPlacePreset && args.ToLower() == "place" )
+			{
+				return "Places the preset at the specified library index (if possible).  Usage \"/pwaymark place <index>\".  Index can be any valid libary preset number.";
+			}
 			else
 			{
 				return "Use \"/pwaymark\" to open the GUI.  Use \"/pwaymark help commands\" for a list of text commands.";
 			}
 		}
 
-		public string ProcessTextCommand_SlotInfo( string args )
+		protected string ProcessTextCommand_SlotInfo( string args )
 		{
 			uint gameSlotToCopy;
 			if( args.Length == 1 &&
@@ -154,6 +163,36 @@ namespace WaymarkPresetPlugin
 			else
 			{
 				return "An invalid game slot number was provided.";
+			}
+		}
+
+		protected string ProcessTextCommand_Place( string args )
+		{
+			if( mConfiguration.AllowDirectPlacePreset )
+			{
+				int slotNum = -1;
+				bool validSlot = int.TryParse( args.Trim(), out slotNum ) && slotNum >= 0 && slotNum < mConfiguration.PresetLibrary.Presets.Count;
+				if( validSlot )
+				{
+					try
+					{
+						MemoryHandler.DirectPlacePreset( mConfiguration.PresetLibrary.Presets[slotNum].ConstructGamePreset() );
+						return "";
+					}
+					catch( Exception e )
+					{
+						PluginLog.Log( $"An unknown error occured while attempting to place preset {slotNum} : {e}" );
+						return $"An unknown error occured placing preset {slotNum}.";
+					}
+				}
+				else
+				{
+					return $"Invalid preset number \"{slotNum}\"";
+				}
+			}
+			else
+			{
+				return "Direct placement from the library is not currently allowed; see the plugin settings for more information.";
 			}
 		}
 
