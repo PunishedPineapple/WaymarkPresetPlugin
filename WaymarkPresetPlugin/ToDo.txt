@@ -1,22 +1,18 @@
 ﻿High Priority:
 
-- Check for a MapID that's in the dictionary before allowing a preset to be written to the game.
+- Nothing for now.
 
 
 Low Priority:
 
+- Probably throttle checking the content finder link type in the future so that UI rendering doesn't call into the game a trillion times a second.
 - Look into clearing out newlines when a user tries to paste something from the PP settings file before it actually goes into the text box.  From Wintermute: "You may be able to 'intercept' the paste and strip linebreaks on it before it actually goes in your textbox, Doesn't imgui support something like it, I thought it did".
 - See if it's not too difficult to let a user just paste the entire PP settings file and/or a path to it and import from that.
 - Switch preset import text box to be one with a hint if that ever gets fixed in the C# ImGui bindings.
 - Make the preset info use a monospace font for coordinate alignment.
-- Last modified time probably *should* be saved in the library; just culled when exporting.  Will this work ok with existing libraries?
 
 
 New Functionality:
 
 - Consider having a drawing of marks around their barycenter in the editor window.
-- If we can find a function to directly place a waymark set, add it, and allow direct place only with the filter to current zone checkbox active.  Or maybe just ignore the place command if the preset MapID doesn't match the current zone.
-- *If* it ever becomes possible to do direct placement, probably make it an option that people have to turn on.
-- Add a checkbox to use the current zone instead of the library preset's zone.  When copying and direct-placing.
-- Add in a text command to place a preset if direct placement happens.
 - Add a button to directly save current waymarks?  Requires finding current zone and current waymark data.  Maybe try to find function that gets called when saving a preset instead?
