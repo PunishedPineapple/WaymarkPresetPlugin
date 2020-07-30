@@ -245,7 +245,7 @@ namespace WaymarkPresetPlugin
 					{
 						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[SelectedPreset], 5u );
 					}
-					if( mConfiguration.AllowDirectPlacePreset && MemoryHandler.IsSafeToDirectPlacePreset() )
+					if( mConfiguration.AllowDirectPlacePreset )
 					{
 						ImGui.SameLine();
 						if( ImGui.Button( "Place" ) )
