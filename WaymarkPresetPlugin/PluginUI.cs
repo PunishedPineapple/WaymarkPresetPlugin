@@ -362,20 +362,34 @@ namespace WaymarkPresetPlugin
 					ImGui.Text( "Zone: " );
 					if( ImGui.BeginCombo( "##MapID", mConfiguration.GetZoneName( ScratchEditingPreset.MapID ) ) )
 					{
-						var zoneInfo = ZoneInfoHandler.GetAllZoneInfo();
-						foreach( var zone in zoneInfo )
+						ImGui.Text( "Search: " );
+						ImGui.SameLine();
+						ImGui.InputText( "##ZoneComboFilter", ref mEditWindowZoneFilterString, 16u );
+						if( !EditWindowZoneComboWasOpen )
 						{
-							if( zone.Key != 0 && ImGui.Selectable( mConfiguration.GetZoneName( zone.Key ), zone.Key == ScratchEditingPreset.MapID ) )
+							ImGui.SetKeyboardFocusHere();
+							ImGui.SetItemDefaultFocus();
+						}
+						foreach( UInt16 zoneID in EditWindowZoneSearcher.GetMatchingZones( mEditWindowZoneFilterString ) )
+						{
+							if( zoneID != 0 && ImGui.Selectable( mConfiguration.GetZoneName( zoneID ), zoneID == ScratchEditingPreset.MapID ) )
 							{
-								ScratchEditingPreset.MapID = zone.Key;
+								ScratchEditingPreset.MapID = zoneID;
 							}
 
-							if( zone.Key == ScratchEditingPreset.MapID )
+							//	Uncomment this if we can ever have a better location for the search/filter text box that's not actually in the combo dropdown.
+							/*if( zoneID == ScratchEditingPreset.MapID )
 							{
 								ImGui.SetItemDefaultFocus();
-							}
+							}*/
 						}
 						ImGui.EndCombo();
+						EditWindowZoneComboWasOpen = true;
+					}
+					else
+					{
+						EditWindowZoneComboWasOpen = false;
+						mEditWindowZoneFilterString = "";
 					}
 					ImGui.EndGroup();
 					ImGui.Spacing();
@@ -439,6 +453,11 @@ namespace WaymarkPresetPlugin
 				{
 					mConfiguration.Save();
 					SettingsWindowVisible = false;
+				}
+				ImGui.SameLine( ImGui.GetWindowWidth() - 90 );	//*****TODO: The magic number is cheap and hacky; actually get the button width if we can.*****
+				if( ImGui.Button( "Show Library" ) )
+				{
+					MainWindowVisible = true;
 				}
 			}
 			ImGui.End();
@@ -507,6 +526,9 @@ namespace WaymarkPresetPlugin
 		public int EditingPresetIndex { get; protected set; } = -1;
 		protected  ScratchPreset ScratchEditingPreset { get; set; }
 		protected UInt16 CurrentTerritoryTypeID { get; set; }
+		protected ZoneSearcher EditWindowZoneSearcher { get; set; } = new ZoneSearcher();
+		protected string mEditWindowZoneFilterString = "";
+		protected bool EditWindowZoneComboWasOpen { get; set; } = false;
 	}
 
 	//	We need this because we can't pass the properties from the regular Waymark class as refs to ImGui stuff.  It's an absolute dog's breakfast, but whatever at this point honestly.

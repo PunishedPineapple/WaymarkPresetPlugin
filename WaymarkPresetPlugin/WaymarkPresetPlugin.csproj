@@ -76,6 +76,7 @@
     <Compile Include="WaymarkPreset.cs" />
     <Compile Include="WaymarkPresetLibrary.cs" />
     <Compile Include="ZoneInfoHandler.cs" />
+    <Compile Include="ZoneSearcher.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="ToDo.txt" />
