@@ -193,6 +193,27 @@ namespace WaymarkPresetPlugin
 					}
 					ImGui.EndGroup();
 				}
+				if( ImGui.CollapsingHeader( "Export/Backup Options" ) )
+				{
+					ImGui.BeginGroup(); //Buttons don't seem to work under a header without being in a group.
+					if( ImGui.Button( "Export All Presets to Clipboard" ) )
+					{
+						try
+						{
+							string str = "";
+							foreach( var preset in mConfiguration.PresetLibrary.Presets )
+							{
+								str += WaymarkPresetExport.GetExportString( preset ) + "\r\n";
+							}
+							Win32Clipboard.CopyTextToClipboard( str );
+						}
+						catch( Exception e )
+						{
+							PluginLog.Log( $"Error while exporting all presets: {e}" );
+						}
+					}
+					ImGui.EndGroup();
+				}
 			}
 
 			//	Store the position and size so that we can keep the companion info window in the right place.

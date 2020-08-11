@@ -96,6 +96,10 @@ namespace WaymarkPresetPlugin
 			{
 				commandResponse = ProcessTextCommand_Place( subCommandArgs );
 			}
+			else if( subCommand.ToLower() == "exportall" )
+			{
+				commandResponse = ProcessTextCommand_ExportAll( subCommandArgs );
+			}
 			else
 			{
 				commandResponse = ProcessTextCommand_Help( subCommandArgs );
@@ -112,7 +116,7 @@ namespace WaymarkPresetPlugin
 		{
 			if( args.ToLower() == "commands" )
 			{
-				return $"Valid commands are as follows: config, slotinfo{( mConfiguration.AllowDirectPlacePreset ? ", place" : "")}.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
+				return $"Valid commands are as follows: config, slotinfo, exportall{( mConfiguration.AllowDirectPlacePreset ? ", place" : "")}.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
 			}
 			else if( args.ToLower() == "config" )
 			{
@@ -125,6 +129,10 @@ namespace WaymarkPresetPlugin
 			else if( mConfiguration.AllowDirectPlacePreset && args.ToLower() == "place" )
 			{
 				return "Places the preset at the specified library index (if possible).  Usage \"/pwaymark place <index>\".  Index can be any valid libary preset number.";
+			}
+			else if( args.ToLower() == "exportall" )
+			{
+				return "Copies all presets in the library to the clipboard, one per line.  Add -t if you wish to include the last-modified timestamp in the export.";
 			}
 			else
 			{
@@ -193,6 +201,37 @@ namespace WaymarkPresetPlugin
 			else
 			{
 				return "Direct placement from the library is not currently allowed; see the plugin settings for more information.";
+			}
+		}
+
+		protected string ProcessTextCommand_ExportAll( string args )
+		{
+			try
+			{
+				string str = "";
+				if( args.ToLower().Trim() == "-t" )
+				{
+					foreach( var preset in mConfiguration.PresetLibrary.Presets )
+					{
+						str += WaymarkPresetExport.GetExportString( preset ) + "\r\n";
+					}
+				}
+				else
+				{
+					foreach( var preset in mConfiguration.PresetLibrary.Presets )
+					{
+						str += JsonConvert.SerializeObject( preset ) + "\r\n";
+					}
+				}
+
+				Win32Clipboard.CopyTextToClipboard( str );
+
+				return "";
+			}
+			catch( Exception e )
+			{
+				PluginLog.Log( $"Unknown error occured while trying to copy presets to clipboard: {e}"  );
+				return "Unknown error occured while trying to copy presets to clipboard.";
 			}
 		}
 
