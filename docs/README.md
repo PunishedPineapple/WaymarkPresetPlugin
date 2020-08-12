@@ -16,7 +16,9 @@ This is a plugin for [XIVLauncher/Dalamud](https://github.com/goatcorp/FFXIVQuic
 	* Finally, the edit and delete buttons at the bottom.  The delete button is self-explanatory.  The edit button brings up a window that allows you to directly edit the coordinates of each waymark, which waymarks are active, and the zone to which the preset applies.
 
 ## Direct Placement
-This plugin supports placing a preset directly from the plugin as of version 1.0.0.0; however, this must be enabled in the plugin settings.  The reason for this is that placing from the plugin goes a little bit deeper into the game's chain of how waymark presets are placed, and while I've tried to be careful, and this feature has been tested and appears to work without issue, it is possible that something has been missed.  Copying presets from the library into a slot in the game's menu is quite clear-cut and simple.  Direct placement less so.
+**Note: Temporarily disabled in 1.0.1.0 pending new Actor struct info.**
+
+~~This plugin supports placing a preset directly from the plugin as of version 1.0.0.0; however, this must be enabled in the plugin settings.  The reason for this is that placing from the plugin goes a little bit deeper into the game's chain of how waymark presets are placed, and while I've tried to be careful, and this feature has been tested and appears to work without issue, it is possible that something has been missed.  Copying presets from the library into a slot in the game's menu is quite clear-cut and simple.  Direct placement less so.~~
 
 One more thing to note about this feature: it performs most of the checks that the game does, including checking that you are in an instance type that allows waymarks to be saved, and checking that you are not in combat.  The only thing that it does not check is that the zone of the preset matches the zone that you are currently in.
 
