@@ -69,7 +69,7 @@ namespace WaymarkPresetPlugin
 		public bool mAllowDirectPlacePreset = false;
 		public bool AllowDirectPlacePreset
 		{
-			get { return mAllowDirectPlacePreset; }
+			get { return false; }
 			set { mAllowDirectPlacePreset = value; }
 		}
 
