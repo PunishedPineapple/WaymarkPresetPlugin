@@ -8,6 +8,10 @@ using System.Diagnostics.Eventing.Reader;
 using Lumina.Excel.GeneratedSheets;
 using System.Linq;
 using Dalamud.Plugin;
+using Dalamud.Data.LuminaExtensions;
+using ImGuiScene;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace WaymarkPresetPlugin
 {
@@ -16,14 +20,33 @@ namespace WaymarkPresetPlugin
 	public class PluginUI : IDisposable
 	{
 		//	Construction
-		public PluginUI( Configuration configuration )
+		public PluginUI( Configuration configuration, DalamudPluginInterface pluginInterface )
 		{
 			mConfiguration = configuration;
+			mPluginInterface = pluginInterface;
 		}
 
 		//	Destruction
 		public void Dispose()
 		{
+			//	Try to do this nicely for 10 seconds, but then just brute force it to clean up as much as we can.
+			mMapTextureDictMutex.WaitOne( 10000 );
+
+			//	Clean up all of the map textures that we've loaded.
+			foreach( var mapTexturesList in MapTextureDict )
+			{
+				foreach( var tex in mapTexturesList.Value )
+				{
+					if( tex != null )
+					{
+						tex.Dispose();
+					}
+				}
+			}
+
+			//	Release the mutex and dispose of it.
+			mMapTextureDictMutex.ReleaseMutex();
+			mMapTextureDictMutex.Dispose();
 		}
 
 		public void Draw()
@@ -33,6 +56,7 @@ namespace WaymarkPresetPlugin
 			DrawInfoWindow();
 			DrawEditorWindow();
 			DrawSettingsWindow();
+			DrawMapWindow();
 		}
 
 		protected void DrawMainWindow()
@@ -52,6 +76,17 @@ namespace WaymarkPresetPlugin
 				{
 					ImGui.Checkbox( "Filter on Current Zone", ref mFilterOnCurrentZone );
 				}
+				//*****TODO: Check if this should be enabled or not.
+				ImGui.SameLine( ImGui.GetWindowWidth() - 163 );  //*****TODO: The magic number is cheap and hacky; actually get the button width if we can.*****
+				if( ImGui.Button( "Save Current Waymarks" ) )
+				{
+					byte[] currentWaymarks = null;
+					if( MemoryHandler.GetCurrentWaymarksAsPresetData( ref currentWaymarks ) && currentWaymarks != null )
+					{
+						mConfiguration.PresetLibrary.ImportPreset( currentWaymarks );
+					}
+				}
+
 				ImGui.BeginGroup();
 				if( mConfiguration.PresetLibrary.Presets.Count > 0 )
 				{
@@ -323,6 +358,12 @@ namespace WaymarkPresetPlugin
 						ImGui.PopStyleColor();
 					}
 					ImGui.PopStyleColor();
+
+					//*****TODO: Display map window based on settings or place the button in a better place.*****
+					if( ImGui.Button( "Map" ) )
+					{
+						MapWindowVisible = true;
+					}
 				}
 				else
 				{
@@ -466,8 +507,8 @@ namespace WaymarkPresetPlugin
 				ImGui.Checkbox( "Show \"Filter on Current Zone\" checkbox.", ref mConfiguration.mShowFilterOnCurrentZoneCheckbox );
 				ImGui.Checkbox( "Show ID numbers next to zone names.", ref mConfiguration.mShowIDNumberNextToZoneNames );
 				ImGui.Checkbox( "Show the index of the preset within the library.", ref mConfiguration.mShowLibraryIndexInPresetList );
-				/*ImGui.Checkbox( "Allow placement of presets directly from the library*.", ref mConfiguration.mAllowDirectPlacePreset );
-				ImGui.Text( "*Please read the plugin site's readme before enabling this." );*/
+				ImGui.Checkbox( "Allow placement of presets directly from the library*.", ref mConfiguration.mAllowDirectPlacePreset );
+				ImGui.Text( "*Please read the plugin site's readme before enabling this." );
 				if( !mConfiguration.ShowFilterOnCurrentZoneCheckbox ) FilterOnCurrentZone = false;
 				ImGui.Spacing();
 				if( ImGui.Button( "Save and Close" ) )
@@ -480,6 +521,70 @@ namespace WaymarkPresetPlugin
 				{
 					MainWindowVisible = true;
 				}
+			}
+			ImGui.End();
+		}
+
+		protected void DrawMapWindow()
+		{
+			if( !MapWindowVisible )
+			{
+				return;
+			}
+
+			//ImGui.SetNextWindowSize( new Vector2( 350, 350 ) );
+			if( ImGui.Begin( "Map View", ref mMapWindowVisible,
+				ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
+			{
+				if( SelectedPreset > -1 && SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
+				{
+					//	Try to show the map(s); otherwise, show a message that they're still loading.
+					if( mMapTextureDictMutex.WaitOne( 0 ) )
+					{
+						//*****TODO: Actually handle multiple maps per zone.  Just doing the first one rn for testing.*****
+
+						if( MapTextureDict.ContainsKey( (UInt16)ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).TerritoryTypeID ) )
+						{
+							if( MapTextureDict[(UInt16)ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).TerritoryTypeID].Count < 1 )
+							{
+								ImGui.Text( "No maps available for this zone." );
+							}
+							else
+							{
+								var mapList = MapTextureDict[(UInt16)ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).TerritoryTypeID];
+								for( int i = 0; i < mapList.Count; ++ i )
+								{
+									var mapInfo = ZoneInfoHandler.GetMapInfoFromTerritoryTypeID( ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).TerritoryTypeID );
+									if( ImGui.RadioButton( $"{i} - {mapInfo[i].GetMapFilePath()}##SelectedMapIndex", i == mSelectedMapIndex ) )
+									{
+										mSelectedMapIndex = i;
+									}
+								}
+								//*****TODO: Reset the selected map index to zero when the zone of the preset is different than last time.*****
+								if( mSelectedMapIndex < mapList.Count )
+								{
+									ImGui.Image( mapList[mSelectedMapIndex].ImGuiHandle, new Vector2( 512, 512 ), new Vector2( 0.25f, 0.25f ), new Vector2( 0.75f, 0.75f ), new Vector4( 1, 1, 1, 1 ), new Vector4( 1, 1, 1, 1 ) );
+								}
+							}
+						}
+						else
+						{
+							ImGui.Text( "Loading zone map(s)." );
+							LoadMapTextures( (UInt16)ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).TerritoryTypeID );
+						}
+
+						mMapTextureDictMutex.ReleaseMutex();
+					}
+					else
+					{
+						ImGui.Text( "Loading zone map(s)." );
+					}
+				}
+				else
+				{
+					ImGui.Text( "No Preset Selected" );
+				}
+				
 			}
 			ImGui.End();
 		}
@@ -508,7 +613,74 @@ namespace WaymarkPresetPlugin
 			CurrentTerritoryTypeID = ID;
 		}
 
+		protected void LoadMapTextures( UInt16 territoryTypeID )
+		{
+			//	Only add/load stuff that we don't already have.  Callers should be checking this, but we should too.
+			if( !MapTextureDict.ContainsKey( territoryTypeID ) )
+			{
+
+				Task.Run( () =>
+				{
+					//	Add the entry.
+					MapTextureDict.Add( territoryTypeID, new List<TextureWrap>() );
+
+					//	Grab the texture files for this zone's maps and load them in.
+					foreach( var map in ZoneInfoHandler.GetMapInfoFromTerritoryTypeID( territoryTypeID ) )
+					{
+						//	Lock the mutex.  If we can't get it within ten seconds, just give up.
+						if( mMapTextureDictMutex.WaitOne( 30000 ) )
+						{
+							//	Get, process, and add the map texture.
+							try
+							{
+								//	TODO: Check for the *m file and/or use the discovery flags to determine whether we need to composite the textures.*****
+								var texFile = mPluginInterface.Data.GetFile<Lumina.Data.Files.TexFile>( map.GetMapFilePath() );
+								var parchmentTexFile = mPluginInterface.Data.GetFile<Lumina.Data.Files.TexFile>( map.GetMapParchmentImageFilePath() );
+								if( texFile != null )
+								{
+									byte[] texData = MapTextureBlend( texFile.GetRgbaImageData(), parchmentTexFile == null ? null : parchmentTexFile.GetRgbaImageData() );
+
+									var tex = mPluginInterface.UiBuilder.LoadImageRaw( texData, texFile.Header.Width, texFile.Header.Height, 4 );
+									if( tex != null && tex.ImGuiHandle != IntPtr.Zero )
+									{
+										MapTextureDict[territoryTypeID].Add( tex );
+									}
+								}
+							}
+							catch
+							{
+							}
+
+							//	Release the mutex.
+							mMapTextureDictMutex.ReleaseMutex();
+						}
+					}
+				} );
+			}
+		}
+
+		protected byte[] MapTextureBlend( byte[] mapTex, byte[] parchmentTex = null )
+		{
+			if( parchmentTex == null || parchmentTex.Length != mapTex.Length )
+			{
+				return mapTex;
+			}
+			else
+			{
+				byte[] blendedTex = new byte[mapTex.Length];
+				for( int i = 0; i < blendedTex.Length; ++i )
+				{
+					//	A simple multiply probably gets us close enough for now.
+					blendedTex[i] = (byte)( (float)mapTex[i] * (float)parchmentTex[i] / 255f );
+				}
+
+				return blendedTex;
+			}
+		}
+
 		protected Configuration mConfiguration;
+
+		protected DalamudPluginInterface mPluginInterface;
 
 		//	Need a real backing field on the following properties for use with ImGui.
 		protected bool mMainWindowVisible = false;
@@ -523,6 +695,13 @@ namespace WaymarkPresetPlugin
 		{
 			get { return mSettingsWindowVisible; }
 			set { mSettingsWindowVisible = value; }
+		}
+
+		protected bool mMapWindowVisible = false;
+		public bool MapWindowVisible
+		{
+			get { return mMapWindowVisible; }
+			set { mMapWindowVisible = value; }
 		}
 
 		protected string mPresetImportString = "";
@@ -550,6 +729,9 @@ namespace WaymarkPresetPlugin
 		protected ZoneSearcher EditWindowZoneSearcher { get; set; } = new ZoneSearcher();
 		protected string mEditWindowZoneFilterString = "";
 		protected bool EditWindowZoneComboWasOpen { get; set; } = false;
+		protected Dictionary<UInt16, List<TextureWrap>> MapTextureDict { get; set; } = new Dictionary<UInt16, List<TextureWrap>>();
+		protected Mutex mMapTextureDictMutex = new Mutex();
+		protected int mSelectedMapIndex = 0;
 	}
 
 	//	We need this because we can't pass the properties from the regular Waymark class as refs to ImGui stuff.  It's an absolute dog's breakfast, but whatever at this point honestly.

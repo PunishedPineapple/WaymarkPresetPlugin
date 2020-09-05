@@ -32,7 +32,7 @@ namespace WaymarkPresetPlugin
 			} );
 
 			//	UI Initialization
-			mUI = new PluginUI( mConfiguration );
+			mUI = new PluginUI( mConfiguration, mPluginInterface );
 			mPluginInterface.UiBuilder.OnBuildUi += DrawUI;
 			mPluginInterface.UiBuilder.OnOpenConfigUi += ( sender, args ) => DrawConfigUI();
 			mUI.SetCurrentTerritoryTypeID( mPluginInterface.ClientState.TerritoryType );
