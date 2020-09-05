@@ -50,7 +50,13 @@ namespace WaymarkPresetPlugin
 					mdDirectPlacePreset = Marshal.GetDelegateForFunctionPointer<DirectPlacePresetDelegate>( fpDirectPlacePreset );
 				}
 
-				mpPlaceRawPresetParam1Obj = mPluginInterface.TargetModuleScanner.GetStaticAddressFromSig( "41 80 F9 08 7C BB 48 8D ?? ?? ?? 48 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 0F 94 C0 EB 19", 11 );
+				IntPtr fpGetCurrentWaymarkData = mPluginInterface.TargetModuleScanner.ScanText( "48 89 ?? ?? ?? 57 48 83 ?? ?? 48 8B ?? 48 8B ?? 33 D2 48 8B" );
+				if( fpGetCurrentWaymarkData != IntPtr.Zero )
+				{
+					mdGetCurrentWaymarkData = Marshal.GetDelegateForFunctionPointer<GetCurrentWaymarkDataDelegate>( fpGetCurrentWaymarkData );
+				}
+
+				mpWaymarksObj = mPluginInterface.TargetModuleScanner.GetStaticAddressFromSig( "41 80 F9 08 7C BB 48 8D ?? ?? ?? 48 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 0F 94 C0 EB 19", 11 );
 			}
 			catch( Exception e )
 			{
@@ -74,7 +80,7 @@ namespace WaymarkPresetPlugin
 		{
 			return	mdGetCurrentContentFinderLinkType != null &&
 					mdDirectPlacePreset != null &&
-					mpPlaceRawPresetParam1Obj != IntPtr.Zero;
+					mpWaymarksObj != IntPtr.Zero;
 		}
 
 		public static byte[] ReadSlot( uint slotNum )
@@ -146,7 +152,7 @@ namespace WaymarkPresetPlugin
 				{
 					fixed( byte* pFormattedData = formattedData )
 					{
-						mdDirectPlacePreset.Invoke( mpPlaceRawPresetParam1Obj, new IntPtr( pFormattedData ) );
+						mdDirectPlacePreset.Invoke( mpWaymarksObj, new IntPtr( pFormattedData ) );
 					}
 				}
 			}
@@ -173,6 +179,56 @@ namespace WaymarkPresetPlugin
 			return newData;
 		}
 
+		public static bool GetCurrentWaymarksAsPresetData( ref byte[] presetData )
+		{
+			if( mPluginInterface != null && true /*TODO: found the right sigs*/ )
+			{
+				byte currentContentLinkType = mdGetCurrentContentFinderLinkType.Invoke();
+				if( currentContentLinkType > 0 && currentContentLinkType < 4 )
+				{
+					byte[] rawWaymarkData = new byte[104];
+					unsafe
+					{
+						fixed( byte* pRawWaymarkData = rawWaymarkData )
+						{
+							mdGetCurrentWaymarkData.Invoke( mpWaymarksObj, new IntPtr( pRawWaymarkData ) );
+						}
+					}
+
+					presetData = ConvertWaymarkObjDataToSavedPresetFormat( rawWaymarkData );
+
+					UInt16 currentZone = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mPluginInterface.ClientState.TerritoryType );
+					UInt32 currentTimestamp = (UInt32)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+					Array.Copy( BitConverter.GetBytes( currentZone ), 0, presetData, 98, 2 );
+					Array.Copy( BitConverter.GetBytes( currentTimestamp ), 0, presetData, 100, 4 );
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private static byte[] ConvertWaymarkObjDataToSavedPresetFormat( byte[] waymarkData )
+		{
+			if( waymarkData.Length != 104 )
+			{
+				throw new Exception( "Error in ConvertWaymarkObjDataToSavedPresetFormat(): Invalid length of passed waymark data!" );
+			}
+
+			//	The coordinates/flags only occupy 98 bytes, but make it the full 104 bytes long so that it's the full length of a preset.
+			byte[] newData = new byte[104];
+
+			for( int i = 0; i < 8; ++i )
+			{
+				newData[96] |= (byte)( ( waymarkData[i] > 0 ? 1 : 0 ) << i );
+				Array.Copy( waymarkData, i * 4 +  8, newData, i * 12 + 0, 4 );
+				Array.Copy( waymarkData, i * 4 + 40, newData, i * 12 + 4, 4 );
+				Array.Copy( waymarkData, i * 4 + 72, newData, i * 12 + 8, 4 );
+			}
+
+			return newData;
+		}
+
 		private static bool IsCharacterInCombat()
 		{
 			byte flags = 0;
@@ -182,7 +238,7 @@ namespace WaymarkPresetPlugin
 			{
 				try
 				{
-					flags = Marshal.ReadByte( new IntPtr( mPluginInterface.ClientState.LocalPlayer.Address.ToInt64() + 0x1901 ) );
+					flags = Marshal.ReadByte( new IntPtr( mPluginInterface.ClientState.LocalPlayer.Address.ToInt64() + 0x1906 ) );
 				}
 				catch
 				{
@@ -193,16 +249,18 @@ namespace WaymarkPresetPlugin
 		}
 
 		private static DalamudPluginInterface mPluginInterface;
-		private static IntPtr mpPlaceRawPresetParam1Obj;
+		private static IntPtr mpWaymarksObj;
 
 		private delegate IntPtr GetConfigSectionDelegate( IntPtr pConfigFile, byte sectionIndex );
 		private delegate IntPtr GetPresetAddressForSlotDelegate( IntPtr pMarkerDataStart, uint slotNum );
 		private delegate byte GetCurrentContentFinderLinkTypeDelegate();
-		private delegate void DirectPlacePresetDelegate( IntPtr thisPtr, IntPtr pData );
+		private delegate void DirectPlacePresetDelegate( IntPtr pObj, IntPtr pData );
+		private delegate void GetCurrentWaymarkDataDelegate( IntPtr pObj, IntPtr pData );
 
 		private static GetConfigSectionDelegate mdGetUISAVESectionAddress;
 		private static GetPresetAddressForSlotDelegate mdGetPresetAddressForSlot;
 		private static GetCurrentContentFinderLinkTypeDelegate mdGetCurrentContentFinderLinkType;
 		private static DirectPlacePresetDelegate mdDirectPlacePreset;
+		private static GetCurrentWaymarkDataDelegate mdGetCurrentWaymarkData;
 	}
 }
