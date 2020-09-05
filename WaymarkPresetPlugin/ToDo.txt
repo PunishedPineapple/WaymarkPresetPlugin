@@ -15,6 +15,5 @@ Low Priority:
 
 New Functionality:
 
-- Consider having a drawing of marks around their barycenter in the editor window.
-- Add a button to directly save current waymarks?  Requires finding current zone and current waymark data.  Maybe try to find function that gets called when saving a preset instead?
+- Preview preset waymarks on game maps.
 - Look into placing a preset by placing each individual waymark to work around preset restrictions, but this honestly looks like a huge mess, and SE's code is doing timing stuff when placing a preset, so it might be even more weird.
