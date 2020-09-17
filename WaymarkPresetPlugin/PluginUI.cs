@@ -329,7 +329,6 @@ namespace WaymarkPresetPlugin
 					if( ImGui.Button( "Edit" ) && EditingPresetIndex == -1 )  //Don't want to let people start editing while the edit window is already open.
 					{
 						EditingPresetIndex = SelectedPreset;
-						//ScratchEditingPreset = new ScratchPreset( mConfiguration.PresetLibrary.Presets[EditingPresetIndex] );
 					}
 					ImGui.SameLine();
 					ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
