@@ -82,7 +82,7 @@ namespace WaymarkPresetPlugin
 			string commandResponse = "";
 			if( subCommand.Length == 0 )
 			{
-				mUI.MainWindowVisible = true;
+				mUI.MainWindowVisible ^= true;
 			}
 			else if( subCommand.ToLower() == "config" )
 			{
