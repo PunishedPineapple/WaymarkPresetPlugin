@@ -86,7 +86,7 @@ namespace WaymarkPresetPlugin
 			}
 			else if( subCommand.ToLower() == "config" )
 			{
-				mUI.SettingsWindowVisible = true;
+				mUI.SettingsWindowVisible ^= true;
 			}
 			else if( subCommand.ToLower() == "slotinfo" )
 			{
