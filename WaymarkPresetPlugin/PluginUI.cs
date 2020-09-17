@@ -329,7 +329,7 @@ namespace WaymarkPresetPlugin
 					if( ImGui.Button( "Edit" ) && EditingPresetIndex == -1 )  //Don't want to let people start editing while the edit window is already open.
 					{
 						EditingPresetIndex = SelectedPreset;
-						ScratchEditingPreset = new ScratchPreset( mConfiguration.PresetLibrary.Presets[EditingPresetIndex] );
+						//ScratchEditingPreset = new ScratchPreset( mConfiguration.PresetLibrary.Presets[EditingPresetIndex] );
 					}
 					ImGui.SameLine();
 					ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
@@ -384,106 +384,92 @@ namespace WaymarkPresetPlugin
 			ImGui.SetNextWindowSize( new Vector2( 375, 425 ) );
 			if( ImGui.Begin( "Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize ) )
 			{
-				if( ScratchEditingPreset != null )
+				WaymarkPreset editingPreset = mConfiguration.PresetLibrary.Presets[EditingPresetIndex];
+				ImGui.Text( "Name: " );
+				ImGui.SameLine();
+				ImGui.InputText( "##PresetName", ref editingPreset.Name, 128 );
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.BeginGroup();
+				ImGui.Columns( 2 );
+				ImGui.SetColumnWidth(0, 50);
+				ImGui.Text( "Active" );
+				foreach( var waymark in editingPreset.Waymarks )
 				{
-					ImGui.Text( "Name: " );
+					ImGui.Checkbox( waymark.Label, ref waymark.Active );
+				}
+				ImGui.NextColumn();
+				ImGui.Text( "" );
+				foreach( var waymark in editingPreset.Waymarks )
+				{
+					var val = new Vector3(waymark.X / 1000f, waymark.Y / 1000f, waymark.Z / 1000f);
+					if (ImGui.InputFloat3( $"##{waymark.Label}-X", ref val ))
+					{
+						waymark.X = (int)(val.X * 1000f);
+						waymark.Y = (int)(val.Y * 1000f);
+						waymark.Z = (int)(val.Z * 1000f);
+					}
+				}
+				ImGui.Columns( 1 );
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Text( "Zone: " );
+				if( ImGui.BeginCombo( "##MapID", mConfiguration.GetZoneName(editingPreset.MapID ) ) )
+				{
+					ImGui.Text( "Search: " );
 					ImGui.SameLine();
-					ImGui.InputText( "##PresetName", ref ScratchEditingPreset.Name, 128 );
-					ImGui.Spacing();
-					ImGui.Spacing();
-					ImGui.Spacing();
-					ImGui.BeginGroup();
-					ImGui.Columns( 4 );
-					ImGui.Text( "Active" );
-					foreach( var waymark in ScratchEditingPreset.Waymarks )
+					ImGui.InputText( "##ZoneComboFilter", ref mEditWindowZoneFilterString, 16u );
+					if( !EditWindowZoneComboWasOpen )
 					{
-						ImGui.Checkbox( waymark.Label, ref waymark.Active );
+						ImGui.SetKeyboardFocusHere();
+						ImGui.SetItemDefaultFocus();
 					}
-					ImGui.NextColumn();
-					ImGui.Text( "X" );
-					foreach( var waymark in ScratchEditingPreset.Waymarks )
+					foreach( UInt16 zoneID in EditWindowZoneSearcher.GetMatchingZones( mEditWindowZoneFilterString ) )
 					{
-						ImGui.InputFloat( $"##{waymark.Label}-X", ref waymark.X );
-					}
-					ImGui.NextColumn();
-					ImGui.Text( "Y" );
-					foreach( var waymark in ScratchEditingPreset.Waymarks )
-					{
-						ImGui.InputFloat( $"##{waymark.Label}-Y", ref waymark.Y );
-					}
-					ImGui.NextColumn();
-					ImGui.Text( "Z" );
-					foreach( var waymark in ScratchEditingPreset.Waymarks )
-					{
-						ImGui.InputFloat( $"##{waymark.Label}-Z", ref waymark.Z );
-					}
-					ImGui.Columns( 1 );
-					ImGui.Spacing();
-					ImGui.Spacing();
-					ImGui.Spacing();
-					ImGui.Text( "Zone: " );
-					if( ImGui.BeginCombo( "##MapID", mConfiguration.GetZoneName( ScratchEditingPreset.MapID ) ) )
-					{
-						ImGui.Text( "Search: " );
-						ImGui.SameLine();
-						ImGui.InputText( "##ZoneComboFilter", ref mEditWindowZoneFilterString, 16u );
-						if( !EditWindowZoneComboWasOpen )
+						if( zoneID != 0 && ImGui.Selectable( mConfiguration.GetZoneName( zoneID ), zoneID == editingPreset.MapID ) )
 						{
-							ImGui.SetKeyboardFocusHere();
-							ImGui.SetItemDefaultFocus();
+							editingPreset.MapID = zoneID;
 						}
-						foreach( UInt16 zoneID in EditWindowZoneSearcher.GetMatchingZones( mEditWindowZoneFilterString ) )
-						{
-							if( zoneID != 0 && ImGui.Selectable( mConfiguration.GetZoneName( zoneID ), zoneID == ScratchEditingPreset.MapID ) )
-							{
-								ScratchEditingPreset.MapID = zoneID;
-							}
 
-							//	Uncomment this if we can ever have a better location for the search/filter text box that's not actually in the combo dropdown.
-							/*if( zoneID == ScratchEditingPreset.MapID )
-							{
-								ImGui.SetItemDefaultFocus();
-							}*/
-						}
-						ImGui.EndCombo();
-						EditWindowZoneComboWasOpen = true;
-					}
-					else
-					{
-						EditWindowZoneComboWasOpen = false;
-						mEditWindowZoneFilterString = "";
-					}
-					ImGui.EndGroup();
-					ImGui.Spacing();
-					ImGui.Spacing();
-					ImGui.Spacing();
-					ImGui.Spacing();
-					ImGui.Spacing();
-					if( ImGui.Button( "Save" ) )
-					{
-						try
+						//	Uncomment this if we can ever have a better location for the search/filter text box that's not actually in the combo dropdown.
+						/*if( zoneID == ScratchEditingPreset.MapID )
 						{
-							mConfiguration.PresetLibrary.Presets[EditingPresetIndex] = ScratchEditingPreset.GetPreset();
-							EditingPresetIndex = -1;
-							ScratchEditingPreset = null;
-							mConfiguration.Save();
-						}
-						catch
-						{
-						}
+							ImGui.SetItemDefaultFocus();
+						}*/
 					}
-					ImGui.SameLine();
+					ImGui.EndCombo();
+					EditWindowZoneComboWasOpen = true;
 				}
 				else
 				{
-					ImGui.Text( "Invalid editing data; something went very wrong.  Please press \"Cancel\" and try again." );
+					EditWindowZoneComboWasOpen = false;
+					mEditWindowZoneFilterString = "";
 				}
+				ImGui.EndGroup();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				if( ImGui.Button( "Save" ) )
+				{
+					try
+					{
+						mConfiguration.Save();
+					}
+					catch
+					{
+					}
+					EditingPresetIndex = -1;
+				}
+				ImGui.SameLine();
 				
 
 				if( ImGui.Button( "Cancel" ) )
 				{
 					EditingPresetIndex = -1;
-					ScratchEditingPreset = null;
 				}
 			}
 			ImGui.End();
@@ -727,159 +713,11 @@ namespace WaymarkPresetPlugin
 		public bool WantToDeleteSelectedPreset { get; protected set; } = false;
 		public int EditingPresetIndex { get; protected set; } = -1;
 		public UInt16 CurrentTerritoryTypeID { get; set; }
-		protected  ScratchPreset ScratchEditingPreset { get; set; }
 		protected ZoneSearcher EditWindowZoneSearcher { get; set; } = new ZoneSearcher();
 		protected string mEditWindowZoneFilterString = "";
 		protected bool EditWindowZoneComboWasOpen { get; set; } = false;
 		protected Dictionary<UInt16, List<TextureWrap>> MapTextureDict { get; set; } = new Dictionary<UInt16, List<TextureWrap>>();
 		protected Mutex mMapTextureDictMutex = new Mutex();
 		protected int mSelectedMapIndex = 0;
-	}
-
-	//	We need this because we can't pass the properties from the regular Waymark class as refs to ImGui stuff.  It's an absolute dog's breakfast, but whatever at this point honestly.
-	public class ScratchPreset
-	{
-		public class ScratchWaymark
-		{
-			public float X;
-			public float Y;
-			public float Z;
-			public int ID;
-			public bool Active;
-			public string Label;
-		}
-
-		public ScratchPreset( WaymarkPreset preset )
-		{
-			Name = preset.Name;
-			MapID = preset.MapID;
-			Waymarks = new List<ScratchWaymark>();
-
-			Waymarks.Add( new ScratchWaymark() );
-			Waymarks.Last().X = preset.A.X;
-			Waymarks.Last().Y = preset.A.Y;
-			Waymarks.Last().Z = preset.A.Z;
-			Waymarks.Last().ID = preset.A.ID;
-			Waymarks.Last().Active = preset.A.Active;
-			Waymarks.Last().Label = "A";
-
-			Waymarks.Add( new ScratchWaymark() );
-			Waymarks.Last().X = preset.B.X;
-			Waymarks.Last().Y = preset.B.Y;
-			Waymarks.Last().Z = preset.B.Z;
-			Waymarks.Last().ID = preset.B.ID;
-			Waymarks.Last().Active = preset.B.Active;
-			Waymarks.Last().Label = "B";
-
-			Waymarks.Add( new ScratchWaymark() );
-			Waymarks.Last().X = preset.C.X;
-			Waymarks.Last().Y = preset.C.Y;
-			Waymarks.Last().Z = preset.C.Z;
-			Waymarks.Last().ID = preset.C.ID;
-			Waymarks.Last().Active = preset.C.Active;
-			Waymarks.Last().Label = "C";
-
-			Waymarks.Add( new ScratchWaymark() );
-			Waymarks.Last().X = preset.D.X;
-			Waymarks.Last().Y = preset.D.Y;
-			Waymarks.Last().Z = preset.D.Z;
-			Waymarks.Last().ID = preset.D.ID;
-			Waymarks.Last().Active = preset.D.Active;
-			Waymarks.Last().Label = "D";
-
-			Waymarks.Add( new ScratchWaymark() );
-			Waymarks.Last().X = preset.One.X;
-			Waymarks.Last().Y = preset.One.Y;
-			Waymarks.Last().Z = preset.One.Z;
-			Waymarks.Last().ID = preset.One.ID;
-			Waymarks.Last().Active = preset.One.Active;
-			Waymarks.Last().Label = "1";
-
-			Waymarks.Add( new ScratchWaymark() );
-			Waymarks.Last().X = preset.Two.X;
-			Waymarks.Last().Y = preset.Two.Y;
-			Waymarks.Last().Z = preset.Two.Z;
-			Waymarks.Last().ID = preset.Two.ID;
-			Waymarks.Last().Active = preset.Two.Active;
-			Waymarks.Last().Label = "2";
-
-			Waymarks.Add( new ScratchWaymark() );
-			Waymarks.Last().X = preset.Three.X;
-			Waymarks.Last().Y = preset.Three.Y;
-			Waymarks.Last().Z = preset.Three.Z;
-			Waymarks.Last().ID = preset.Three.ID;
-			Waymarks.Last().Active = preset.Three.Active;
-			Waymarks.Last().Label = "3";
-
-			Waymarks.Add( new ScratchWaymark() );
-			Waymarks.Last().X = preset.Four.X;
-			Waymarks.Last().Y = preset.Four.Y;
-			Waymarks.Last().Z = preset.Four.Z;
-			Waymarks.Last().ID = preset.Four.ID;
-			Waymarks.Last().Active = preset.Four.Active;
-			Waymarks.Last().Label = "4";
-		}
-
-		public WaymarkPreset GetPreset()
-		{
-			WaymarkPreset newPreset = new WaymarkPreset();
-
-			newPreset.Name = Name;
-			newPreset.MapID = MapID;
-
-			newPreset.A.X = Waymarks[0].X;
-			newPreset.A.Y = Waymarks[0].Y;
-			newPreset.A.Z = Waymarks[0].Z;
-			newPreset.A.ID = Waymarks[0].ID;
-			newPreset.A.Active = Waymarks[0].Active;
-
-			newPreset.B.X = Waymarks[1].X;
-			newPreset.B.Y = Waymarks[1].Y;
-			newPreset.B.Z = Waymarks[1].Z;
-			newPreset.B.ID = Waymarks[1].ID;
-			newPreset.B.Active = Waymarks[1].Active;
-
-			newPreset.C.X = Waymarks[2].X;
-			newPreset.C.Y = Waymarks[2].Y;
-			newPreset.C.Z = Waymarks[2].Z;
-			newPreset.C.ID = Waymarks[2].ID;
-			newPreset.C.Active = Waymarks[2].Active;
-
-			newPreset.D.X = Waymarks[3].X;
-			newPreset.D.Y = Waymarks[3].Y;
-			newPreset.D.Z = Waymarks[3].Z;
-			newPreset.D.ID = Waymarks[3].ID;
-			newPreset.D.Active = Waymarks[3].Active;
-
-			newPreset.One.X = Waymarks[4].X;
-			newPreset.One.Y = Waymarks[4].Y;
-			newPreset.One.Z = Waymarks[4].Z;
-			newPreset.One.ID = Waymarks[4].ID;
-			newPreset.One.Active = Waymarks[4].Active;
-
-			newPreset.Two.X = Waymarks[5].X;
-			newPreset.Two.Y = Waymarks[5].Y;
-			newPreset.Two.Z = Waymarks[5].Z;
-			newPreset.Two.ID = Waymarks[5].ID;
-			newPreset.Two.Active = Waymarks[5].Active;
-
-			newPreset.Three.X = Waymarks[6].X;
-			newPreset.Three.Y = Waymarks[6].Y;
-			newPreset.Three.Z = Waymarks[6].Z;
-			newPreset.Three.ID = Waymarks[6].ID;
-			newPreset.Three.Active = Waymarks[6].Active;
-
-			newPreset.Four.X = Waymarks[7].X;
-			newPreset.Four.Y = Waymarks[7].Y;
-			newPreset.Four.Z = Waymarks[7].Z;
-			newPreset.Four.ID = Waymarks[7].ID;
-			newPreset.Four.Active = Waymarks[7].Active;
-
-			return newPreset;
-		}
-
-		public string Name = "";
-		public UInt16 MapID = 0;
-		public List<ScratchWaymark> Waymarks;
 	}
 }

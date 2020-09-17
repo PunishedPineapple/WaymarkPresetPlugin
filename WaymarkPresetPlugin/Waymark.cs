@@ -12,6 +12,11 @@ namespace WaymarkPresetPlugin
 		{
 		}
 
+		public Waymark(string Label)
+		{
+			this.Label = Label;
+		}
+		
 		public Waymark( Waymark objToCopy )
 		{
 			if( objToCopy != null )
@@ -25,20 +30,21 @@ namespace WaymarkPresetPlugin
 		}
 		public string GetWaymarkDataString()
 		{
-			return Active ? ( X.ToString( "0.00" ).PadLeft( 7 ) + ", " + Y.ToString( "0.00" ).PadLeft( 7 ) + ", " + Z.ToString( "0.00" ).PadLeft( 7 ) ) : "Unused";
+			return Active ? ( (X / 1000f).ToString( "0.00" ).PadLeft( 7 ) + ", " + (Y / 1000f).ToString( "0.00" ).PadLeft( 7 ) + ", " + (Z / 1000f).ToString( "0.00" ).PadLeft( 7 ) ) : "Unused";
 		}
 
-		public float X { get; set; } = 0.0f;
-		public float Y { get; set; } = 0.0f;
-		public float Z { get; set; } = 0.0f;
+		public int X { get; set; } = 0;
+		public int Y { get; set; } = 0;
+		public int Z { get; set; } = 0;
 		public int ID { get; set; } = 0;	//This is kind of a BS field, but keep it for import/export interop with PP.
-		public bool Active { get; set; } = false;
+		public string Label { get; set; }
+		public bool Active = false;
 
 		public bool Equals(Waymark other)
 		{
-			return Math.Abs(X - other.X) < 0.02f
-				&& Math.Abs(X - other.X) < 0.02f
-				&& Math.Abs(Z - other.Z) < 0.02f;
+			return X == other.X
+				&& Y == other.Y
+				&& Z == other.Z;
 		}
 	}
 }
