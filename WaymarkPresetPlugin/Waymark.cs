@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WaymarkPresetPlugin
 {
-	public class Waymark
+	public class Waymark : IEquatable<Waymark>
 	{
 		public Waymark()
 		{
@@ -33,5 +33,12 @@ namespace WaymarkPresetPlugin
 		public float Z { get; set; } = 0.0f;
 		public int ID { get; set; } = 0;	//This is kind of a BS field, but keep it for import/export interop with PP.
 		public bool Active { get; set; } = false;
+
+		public bool Equals(Waymark other)
+		{
+			return Math.Abs(X - other.X) < 0.02f
+				&& Math.Abs(X - other.X) < 0.02f
+				&& Math.Abs(Z - other.Z) < 0.02f;
+		}
 	}
 }

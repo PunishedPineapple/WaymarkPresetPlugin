@@ -12,6 +12,8 @@ namespace WaymarkPresetPlugin
 {
 	public static class MemoryHandler
 	{
+		private static object writeLock = new object();
+
 		public static void Init( DalamudPluginInterface pluginInterface )
 		{
 			if( pluginInterface == null )
@@ -98,16 +100,19 @@ namespace WaymarkPresetPlugin
 
 		public static bool WriteSlot( uint slotNum, byte[] data )
 		{
-			IntPtr pWaymarkData = GetGameWaymarkDataPointerForSlot( slotNum );
-			if( data.Length >= 104 && pWaymarkData != IntPtr.Zero )
+			lock (writeLock)
 			{
-				//	Don't catch exceptions here; better to have the caller do it probably.
-				Marshal.Copy( data, 0, pWaymarkData, 104 );
-				return true;
-			}
-			else
-			{
-				return false;
+				IntPtr pWaymarkData = GetGameWaymarkDataPointerForSlot(slotNum);
+				if (data.Length >= 104 && pWaymarkData != IntPtr.Zero)
+				{
+					//	Don't catch exceptions here; better to have the caller do it probably.
+					Marshal.Copy(data, 0, pWaymarkData, 104);
+					return true;
+				}
+				else
+				{
+					return false;
+				}
 			}
 		}
 

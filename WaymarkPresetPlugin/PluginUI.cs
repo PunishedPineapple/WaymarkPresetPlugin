@@ -496,7 +496,7 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 350, 310 ) );
+			ImGui.SetNextWindowSize( new Vector2( 350, 350 ) );
 			if( ImGui.Begin( "Waymark Settings", ref mSettingsWindowVisible,
 				ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
@@ -508,7 +508,9 @@ namespace WaymarkPresetPlugin
 				ImGui.Checkbox( "Show ID numbers next to zone names.", ref mConfiguration.mShowIDNumberNextToZoneNames );
 				ImGui.Checkbox( "Show the index of the preset within the library.", ref mConfiguration.mShowLibraryIndexInPresetList );
 				ImGui.Checkbox( "Allow placement of presets directly from the library*.", ref mConfiguration.mAllowDirectPlacePreset );
-				ImGui.Text( "*Please read the plugin site's readme before enabling this." );
+                ImGui.Checkbox( "Autoload waymarks from preset library.", ref mConfiguration.mAutoPopulatePresetsOnEnterInstance);
+                ImGui.Checkbox( "Autosave waymarks to preset library.", ref mConfiguration.mAutoSaveWaymarksOnInstanceLeave);
+                ImGui.Text( "*Please read the plugin site's readme before enabling this." );
 				if( !mConfiguration.ShowFilterOnCurrentZoneCheckbox ) FilterOnCurrentZone = false;
 				ImGui.Spacing();
 				if( ImGui.Button( "Save and Close" ) )
@@ -724,8 +726,8 @@ namespace WaymarkPresetPlugin
 		public int SelectedPreset { get; protected set; } = -1;
 		public bool WantToDeleteSelectedPreset { get; protected set; } = false;
 		public int EditingPresetIndex { get; protected set; } = -1;
+		public UInt16 CurrentTerritoryTypeID { get; set; }
 		protected  ScratchPreset ScratchEditingPreset { get; set; }
-		protected UInt16 CurrentTerritoryTypeID { get; set; }
 		protected ZoneSearcher EditWindowZoneSearcher { get; set; } = new ZoneSearcher();
 		protected string mEditWindowZoneFilterString = "";
 		protected bool EditWindowZoneComboWasOpen { get; set; } = false;

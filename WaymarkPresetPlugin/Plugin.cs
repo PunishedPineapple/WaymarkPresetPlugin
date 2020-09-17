@@ -35,7 +35,7 @@ namespace WaymarkPresetPlugin
 			mUI = new PluginUI( mConfiguration, mPluginInterface );
 			mPluginInterface.UiBuilder.OnBuildUi += DrawUI;
 			mPluginInterface.UiBuilder.OnOpenConfigUi += ( sender, args ) => DrawConfigUI();
-			mUI.SetCurrentTerritoryTypeID( mPluginInterface.ClientState.TerritoryType );
+			mUI.CurrentTerritoryTypeID = mPluginInterface.ClientState.TerritoryType;
 
 			//	Event Subscription
 			mPluginInterface.ClientState.TerritoryChanged += OnTerritoryChanged;
@@ -247,7 +247,57 @@ namespace WaymarkPresetPlugin
 
 		protected void OnTerritoryChanged( object sender, UInt16 ID )
 		{
-			mUI.SetCurrentTerritoryTypeID( ID );
+			var prevID = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID(mUI.CurrentTerritoryTypeID);
+			var newID = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID(ID);
+			mUI.CurrentTerritoryTypeID = ID;
+
+			if (mConfiguration.AutoSaveWaymarksOnInstanceLeave && ZoneInfoHandler.IsKnownContentFinderID(prevID))
+			{
+				var name = ZoneInfoHandler.GetZoneInfoFromContentFinderID(prevID).DutyName.ToString() + " - AutoImported";
+				for (uint i = 0; i < 5; i++)
+				{
+					try
+					{
+						var preset = WaymarkPreset.Parse(MemoryHandler.ReadSlot(i + 1));
+						if (preset.MapID == prevID)
+						{
+							preset.Name = name;
+							if (!mConfiguration.PresetLibrary.Presets.Any(x => x.Equals(preset)))
+							{
+								mConfiguration.PresetLibrary.Presets.Add(preset);
+							}
+						}
+					}
+					catch
+					{
+						// Do nothing
+					}
+				}
+
+				mConfiguration.Save();
+			}
+
+			if (mConfiguration.AutoPopulatePresetsOnEnterInstance && ZoneInfoHandler.IsKnownContentFinderID(newID))
+			{
+				var storedPresets = mConfiguration.PresetLibrary.Presets.Where(x => x.MapID == newID).Take(5).ToList();
+				for (uint i = 0; i < storedPresets.Count; i++)
+				{
+					var preset = storedPresets[(int)i];
+					byte[] gamePresetData = preset.ConstructGamePreset();
+
+					if (gamePresetData.Length == 104)
+					{
+						try
+						{
+							MemoryHandler.WriteSlot(i + 1, gamePresetData);
+						}
+						catch (Exception e)
+						{
+							PluginLog.Log($"Error while copying preset data to game slot: {e}");
+						}
+					}
+				}
+			}
 		}
 
 		public string Name => "WaymarkPresetPlugin";

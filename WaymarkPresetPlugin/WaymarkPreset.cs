@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 namespace WaymarkPresetPlugin
 {
 	[JsonObject( ItemNullValueHandling = NullValueHandling.Ignore )]	//	Shouldn't have any null waymarks, but just in case...
-	public class WaymarkPreset
+	public class WaymarkPreset : IEquatable<WaymarkPreset>
 	{
 		public WaymarkPreset()
 		{
@@ -213,6 +213,19 @@ namespace WaymarkPresetPlugin
 		public virtual bool ShouldSerializeTime()	//More JSON bullshit because it has to be polymorphic for the serializer to check it in a derived class apparently.
 		{
 			return true;
+		}
+
+		public bool Equals(WaymarkPreset other)
+		{
+			return A.Equals(other.A)
+				&& B.Equals(other.B)
+				&& C.Equals(other.C)
+				&& D.Equals(other.D)
+				&& One.Equals(other.One)
+				&& Two.Equals(other.Two)
+				&& Three.Equals(other.Three)
+				&& Four.Equals(other.Four)
+				&& MapID == other.MapID;
 		}
 	}
 
