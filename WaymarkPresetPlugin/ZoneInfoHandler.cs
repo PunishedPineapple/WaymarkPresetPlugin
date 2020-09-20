@@ -70,7 +70,7 @@ namespace WaymarkPresetPlugin
 					mMapInfoDict.Add( mapZoneKey, new List<MapInfo>() );
 				}
 
-				mMapInfoDict[mapZoneKey].Add( new MapInfo( map.Id, map.SizeFactor, map.OffsetX, map.OffsetY, map.DiscoveryIndex ) );
+				mMapInfoDict[mapZoneKey].Add( new MapInfo( map.Id, map.SizeFactor, map.OffsetX, map.OffsetY, map.PlaceNameSub.Value.Name ) );
 			}
 		}
 
@@ -164,20 +164,20 @@ namespace WaymarkPresetPlugin
 
 	public struct MapInfo
 	{
-		public MapInfo( string mapID, UInt16 sizeFactor, Int16 offsetX, Int16 offsetY, Int16 discoveryIndex )
+		public MapInfo( string mapID, UInt16 sizeFactor, Int16 offsetX, Int16 offsetY, string placeNameSub )
 		{
 			MapID = mapID;
 			SizeFactor = sizeFactor;
 			Offset = new Vector2( offsetX, offsetY );
-			DiscoveryIndex = discoveryIndex;
+			PlaceNameSub = placeNameSub;
 		}
 
-		public static readonly MapInfo Unknown = new MapInfo( "default/00", 100, 0, 0, -1 );
+		public static readonly MapInfo Unknown = new MapInfo( "default/00", 100, 0, 0, "" );
 
 		public string MapID { get; set; }
 		public UInt16 SizeFactor { get; set; }
 		public Vector2 Offset { get; set; }
-		public Int16 DiscoveryIndex { get; set; }
+		public string PlaceNameSub { get; set; }
 		public string GetMapFilePath( bool smallMap = false )
 		{
 			return $"ui/map/{MapID}/{MapID.Replace( "/", "" )}_{(smallMap ? "s" : "m")}.tex";
