@@ -593,7 +593,7 @@ namespace WaymarkPresetPlugin
 								var mapInfo = ZoneInfoHandler.GetMapInfoFromTerritoryTypeID( ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).TerritoryTypeID );
 								for( int i = 0; i < mapList.Count; ++ i )
 								{
-									if( ImGui.RadioButton( $"{i} - {mapInfo[i].GetMapFilePath()}##SelectedMapIndex", i == mSelectedMapIndex ) )
+									if( ImGui.RadioButton( $"{i} - {mapInfo[i].GetMapFilePath()}##SelectedMapIndex", i == mSelectedMapIndex ) )	//*****TODO: Give the map radio buttons proper labels.*****
 									{
 										mSelectedMapIndex = i;
 									}
@@ -620,16 +620,79 @@ namespace WaymarkPresetPlugin
 									}
 									mMapPan.X = Math.Min( 1.0f - mMapZoom * 0.5f, Math.Max( 0.0f + mMapZoom * 0.5f, mMapPan.X ) );
 									mMapPan.Y = Math.Min( 1.0f - mMapZoom * 0.5f, Math.Max( 0.0f + mMapZoom * 0.5f, mMapPan.Y ) );
+									Vector2 mapWidgetScreenPos = ImGui.GetItemRectMin();
 									if( ImGui.IsItemHovered() )
 									{
-										Vector2 mapPixelCoords = ImGui.GetMousePos() - ImGui.GetItemRectMin();
-										Vector2 mapNormCoords = mapPixelCoords / imageSize * ( mapUpperBounds - mapLowerBounds ) + mapLowerBounds - new Vector2( 0.5f, 0.5f );
-										Vector2 mapImageCoords = mapNormCoords * 2048.0f;
-										Vector2 mapRealCoords = mapImageCoords / (float)mapInfo[mSelectedMapIndex].SizeFactor * 100.0f - mapInfo[mSelectedMapIndex].Offset;
-										ImGui.Text( $"Image X: {mapPixelCoords.X}, Y: {mapPixelCoords.Y}" );
-										ImGui.Text( $"Map Norm X: {mapNormCoords.X}, Y: {mapNormCoords.Y}" );
-										ImGui.Text( $"Map Image X: {mapImageCoords.X}, Y: {mapImageCoords.Y}" );
-										ImGui.Text( $"Map X: {mapRealCoords.X}, Y: {mapRealCoords.Y}" );
+										Vector2 mapPixelCoords = ImGui.GetMousePos() - mapWidgetScreenPos;
+										Vector2 mapNormCoords = mapPixelCoords / imageSize * ( mapUpperBounds - mapLowerBounds ) + mapLowerBounds;
+										Vector2 mapRealCoords = mapInfo[mSelectedMapIndex].GetMapCoordinates( mapNormCoords * 2048.0f );
+										ImGui.Text( $"X: {mapRealCoords.X}, Y: {mapRealCoords.Y}" );
+									}
+									if( SelectedPreset > -1 && SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )	//*****TODO: Actually do something reasonable here; this mess is just for testing.*****
+									{
+										Vector2 waymarkMapPt = mapInfo[mSelectedMapIndex].GetPixelCoordinates( new Vector2( mConfiguration.PresetLibrary.Presets[SelectedPreset].A.X, mConfiguration.PresetLibrary.Presets[SelectedPreset].A.Z ) );
+										waymarkMapPt = waymarkMapPt / 2048.0f;
+										waymarkMapPt = ( waymarkMapPt - mapLowerBounds ) / ( mapUpperBounds - mapLowerBounds ) * imageSize;
+										waymarkMapPt = waymarkMapPt + mapWidgetScreenPos;
+										ImGui.Text( $"Screen pt for waymark A X: {waymarkMapPt.X}, Y: {waymarkMapPt.Y}" );
+										ImGui.GetForegroundDrawList().AddCircleFilled( waymarkMapPt, 4.0f, 0xFF0000FF );
+										//ImGui.GetForegroundDrawList().AddText( waymarkMapPt, 0xFF0000FF, "A" );
+
+										waymarkMapPt = mapInfo[mSelectedMapIndex].GetPixelCoordinates( new Vector2( mConfiguration.PresetLibrary.Presets[SelectedPreset].B.X, mConfiguration.PresetLibrary.Presets[SelectedPreset].B.Z ) );
+										waymarkMapPt = waymarkMapPt / 2048.0f;
+										waymarkMapPt = ( waymarkMapPt - mapLowerBounds ) / ( mapUpperBounds - mapLowerBounds ) * imageSize;
+										waymarkMapPt = waymarkMapPt + mapWidgetScreenPos;
+										ImGui.Text( $"Screen pt for waymark A X: {waymarkMapPt.X}, Y: {waymarkMapPt.Y}" );
+										ImGui.GetForegroundDrawList().AddCircleFilled( waymarkMapPt, 4.0f, 0xFF00FFFF );
+										//ImGui.GetForegroundDrawList().AddText( waymarkMapPt, 0xFF00FFFF, "B" );
+
+										waymarkMapPt = mapInfo[mSelectedMapIndex].GetPixelCoordinates( new Vector2( mConfiguration.PresetLibrary.Presets[SelectedPreset].C.X, mConfiguration.PresetLibrary.Presets[SelectedPreset].C.Z ) );
+										waymarkMapPt = waymarkMapPt / 2048.0f;
+										waymarkMapPt = ( waymarkMapPt - mapLowerBounds ) / ( mapUpperBounds - mapLowerBounds ) * imageSize;
+										waymarkMapPt = waymarkMapPt + mapWidgetScreenPos;
+										ImGui.Text( $"Screen pt for waymark A X: {waymarkMapPt.X}, Y: {waymarkMapPt.Y}" );
+										ImGui.GetForegroundDrawList().AddCircleFilled( waymarkMapPt, 4.0f, 0xFFFF0000 );
+										//ImGui.GetForegroundDrawList().AddText( waymarkMapPt, 0xFFFF0000, "C" );
+
+										waymarkMapPt = mapInfo[mSelectedMapIndex].GetPixelCoordinates( new Vector2( mConfiguration.PresetLibrary.Presets[SelectedPreset].D.X, mConfiguration.PresetLibrary.Presets[SelectedPreset].D.Z ) );
+										waymarkMapPt = waymarkMapPt / 2048.0f;
+										waymarkMapPt = ( waymarkMapPt - mapLowerBounds ) / ( mapUpperBounds - mapLowerBounds ) * imageSize;
+										waymarkMapPt = waymarkMapPt + mapWidgetScreenPos;
+										ImGui.Text( $"Screen pt for waymark A X: {waymarkMapPt.X}, Y: {waymarkMapPt.Y}" );
+										ImGui.GetForegroundDrawList().AddCircleFilled( waymarkMapPt, 4.0f, 0xFFFF00FF );
+										//ImGui.GetForegroundDrawList().AddText( waymarkMapPt, 0xFFFF00FF, "D" );
+
+										waymarkMapPt = mapInfo[mSelectedMapIndex].GetPixelCoordinates( new Vector2( mConfiguration.PresetLibrary.Presets[SelectedPreset].One.X, mConfiguration.PresetLibrary.Presets[SelectedPreset].One.Z ) );
+										waymarkMapPt = waymarkMapPt / 2048.0f;
+										waymarkMapPt = ( waymarkMapPt - mapLowerBounds ) / ( mapUpperBounds - mapLowerBounds ) * imageSize;
+										waymarkMapPt = waymarkMapPt + mapWidgetScreenPos;
+										ImGui.Text( $"Screen pt for waymark A X: {waymarkMapPt.X}, Y: {waymarkMapPt.Y}" );
+										ImGui.GetForegroundDrawList().AddCircleFilled( waymarkMapPt, 4.0f, 0xFF0000FF );
+										//ImGui.GetForegroundDrawList().AddText( waymarkMapPt, 0xFF0000FF, "1" );
+
+										waymarkMapPt = mapInfo[mSelectedMapIndex].GetPixelCoordinates( new Vector2( mConfiguration.PresetLibrary.Presets[SelectedPreset].Two.X, mConfiguration.PresetLibrary.Presets[SelectedPreset].Two.Z ) );
+										waymarkMapPt = waymarkMapPt / 2048.0f;
+										waymarkMapPt = ( waymarkMapPt - mapLowerBounds ) / ( mapUpperBounds - mapLowerBounds ) * imageSize;
+										waymarkMapPt = waymarkMapPt + mapWidgetScreenPos;
+										ImGui.Text( $"Screen pt for waymark A X: {waymarkMapPt.X}, Y: {waymarkMapPt.Y}" );
+										ImGui.GetForegroundDrawList().AddCircleFilled( waymarkMapPt, 4.0f, 0xFF00FFFF );
+										//ImGui.GetForegroundDrawList().AddText( waymarkMapPt, 0xFF00FFFF, "2" );
+
+										waymarkMapPt = mapInfo[mSelectedMapIndex].GetPixelCoordinates( new Vector2( mConfiguration.PresetLibrary.Presets[SelectedPreset].Three.X, mConfiguration.PresetLibrary.Presets[SelectedPreset].Three.Z ) );
+										waymarkMapPt = waymarkMapPt / 2048.0f;
+										waymarkMapPt = ( waymarkMapPt - mapLowerBounds ) / ( mapUpperBounds - mapLowerBounds ) * imageSize;
+										waymarkMapPt = waymarkMapPt + mapWidgetScreenPos;
+										ImGui.Text( $"Screen pt for waymark A X: {waymarkMapPt.X}, Y: {waymarkMapPt.Y}" );
+										ImGui.GetForegroundDrawList().AddCircleFilled( waymarkMapPt, 4.0f, 0xFFFF0000 );
+										//ImGui.GetForegroundDrawList().AddText( waymarkMapPt, 0xFFFF0000, "3" );
+
+										waymarkMapPt = mapInfo[mSelectedMapIndex].GetPixelCoordinates( new Vector2( mConfiguration.PresetLibrary.Presets[SelectedPreset].Four.X, mConfiguration.PresetLibrary.Presets[SelectedPreset].Four.Z ) );
+										waymarkMapPt = waymarkMapPt / 2048.0f;
+										waymarkMapPt = ( waymarkMapPt - mapLowerBounds ) / ( mapUpperBounds - mapLowerBounds ) * imageSize;
+										waymarkMapPt = waymarkMapPt + mapWidgetScreenPos;
+										ImGui.Text( $"Screen pt for waymark A X: {waymarkMapPt.X}, Y: {waymarkMapPt.Y}" );
+										ImGui.GetForegroundDrawList().AddCircleFilled( waymarkMapPt, 4.0f, 0xFFFF00FF );
+										//ImGui.GetForegroundDrawList().AddText( waymarkMapPt, 0xFFFF00FF, "4" );
 									}
 								}
 							}
