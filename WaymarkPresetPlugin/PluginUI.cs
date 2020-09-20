@@ -624,12 +624,13 @@ namespace WaymarkPresetPlugin
 									{
 										Vector2 mapPixelCoords = ImGui.GetMousePos() - ImGui.GetItemRectMin();
 										Vector2 mapNormCoords = mapPixelCoords / imageSize * ( mapUpperBounds - mapLowerBounds ) + mapLowerBounds - new Vector2( 0.5f, 0.5f );
-										Vector2 mapRealCoords = mapNormCoords * (float)mapInfo[mSelectedMapIndex].SizeFactor - mapInfo[mSelectedMapIndex].Offset;
+										Vector2 mapImageCoords = mapNormCoords * 2048.0f;
+										Vector2 mapRealCoords = mapImageCoords / (float)mapInfo[mSelectedMapIndex].SizeFactor * 100.0f - mapInfo[mSelectedMapIndex].Offset;
 										ImGui.Text( $"Image X: {mapPixelCoords.X}, Y: {mapPixelCoords.Y}" );
 										ImGui.Text( $"Map Norm X: {mapNormCoords.X}, Y: {mapNormCoords.Y}" );
+										ImGui.Text( $"Map Image X: {mapImageCoords.X}, Y: {mapImageCoords.Y}" );
 										ImGui.Text( $"Map X: {mapRealCoords.X}, Y: {mapRealCoords.Y}" );
 									}
-									
 								}
 							}
 						}
