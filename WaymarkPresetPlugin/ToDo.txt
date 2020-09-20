@@ -9,16 +9,18 @@ Low Priority:
 - Maybe add "preferred for zone" or "starred" bool/checkmark in the info pane/editor as a field in a preset to tell if it should be given priority for auto load?
 - Add an export/backup menu below import that lets you export all presets at once (probably line breaks between).  Maybe add a way to back up entire settings file from the UI, but not sure if ImGui has a file browser dialog; otherwise it's probably not worth the trouble.
 - Probably throttle checking the content finder link type in the future so that UI rendering doesn't call into the game a trillion times a second if we want to go back to removing the direct place button when not in an instance.
-- Look into clearing out newlines when a user tries to paste something from the PP settings file before it actually goes into the text box.  From Wintermute: "You may be able to 'intercept' the paste and strip linebreaks on it before it actually goes in your textbox, Doesn't imgui support something like it, I thought it did".
-- See if it's not too difficult to let a user just paste the entire PP settings file and/or a path to it and import from that.
 - Switch preset import text box to be one with a hint if that ever gets fixed in the C# ImGui bindings.
 - Make the preset info use a monospace font for coordinate alignment.
 - Give the UI a reference to the actual plugin object itself and see if we can get rid of duplicate functionality between the two parts.
 - Make the 5 slots/104 bytes numbers constants somewhere instead of being magic numbers.  Probably in GameDataHandler.
 - Think about whether ints or possbily even fixed-precision coordinates would be preferable to floats going forward.  Eliminates impact of rounding errors, but makes interop with other existing programs more difficult, and may or may not interfere with any future direct placement/saving features.  Are rounding errors even a potential issue as-is?
+- Add options to sort both zones and presets by name alphabetically (GitHub Issue #3).
 
 
 New Functionality:
 
 - Preview preset waymarks on game maps.
 - Look into placing a preset by placing each individual waymark to work around preset restrictions, but this honestly looks like a huge mess, and SE's code is doing timing stuff when placing a preset, so it might be even more weird.
+- PP settings and/or mass-import, considering the following:
+	- Look into clearing out newlines when a user tries to paste something from the PP settings file before it actually goes into the text box.  From Wintermute: "You may be able to 'intercept' the paste and strip linebreaks on it before it actually goes in your textbox, Doesn't imgui support something like it, I thought it did".
+	- See if it's not too difficult to let a user just paste the entire PP settings file and/or a path to it and import from that.
