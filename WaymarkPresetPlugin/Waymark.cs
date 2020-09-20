@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WaymarkPresetPlugin
 {
-	public class Waymark
+	public class Waymark : IEquatable<Waymark>
 	{
 		public Waymark()
 		{
@@ -33,5 +33,29 @@ namespace WaymarkPresetPlugin
 		public float Z { get; set; } = 0.0f;
 		public int ID { get; set; } = 0;	//This is kind of a BS field, but keep it for import/export interop with PP.
 		public bool Active { get; set; } = false;
+
+		#region IEquatable Implementation
+		public bool Equals( Waymark other )
+		{
+			return	Math.Abs( X - other.X ) <= mMaxEqualCoordDifference &&
+					Math.Abs( Y - other.Y ) <= mMaxEqualCoordDifference &&
+					Math.Abs( Z - other.Z ) <= mMaxEqualCoordDifference &&
+					Active == other.Active;
+		}
+
+		public override bool Equals( Object other )
+		{
+			return other.GetType().Equals( GetType() ) &&
+					( (Waymark)other ).Equals( this );
+		}
+
+		public override int GetHashCode()
+		{
+			return ( X, Y, Z, Active ).GetHashCode();
+		}
+
+		[NonSerialized]
+		private static readonly float mMaxEqualCoordDifference = 0.01f;
+		#endregion
 	}
 }

@@ -82,11 +82,11 @@ namespace WaymarkPresetPlugin
 			string commandResponse = "";
 			if( subCommand.Length == 0 )
 			{
-				mUI.MainWindowVisible ^= true;
+				mUI.MainWindowVisible = !mUI.MainWindowVisible;
 			}
 			else if( subCommand.ToLower() == "config" )
 			{
-				mUI.SettingsWindowVisible ^= true;
+				mUI.SettingsWindowVisible = !mUI.SettingsWindowVisible;
 			}
 			else if( subCommand.ToLower() == "slotinfo" )
 			{
@@ -116,7 +116,7 @@ namespace WaymarkPresetPlugin
 		{
 			if( args.ToLower() == "commands" )
 			{
-				return $"Valid commands are as follows: config, slotinfo, exportall{( mConfiguration.AllowDirectPlacePreset ? ", place" : "")}.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
+				return $"Valid commands are as follows: config, slotinfo, exportall{( mConfiguration.AllowDirectPlacePreset ? ", place" : "" )}.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
 			}
 			else if( args.ToLower() == "config" )
 			{
@@ -230,7 +230,7 @@ namespace WaymarkPresetPlugin
 			}
 			catch( Exception e )
 			{
-				PluginLog.Log( $"Unknown error occured while trying to copy presets to clipboard: {e}"  );
+				PluginLog.Log( $"Unknown error occured while trying to copy presets to clipboard: {e}" );
 				return "Unknown error occured while trying to copy presets to clipboard.";
 			}
 		}
@@ -247,11 +247,69 @@ namespace WaymarkPresetPlugin
 
 		protected void OnTerritoryChanged( object sender, UInt16 ID )
 		{
+			ZoneInfo prevTerritoryTypeInfo = ZoneInfoHandler.GetZoneInfoFromTerritoryTypeID( CurrentTerritoryTypeID );
+			ZoneInfo newTerritoryTypeInfo = ZoneInfoHandler.GetZoneInfoFromTerritoryTypeID( ID );
+			CurrentTerritoryTypeID = ID;
 			mUI.SetCurrentTerritoryTypeID( ID );
+
+			//	Auto-save presets on leaving instance.
+			if( mConfiguration.AutoSavePresetsOnInstanceLeave && ZoneInfoHandler.IsKnownContentFinderID( prevTerritoryTypeInfo.ContentFinderConditionID ) )
+			{
+				for( uint i = 1; i <= 5; ++i )
+				{
+					try
+					{
+						var preset = WaymarkPreset.Parse( MemoryHandler.ReadSlot( i ) );
+						if( preset.MapID == prevTerritoryTypeInfo.ContentFinderConditionID && !mConfiguration.PresetLibrary.Presets.Any( x => x.Equals( preset ) ) )
+						{
+							preset.Name = prevTerritoryTypeInfo.DutyName.ToString() + " - AutoImported";
+							mConfiguration.PresetLibrary.Presets.Add( preset );
+						}
+					}
+					catch( Exception e )
+					{
+						PluginLog.Log( $"Error while attempting to auto-import game slot {i}: {e}" );
+					}
+				}
+
+				mConfiguration.Save();
+			}
+
+			//	Auto-load presets on entering instance.
+			if( mConfiguration.AutoPopulatePresetsOnEnterInstance && ZoneInfoHandler.IsKnownContentFinderID( newTerritoryTypeInfo.ContentFinderConditionID ) )
+			{
+				//*****TODO: Eventually maybe have this check for a "preferred" flag on the presets and use that to help select which five to use, rather than just the first five from the zone.
+				var presetsToAutoLoad = mConfiguration.PresetLibrary.Presets.Where( x => x.MapID == newTerritoryTypeInfo.ContentFinderConditionID ).Take( 5 ).ToList();
+				for( int i = 0; i < 5; ++i )
+				{
+					//	Start out with an array of zeroes (which is how the game indicates an empty slot), and get an actual preset if we can.
+					byte[] gamePresetData = new byte[104];
+
+					if( i < presetsToAutoLoad.Count )
+					{
+						var preset = presetsToAutoLoad[i];
+						gamePresetData = preset.ConstructGamePreset();
+					}
+
+					if( gamePresetData.Length == 104 )
+					{
+						try
+						{
+							MemoryHandler.WriteSlot( (uint)i + 1, gamePresetData );
+						}
+						catch( Exception e )
+						{
+							PluginLog.Log( $"Error while auto copying preset data to game slot {i}: {e}" );
+						}
+					}
+				}
+			}
 		}
 
 		public string Name => "WaymarkPresetPlugin";
 		protected const string mTextCommandName = "/pwaymark";
+
+		public UInt16 CurrentTerritoryTypeID { get; protected set; }
 
 		protected DalamudPluginInterface mPluginInterface;
 		protected Configuration mConfiguration;

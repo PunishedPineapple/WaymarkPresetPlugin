@@ -496,7 +496,7 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 350, 310 ) );
+			ImGui.SetNextWindowSize( new Vector2( 350, 350 ) );
 			if( ImGui.Begin( "Waymark Settings", ref mSettingsWindowVisible,
 				ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
@@ -507,8 +507,12 @@ namespace WaymarkPresetPlugin
 				ImGui.Checkbox( "Show \"Filter on Current Zone\" checkbox.", ref mConfiguration.mShowFilterOnCurrentZoneCheckbox );
 				ImGui.Checkbox( "Show ID numbers next to zone names.", ref mConfiguration.mShowIDNumberNextToZoneNames );
 				ImGui.Checkbox( "Show the index of the preset within the library.", ref mConfiguration.mShowLibraryIndexInPresetList );
-				ImGui.Checkbox( "Allow placement of presets directly from the library*.", ref mConfiguration.mAllowDirectPlacePreset );
-				ImGui.Text( "*Please read the plugin site's readme before enabling this." );
+				ImGui.Checkbox( "Allow placement/saving of presets directly.", ref mConfiguration.mAllowDirectPlacePreset );
+				ImGuiHelpMarker( "Enables buttons to save and place presets to/from the library, bypassing the game's preset UI entirely.  Please read the plugin site's readme before enabling this." );
+				ImGui.Checkbox( "Autoload waymarks from library.", ref mConfiguration.mAutoPopulatePresetsOnEnterInstance );
+				ImGuiHelpMarker( "Automatically loads the waymarks that exist in the library for a zone when you load into it.  THIS WILL OVERWRITE THE GAME'S SLOTS WITHOUT WARNING, so please do not turn this on until you are certain that you have saved any data that you want to keep." );
+				ImGui.Checkbox( "Autosave waymarks to library.", ref mConfiguration.mAutoSavePresetsOnInstanceLeave );
+				ImGuiHelpMarker( "Automatically copies any populated game preset slots into the library upon exiting an instance." );
 				if( !mConfiguration.ShowFilterOnCurrentZoneCheckbox ) FilterOnCurrentZone = false;
 				ImGui.Spacing();
 				if( ImGui.Button( "Save and Close" ) )
@@ -675,6 +679,20 @@ namespace WaymarkPresetPlugin
 				}
 
 				return blendedTex;
+			}
+		}
+
+		protected void ImGuiHelpMarker( string description, bool sameLine = true, string marker = "?\u20DD" )
+		{
+			if( sameLine ) ImGui.SameLine();
+			ImGui.TextDisabled( marker );
+			if( ImGui.IsItemHovered() )
+			{
+				ImGui.BeginTooltip();
+				ImGui.PushTextWrapPos( ImGui.GetFontSize() * 35.0f );
+				ImGui.TextUnformatted( description );
+				ImGui.PopTextWrapPos();
+				ImGui.EndTooltip();
 			}
 		}
 

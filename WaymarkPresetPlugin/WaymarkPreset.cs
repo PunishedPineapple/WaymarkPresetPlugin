@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 namespace WaymarkPresetPlugin
 {
 	[JsonObject( ItemNullValueHandling = NullValueHandling.Ignore )]	//	Shouldn't have any null waymarks, but just in case...
-	public class WaymarkPreset
+	public class WaymarkPreset : IEquatable<WaymarkPreset>
 	{
 		public WaymarkPreset()
 		{
@@ -214,6 +214,32 @@ namespace WaymarkPresetPlugin
 		{
 			return true;
 		}
+
+		#region IEquatable Implementation
+		public bool Equals( WaymarkPreset other )
+		{
+			return	A.Equals( other.A ) &&
+					B.Equals( other.B ) &&
+					C.Equals( other.C ) &&
+					D.Equals( other.D ) &&
+					One.Equals( other.One ) &&
+					Two.Equals( other.Two ) &&
+					Three.Equals( other.Three ) &&
+					Four.Equals( other.Four ) &&
+					MapID == other.MapID;
+		}
+
+		public override bool Equals( Object other )
+		{
+			return other.GetType().Equals( GetType() ) &&
+					( (WaymarkPreset)other ).Equals( this );
+		}
+
+		public override int GetHashCode()
+		{
+			return ( A, B, C, D, One, Two, Three, Four, MapID ).GetHashCode();
+		}
+		#endregion
 	}
 
 	//	We may be getting the MapID as something that won't fit in UInt16, so this class helps us handle that.

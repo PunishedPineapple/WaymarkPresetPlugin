@@ -73,6 +73,20 @@ namespace WaymarkPresetPlugin
 			set { mAllowDirectPlacePreset = value; }
 		}
 
+		public bool mAutoPopulatePresetsOnEnterInstance = false;
+		public bool AutoPopulatePresetsOnEnterInstance
+		{
+			get { return mAutoPopulatePresetsOnEnterInstance; }
+			set { mAutoPopulatePresetsOnEnterInstance = value; }
+		}
+
+		public bool mAutoSavePresetsOnInstanceLeave = false;
+		public bool AutoSavePresetsOnInstanceLeave
+		{
+			get { return mAutoSavePresetsOnInstanceLeave; }
+			set { mAutoSavePresetsOnInstanceLeave = value; }
+		}
+
 		public string GetZoneName( UInt16 ID )
 		{
 			return GetZoneNameDelegate( ID, ShowIDNumberNextToZoneNames );
