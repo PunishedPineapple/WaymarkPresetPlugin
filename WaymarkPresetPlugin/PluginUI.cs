@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Security.Policy;
 using Newtonsoft.Json;
 using System.Diagnostics.Eventing.Reader;
+using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
 using System.Linq;
 using Dalamud.Plugin;
@@ -12,6 +13,7 @@ using Dalamud.Data.LuminaExtensions;
 using ImGuiScene;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Text.RegularExpressions;
 
 namespace WaymarkPresetPlugin
 {
@@ -47,6 +49,37 @@ namespace WaymarkPresetPlugin
 			//	Release the mutex and dispose of it.
 			mMapTextureDictMutex.ReleaseMutex();
 			mMapTextureDictMutex.Dispose();
+		}
+
+		public void Initialize()
+		{
+			//	Get the field markers sheet so that we can look up the textures we need.  Get it in English specifically so that we can more reliably parse the rows for what we want.
+			ExcelSheet<Lumina.Excel.GeneratedSheets.FieldMarker> fieldMarkerSheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.FieldMarker>( Dalamud.ClientLanguage.English );
+
+			//	Find the rows that we want and get the texture names from them.
+			/*foreach( var row in fieldMarkerSheet.ToList() )
+			{
+				var match = Regex.Match( row.Unknown3, "Waymark ([A-Z0-9])" );
+				if( match.Success )
+				{
+					try
+					{
+						var texFile = mPluginInterface.Data.GetIcon( row.Icon );
+						if( texFile != null )
+						{
+							var tex = mPluginInterface.UiBuilder.LoadImageRaw( texFile.Data, texFile.Header.Width, texFile.Header.Height, 4 );
+							if( tex != null && tex.ImGuiHandle != IntPtr.Zero )
+							{
+								WaymarkTextureDict.Add( match.Groups[0].Value.ToCharArray()[0], tex );
+							}
+						}
+					}
+					catch( Exception e )
+					{
+						throw new Exception( $"Error during UI initialization: Unable to load waymark icon texture: {e}" );
+					}
+				}
+			}*/
 		}
 
 		public void Draw()
@@ -360,6 +393,7 @@ namespace WaymarkPresetPlugin
 					ImGui.PopStyleColor();
 
 					//*****TODO: Display map window based on settings or place the button in a better place.*****
+					ImGui.SameLine();
 					if( ImGui.Button( "Map" ) )
 					{
 						MapWindowVisible = true;
@@ -510,7 +544,7 @@ namespace WaymarkPresetPlugin
 				ImGui.Checkbox( "Allow placement/saving of presets directly.", ref mConfiguration.mAllowDirectPlacePreset );
 				ImGuiHelpMarker( "Enables buttons to save and place presets to/from the library, bypassing the game's preset UI entirely.  Please read the plugin site's readme before enabling this." );
 				ImGui.Checkbox( "Autoload waymarks from library.", ref mConfiguration.mAutoPopulatePresetsOnEnterInstance );
-				ImGuiHelpMarker( "Automatically loads the waymarks that exist in the library for a zone when you load into it.  THIS WILL OVERWRITE THE GAME'S SLOTS WITHOUT WARNING, so please do not turn this on until you are certain that you have saved any data that you want to keep." );
+				ImGuiHelpMarker( "Automatically loads the waymarks that exist in the library for a zone when you load into it.  THIS WILL OVERWRITE THE GAME'S SLOTS WITHOUT WARNING, so please do not turn this on until you are certain that you have saved any data that you want to keep.  Consider using this with the auto-import option below to reduce the risk of inadvertent preset loss." );
 				ImGui.Checkbox( "Autosave waymarks to library.", ref mConfiguration.mAutoSavePresetsOnInstanceLeave );
 				ImGuiHelpMarker( "Automatically copies any populated game preset slots into the library upon exiting an instance." );
 				if( !mConfiguration.ShowFilterOnCurrentZoneCheckbox ) FilterOnCurrentZone = false;
@@ -556,9 +590,9 @@ namespace WaymarkPresetPlugin
 							else
 							{
 								var mapList = MapTextureDict[(UInt16)ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).TerritoryTypeID];
+								var mapInfo = ZoneInfoHandler.GetMapInfoFromTerritoryTypeID( ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).TerritoryTypeID );
 								for( int i = 0; i < mapList.Count; ++ i )
 								{
-									var mapInfo = ZoneInfoHandler.GetMapInfoFromTerritoryTypeID( ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).TerritoryTypeID );
 									if( ImGui.RadioButton( $"{i} - {mapInfo[i].GetMapFilePath()}##SelectedMapIndex", i == mSelectedMapIndex ) )
 									{
 										mSelectedMapIndex = i;
@@ -567,7 +601,35 @@ namespace WaymarkPresetPlugin
 								//*****TODO: Reset the selected map index to zero when the zone of the preset is different than last time.*****
 								if( mSelectedMapIndex < mapList.Count )
 								{
-									ImGui.Image( mapList[mSelectedMapIndex].ImGuiHandle, new Vector2( 512, 512 ), new Vector2( 0.25f, 0.25f ), new Vector2( 0.75f, 0.75f ), new Vector4( 1, 1, 1, 1 ), new Vector4( 1, 1, 1, 1 ) );
+									Vector2 windowSize = ImGui.GetWindowSize();
+									float imageSize = Math.Min( windowSize.X - 30, windowSize.Y - 30 );	//*****TODO*****: Take into account map radio buttons.*****
+									Vector2 mapLowerBounds = new Vector2( Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.X - mMapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.Y - mMapZoom * 0.5f ) ) );
+									Vector2 mapUpperBounds = new Vector2( Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.X + mMapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.Y + mMapZoom * 0.5f ) ) );
+									ImGui.ImageButton( mapList[mSelectedMapIndex].ImGuiHandle, new Vector2( imageSize, imageSize ), mapLowerBounds, mapUpperBounds, 0, new Vector4( 0, 0, 0, 1 ), new Vector4( 1, 1, 1, 1 ) );
+									if( ImGui.IsItemHovered() )
+									{
+										if( ImGui.GetIO().MouseWheel < 0 ) mMapZoom *= 1.1f;
+										if( ImGui.GetIO().MouseWheel > 0 ) mMapZoom *= 0.9f;
+										mMapZoom = Math.Min( 1.0f, Math.Max( 0.01f, mMapZoom ) );
+									}
+									if( ImGui.IsItemActive() )
+									{
+										var mouseDragDelta = ImGui.GetIO().MouseDown[0] ? ImGui.GetIO().MouseDelta : new Vector2( 0, 0 );
+										mMapPan.X -= mouseDragDelta.X * mMapZoom / imageSize;
+										mMapPan.Y -= mouseDragDelta.Y * mMapZoom / imageSize;
+									}
+									mMapPan.X = Math.Min( 1.0f - mMapZoom * 0.5f, Math.Max( 0.0f + mMapZoom * 0.5f, mMapPan.X ) );
+									mMapPan.Y = Math.Min( 1.0f - mMapZoom * 0.5f, Math.Max( 0.0f + mMapZoom * 0.5f, mMapPan.Y ) );
+									if( ImGui.IsItemHovered() )
+									{
+										Vector2 mapPixelCoords = ImGui.GetMousePos() - ImGui.GetItemRectMin();
+										Vector2 mapNormCoords = mapPixelCoords / imageSize * ( mapUpperBounds - mapLowerBounds ) + mapLowerBounds - new Vector2( 0.5f, 0.5f );
+										Vector2 mapRealCoords = mapNormCoords * (float)mapInfo[mSelectedMapIndex].SizeFactor - mapInfo[mSelectedMapIndex].Offset;
+										ImGui.Text( $"Image X: {mapPixelCoords.X}, Y: {mapPixelCoords.Y}" );
+										ImGui.Text( $"Map Norm X: {mapNormCoords.X}, Y: {mapNormCoords.Y}" );
+										ImGui.Text( $"Map X: {mapRealCoords.X}, Y: {mapRealCoords.Y}" );
+									}
+									
 								}
 							}
 						}
@@ -749,7 +811,10 @@ namespace WaymarkPresetPlugin
 		protected bool EditWindowZoneComboWasOpen { get; set; } = false;
 		protected Dictionary<UInt16, List<TextureWrap>> MapTextureDict { get; set; } = new Dictionary<UInt16, List<TextureWrap>>();
 		protected Mutex mMapTextureDictMutex = new Mutex();
-		protected int mSelectedMapIndex = 0;
+		protected int mSelectedMapIndex = 0;    //*****TODO: This needs to be handled a lot better.*****
+		protected float mMapZoom = 1.0f;
+		protected Vector2 mMapPan = new Vector2( 0.5f, 0.5f );
+		protected Dictionary<char, TextureWrap> WaymarkTextureDict { get; set; } = new Dictionary<char, TextureWrap>();
 	}
 
 	//	We need this because we can't pass the properties from the regular Waymark class as refs to ImGui stuff.  It's an absolute dog's breakfast, but whatever at this point honestly.

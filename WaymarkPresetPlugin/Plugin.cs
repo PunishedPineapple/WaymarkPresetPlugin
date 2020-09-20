@@ -36,6 +36,7 @@ namespace WaymarkPresetPlugin
 			mPluginInterface.UiBuilder.OnBuildUi += DrawUI;
 			mPluginInterface.UiBuilder.OnOpenConfigUi += ( sender, args ) => DrawConfigUI();
 			mUI.SetCurrentTerritoryTypeID( mPluginInterface.ClientState.TerritoryType );
+			mUI.Initialize();
 
 			//	Event Subscription
 			mPluginInterface.ClientState.TerritoryChanged += OnTerritoryChanged;
