@@ -6,6 +6,7 @@
 Low Priority:
 
 - Double check config option help hovers for completeness.
+- Use waymark icons instead of just plain text for markers on maps once Dalamud has updated Lumina.
 - Maybe add "preferred for zone" or "starred" bool/checkmark in the info pane/editor as a field in a preset to tell if it should be given priority for auto load?
 - Add an export/backup menu below import that lets you export all presets at once (probably line breaks between).  Maybe add a way to back up entire settings file from the UI, but not sure if ImGui has a file browser dialog; otherwise it's probably not worth the trouble.
 - Probably throttle checking the content finder link type in the future so that UI rendering doesn't call into the game a trillion times a second if we want to go back to removing the direct place button when not in an instance.
@@ -15,6 +16,10 @@ Low Priority:
 - Make the 5 slots/104 bytes numbers constants somewhere instead of being magic numbers.  Probably in GameDataHandler.
 - Think about whether ints or possbily even fixed-precision coordinates would be preferable to floats going forward.  Eliminates impact of rounding errors, but makes interop with other existing programs more difficult, and may or may not interfere with any future direct placement/saving features.  Are rounding errors even a potential issue as-is?
 - Add options to sort both zones and presets by name alphabetically (GitHub Issue #3).
+- Look into getting information about multi-map situations from the lgbs in order to only show waymarks on the appropriate maps of a zone.  Starting point information to pick back up on this:
+	- Basic paths to bg lgbs for zones are in Bg column of TerritoryType sheet.
+	- Lumina command line to get basic bg lgb file information for say Pharos Sirius is therefore: Lumina.Cmd.exe file bg/ffxiv/sea_s1/dun/s1d4/level/bg.lgb extract --datapath "C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack"
+	- No idea how to process the lgb for the map boundaries though.
 
 
 New Functionality:
