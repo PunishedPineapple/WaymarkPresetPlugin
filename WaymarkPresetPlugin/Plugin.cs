@@ -264,7 +264,7 @@ namespace WaymarkPresetPlugin
 						if( preset.MapID == prevTerritoryTypeInfo.ContentFinderConditionID && !mConfiguration.PresetLibrary.Presets.Any( x => x.Equals( preset ) ) )
 						{
 							preset.Name = prevTerritoryTypeInfo.DutyName.ToString() + " - AutoImported";
-							mConfiguration.PresetLibrary.Presets.Add( preset );
+							mConfiguration.PresetLibrary.ImportPreset( preset );
 						}
 					}
 					catch( Exception e )
