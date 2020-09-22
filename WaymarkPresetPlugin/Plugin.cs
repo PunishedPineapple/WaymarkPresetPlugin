@@ -214,14 +214,14 @@ namespace WaymarkPresetPlugin
 				{
 					foreach( var preset in mConfiguration.PresetLibrary.Presets )
 					{
-						str += WaymarkPresetExport.GetExportString( preset ) + "\r\n";
+						str += JsonConvert.SerializeObject( preset ) + "\r\n";
 					}
 				}
 				else
 				{
 					foreach( var preset in mConfiguration.PresetLibrary.Presets )
 					{
-						str += JsonConvert.SerializeObject( preset ) + "\r\n";
+						str += WaymarkPresetExport.GetExportString( preset ) + "\r\n";
 					}
 				}
 
