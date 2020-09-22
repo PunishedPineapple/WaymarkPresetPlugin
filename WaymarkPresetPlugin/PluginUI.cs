@@ -592,11 +592,15 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 			bool showingEditingView = EditingPresetIndex > -1 && ScratchEditingPreset != null;
+			if( !showingEditingView )
+			{
+				CapturedWaymarkIndex = -1;	//	Shouldn't be necessary, but better to be safe than potentially muck up a preset.
+			}
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 350, 380 ), new Vector2( int.MaxValue, int.MaxValue ) );
 			if( ImGui.Begin( $"Map View{(showingEditingView ? " - Editing" : "")}###MapViewWindow", ref mMapWindowVisible,
 				ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
-				//	Get TerritoryType ID of map to show, along with the (pseudo) zone coordinates of the waymarks.  Do this up front because we can be showing both normal presets or an editing scratch preset in the map view.
+				//	Get TerritoryType ID of map to show, along with the (2D/XZ) zone coordinates of the waymarks.  Do this up front because we can be showing both normal presets or an editing scratch preset in the map view.
 				uint territoryTypeIDToShow = 0;
 				Vector2[] marker2dCoords = new Vector2[8];
 				bool[] markerActiveFlags = new bool[8];
@@ -650,29 +654,67 @@ namespace WaymarkPresetPlugin
 								if( mSelectedSubMapIndex < mapList.Count )
 								{
 									Vector2 windowSize = ImGui.GetWindowSize();
-									float imageSize = Math.Min( windowSize.X - 15, windowSize.Y - 60 );	//*****TODO*****: Take into account map radio buttons.*****
+									float imageSize = Math.Min( windowSize.X - 15, windowSize.Y - 60 );
 									Vector2 mapLowerBounds = new Vector2( Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.X - mMapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.Y - mMapZoom * 0.5f ) ) );
 									Vector2 mapUpperBounds = new Vector2( Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.X + mMapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.Y + mMapZoom * 0.5f ) ) );
 									ImGui.ImageButton( mapList[mSelectedSubMapIndex].ImGuiHandle, new Vector2( imageSize, imageSize ), mapLowerBounds, mapUpperBounds, 0, new Vector4( 0, 0, 0, 1 ), new Vector4( 1, 1, 1, 1 ) );
-									if( ImGui.IsItemHovered() )
+									Vector2 mapWidgetScreenPos = ImGui.GetItemRectMin();
+									if( ImGui.IsItemHovered() && CapturedWaymarkIndex < 0 )
 									{
 										if( ImGui.GetIO().MouseWheel < 0 ) mMapZoom *= 1.1f;
 										if( ImGui.GetIO().MouseWheel > 0 ) mMapZoom *= 0.9f;
 										mMapZoom = Math.Min( 1.0f, Math.Max( 0.01f, mMapZoom ) );
 									}
-									if( ImGui.IsItemActive() )
+									if( ImGui.IsItemActive() && ImGui.GetIO().MouseDown[0] )
 									{
-										var mouseDragDelta = ImGui.GetIO().MouseDown[0] ? ImGui.GetIO().MouseDelta : new Vector2( 0, 0 );
-										mMapPan.X -= mouseDragDelta.X * mMapZoom / imageSize;
-										mMapPan.Y -= mouseDragDelta.Y * mMapZoom / imageSize;
+										Vector2 mouseDragDelta = ImGui.GetIO().MouseDelta;
+										//	If we have a captured waymark, convert it to screen coordinates, add on the mouse delta, and then convert it back and save off the new location as-appropriate
+										if( CapturedWaymarkIndex > -1 && CapturedWaymarkIndex < marker2dCoords.Length )
+										{
+											Vector2 capturedMarkerPixelCoords = MapTextureCoordsToScreenCoords(	mapInfo[mSelectedSubMapIndex].GetPixelCoordinates( marker2dCoords[CapturedWaymarkIndex] ),
+																												mapLowerBounds,
+																												mapUpperBounds,
+																												new Vector2( imageSize ),
+																												mapWidgetScreenPos );
+
+											capturedMarkerPixelCoords += mouseDragDelta;
+
+											Vector2 capturedMarkerTexCoords = MapScreenCoordsToMapTextureCoords(	capturedMarkerPixelCoords,
+																													mapLowerBounds,
+																													mapUpperBounds,
+																													new Vector2( imageSize ),
+																													mapWidgetScreenPos );
+
+											marker2dCoords[CapturedWaymarkIndex] = mapInfo[mSelectedSubMapIndex].GetMapCoordinates( capturedMarkerTexCoords );
+
+											if( EditingPresetIndex > -1 && ScratchEditingPreset != null )
+											{
+												ScratchEditingPreset.Waymarks[CapturedWaymarkIndex].X = marker2dCoords[CapturedWaymarkIndex].X;
+												ScratchEditingPreset.Waymarks[CapturedWaymarkIndex].Z = marker2dCoords[CapturedWaymarkIndex].Y;
+											}
+										}
+										//	Otherwise, we're just panning the map.
+										else
+										{
+											mMapPan.X -= mouseDragDelta.X * mMapZoom / imageSize;
+											mMapPan.Y -= mouseDragDelta.Y * mMapZoom / imageSize;
+										}
+									}
+									else
+									{
+										CapturedWaymarkIndex = -1;
 									}
 									mMapPan.X = Math.Min( 1.0f - mMapZoom * 0.5f, Math.Max( 0.0f + mMapZoom * 0.5f, mMapPan.X ) );
 									mMapPan.Y = Math.Min( 1.0f - mMapZoom * 0.5f, Math.Max( 0.0f + mMapZoom * 0.5f, mMapPan.Y ) );
-									Vector2 mapWidgetScreenPos = ImGui.GetItemRectMin();
 									string cursorPosText = "X: ---, Y: ---";
 									if( ImGui.IsItemHovered() )
 									{
 										Vector2 mapPixelCoords = ImGui.GetMousePos() - mapWidgetScreenPos;
+										//	If we are dragging a marker, offset the mouse position in here to show the actual point location, not the mouse position).
+										if( showingEditingView && CapturedWaymarkIndex > -1 )
+										{
+											mapPixelCoords += CapturedWaymarkOffset;
+										}
 										Vector2 mapNormCoords = mapPixelCoords / imageSize * ( mapUpperBounds - mapLowerBounds ) + mapLowerBounds;
 										Vector2 mapRealCoords = mapInfo[mSelectedSubMapIndex].GetMapCoordinates( mapNormCoords * 2048.0f );
 										cursorPosText = $"X: {mapRealCoords.X.ToString( "0.00" )}, Y: {mapRealCoords.Y.ToString( "0.00" )}";
@@ -683,12 +725,27 @@ namespace WaymarkPresetPlugin
 									{
 										if( markerActiveFlags[i] )
 										{
-											Vector2 waymarkMapPt = mapInfo[mSelectedSubMapIndex].GetPixelCoordinates( marker2dCoords[i] );
-											waymarkMapPt = waymarkMapPt / 2048.0f;
-											waymarkMapPt = ( waymarkMapPt - mapLowerBounds ) / ( mapUpperBounds - mapLowerBounds ) * imageSize;
-											waymarkMapPt = waymarkMapPt + mapWidgetScreenPos;
+											Vector2 waymarkMapPt = MapTextureCoordsToScreenCoords(	mapInfo[mSelectedSubMapIndex].GetPixelCoordinates( marker2dCoords[i] ),
+																									mapLowerBounds,	
+																									mapUpperBounds,
+																									new Vector2( imageSize ),
+																									mapWidgetScreenPos );
+											
 											ImGui.GetWindowDrawList().AddCircleFilled( waymarkMapPt, 4.0f, mMapMarkerColors[i] );
 											ImGui.GetWindowDrawList().AddText( waymarkMapPt + waymarkIconOffset, mMapMarkerColors[i], mMapMarkerLabels[i] );
+
+											//	Capture the waymark if appropriate.
+											if( showingEditingView &&
+												CapturedWaymarkIndex < 0 &&
+												ImGui.GetIO().MouseDown[0] &&
+												ImGui.GetIO().MousePos.X >= waymarkMapPt.X + WaymarkCaptureBounds.X &&
+												ImGui.GetIO().MousePos.X <= waymarkMapPt.X + WaymarkCaptureBounds.Z &&
+												ImGui.GetIO().MousePos.Y >= waymarkMapPt.Y + WaymarkCaptureBounds.Y &&
+												ImGui.GetIO().MousePos.Y <= waymarkMapPt.Y + WaymarkCaptureBounds.W )
+											{
+												CapturedWaymarkIndex = i;
+												CapturedWaymarkOffset = waymarkMapPt - ImGui.GetIO().MousePos;
+											}
 										}
 									}
 								}
@@ -726,9 +783,29 @@ namespace WaymarkPresetPlugin
 				{
 					ImGui.Text( "No Preset Selected" );
 				}
-				
 			}
 			ImGui.End();
+		}
+
+		protected Vector2 MapTextureCoordsToScreenCoords( Vector2 mapTextureCoords_Px, Vector2 mapVisibleLowerBounds_Norm, Vector2 mapVisibleUpperBounds_Norm, Vector2 mapViewportSize_Px, Vector2 mapViewportScreenPos_Px )
+		{
+			Vector2 newScreenCoords = mapTextureCoords_Px;
+			newScreenCoords /= 2048.0f;
+			newScreenCoords = ( newScreenCoords - mapVisibleLowerBounds_Norm ) / ( mapVisibleUpperBounds_Norm - mapVisibleLowerBounds_Norm ) * mapViewportSize_Px;
+			newScreenCoords = newScreenCoords + mapViewportScreenPos_Px;
+
+			return newScreenCoords;
+		}
+
+		protected Vector2 MapScreenCoordsToMapTextureCoords( Vector2 mapScreenCoords_Px, Vector2 mapVisibleLowerBounds_Norm, Vector2 mapVisibleUpperBounds_Norm, Vector2 mapViewportSize_Px, Vector2 mapViewportScreenPos_Px )
+		{
+			Vector2 newMapTexCoords = mapScreenCoords_Px;
+			newMapTexCoords -= mapViewportScreenPos_Px;
+			newMapTexCoords /= mapViewportSize_Px;
+			newMapTexCoords *= mapVisibleUpperBounds_Norm - mapVisibleLowerBounds_Norm;
+			newMapTexCoords += mapVisibleLowerBounds_Norm;
+			newMapTexCoords *= 2048.0f;
+			return newMapTexCoords;
 		}
 
 		protected void CopyPresetToGameSlot( WaymarkPreset preset, uint slot )
@@ -893,6 +970,9 @@ namespace WaymarkPresetPlugin
 		protected Dictionary<char, TextureWrap> WaymarkTextureDict { get; set; } = new Dictionary<char, TextureWrap>();
 		protected uint[] mMapMarkerColors = new uint[8];
 		protected string[] mMapMarkerLabels = new string[8];
+		protected int CapturedWaymarkIndex { get; set; } = -1;
+		protected Vector2 CapturedWaymarkOffset { get; set; } = new Vector2( 0, 0 );
+		protected Vector4 WaymarkCaptureBounds { get; set; } = new Vector4( -8, -23, 8, 6 );
 	}
 
 	//	We need this because we can't pass the properties from the regular Waymark class as refs to ImGui stuff.  It's an absolute dog's breakfast, but whatever at this point honestly.
