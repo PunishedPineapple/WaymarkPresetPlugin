@@ -376,7 +376,7 @@ namespace WaymarkPresetPlugin
 
 					ImGui.EndGroup();
 					ImGui.Text( "Preset Info:" );
-					ImGui.SameLine( ImGui.GetWindowWidth() - 79 );
+					ImGui.SameLine( ImGui.GetWindowWidth() - 100 );
 					if( ImGui.Button( "Toggle Map" ) )
 					{
 						MapWindowVisible = !MapWindowVisible;
@@ -603,13 +603,14 @@ namespace WaymarkPresetPlugin
 			{
 				return;
 			}
+
 			bool showingEditingView = EditingPresetIndex > -1 && ScratchEditingPreset != null;
 			if( !showingEditingView )
 			{
 				CapturedWaymarkIndex = -1;	//	Shouldn't be necessary, but better to be safe than potentially muck up a preset.
 			}
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 350, 380 ), new Vector2( int.MaxValue, int.MaxValue ) );
-			if( ImGui.Begin( $"Map View{(showingEditingView ? " - Editing" : "")}###MapViewWindow", ref mMapWindowVisible,
+			if ( ImGui.Begin( $"Map View{(showingEditingView ? " - Editing" : "")}###MapViewWindow", ref mMapWindowVisible,
 				ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
 				//	Get TerritoryType ID of map to show, along with the (2D/XZ) zone coordinates of the waymarks.  Do this up front because we can be showing both normal presets or an editing scratch preset in the map view.
@@ -667,6 +668,9 @@ namespace WaymarkPresetPlugin
 								{
 									Vector2 windowSize = ImGui.GetWindowSize();
 									float imageSize = Math.Min( windowSize.X - 15, windowSize.Y - 60 );
+
+									ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0));
+									ImGui.BeginChild("Map Image", new Vector2(imageSize), false, ImGuiWindowFlags.NoDecoration);
 									Vector2 mapLowerBounds = new Vector2( Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.X - mMapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.Y - mMapZoom * 0.5f ) ) );
 									Vector2 mapUpperBounds = new Vector2( Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.X + mMapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.Y + mMapZoom * 0.5f ) ) );
 									ImGui.ImageButton( mapList[mSelectedSubMapIndex].ImGuiHandle, new Vector2( imageSize, imageSize ), mapLowerBounds, mapUpperBounds, 0, new Vector4( 0, 0, 0, 1 ), new Vector4( 1, 1, 1, 1 ) );
@@ -718,6 +722,7 @@ namespace WaymarkPresetPlugin
 									}
 									mMapPan.X = Math.Min( 1.0f - mMapZoom * 0.5f, Math.Max( 0.0f + mMapZoom * 0.5f, mMapPan.X ) );
 									mMapPan.Y = Math.Min( 1.0f - mMapZoom * 0.5f, Math.Max( 0.0f + mMapZoom * 0.5f, mMapPan.Y ) );
+
 									string cursorPosText = "X: ---, Y: ---";
 									if( ImGui.IsItemHovered() )
 									{
@@ -731,7 +736,6 @@ namespace WaymarkPresetPlugin
 										Vector2 mapRealCoords = mapInfo[mSelectedSubMapIndex].GetMapCoordinates( mapNormCoords * 2048.0f );
 										cursorPosText = $"X: {mapRealCoords.X.ToString( "0.00" )}, Y: {mapRealCoords.Y.ToString( "0.00" )}";
 									}
-									ImGui.Text( cursorPosText );
 									Vector2 iconSize = new Vector2(15, 15);
 									for( int i = 0; i < 8; ++i )
 									{
@@ -760,6 +764,9 @@ namespace WaymarkPresetPlugin
 											}
 										}
 									}
+									ImGui.EndChild();
+									ImGui.PopStyleVar();
+									ImGui.Text(cursorPosText);
 								}
 								//	Put the radio buttons down below since they'll not commonly be used.  Set the selected map index to zero first if applicable.
 								if( mapList.Count <= 1 || mSelectedSubMapIndex >= mapList.Count )
@@ -796,6 +803,7 @@ namespace WaymarkPresetPlugin
 					ImGui.Text( "No Preset Selected" );
 				}
 			}
+
 			ImGui.End();
 		}
 
