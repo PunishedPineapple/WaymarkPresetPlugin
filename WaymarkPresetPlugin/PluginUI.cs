@@ -82,24 +82,36 @@ namespace WaymarkPresetPlugin
 				}
 			}*/
 
-			//*****TODO: This probably needs to be modified once we can actually get the real icons through lumina.*****
-			mMapMarkerColors[0] = 0xFF0000FF;
-			mMapMarkerColors[1] = 0xFF00FFFF;
-			mMapMarkerColors[2] = 0xFFFF0000;
-			mMapMarkerColors[3] = 0xFFFF00FF;
-			mMapMarkerColors[4] = 0xFF0000FF;
-			mMapMarkerColors[5] = 0xFF00FFFF;
-			mMapMarkerColors[6] = 0xFFFF0000;
-			mMapMarkerColors[7] = 0xFFFF00FF;
+			var paths = new List<string>
+			{
+				"ui/icon/061000/061241.tex", // A
+				"ui/icon/061000/061242.tex", // B
+				"ui/icon/061000/061243.tex", // C
+				"ui/icon/061000/061247.tex", // D
+				"ui/icon/061000/061244.tex", // 1
+				"ui/icon/061000/061245.tex", // 2
+				"ui/icon/061000/061246.tex", // 3
+				"ui/icon/061000/061248.tex", // 4
+			};
+			for (int i = 0; i < 8; i++)
+			{
+				//*****TODO: This probably needs to be modified once we can actually get the real icons through lumina.*****
+				var texFile =  mPluginInterface.Data.GetFile(paths[i]);
+				var bytes = texFile.Data;
+				var imageDataBGRA = texFile.Data.Skip(80).ToArray();
+				var imageDataRGBA = new Byte[40 * 40 * 4];
+				
+				for (int j = 0; j < imageDataBGRA.Length; j += 4)
+				{
+					imageDataRGBA[j] = imageDataBGRA[j + 2];
+					imageDataRGBA[j + 1] = imageDataBGRA[j + 1];
+					imageDataRGBA[j + 2] = imageDataBGRA[j];
+					imageDataRGBA[j + 3] = imageDataBGRA[j + 3];
+				}
 
-			mMapMarkerLabels[0] = "A";
-			mMapMarkerLabels[1] = "B";
-			mMapMarkerLabels[2] = "C";
-			mMapMarkerLabels[3] = "D";
-			mMapMarkerLabels[4] = "1";
-			mMapMarkerLabels[5] = "2";
-			mMapMarkerLabels[6] = "3";
-			mMapMarkerLabels[7] = "4";
+				var tex = mPluginInterface.UiBuilder.LoadImageRaw(imageDataRGBA, 40, 40, 4);
+				mapMarkerTextures[i] = tex;
+			}
 		}
 
 		public void Draw()
@@ -364,10 +376,10 @@ namespace WaymarkPresetPlugin
 
 					ImGui.EndGroup();
 					ImGui.Text( "Preset Info:" );
-					ImGui.SameLine( ImGui.GetWindowWidth() - 79 );
-					if( ImGui.Button( "View Map" ) )
+					ImGui.SameLine( ImGui.GetWindowWidth() - 100 );
+					if( ImGui.Button( "Toggle Map" ) )
 					{
-						MapWindowVisible = true;
+						MapWindowVisible = !MapWindowVisible;
 					}
 					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames ) );
 					ImGui.Spacing();
@@ -591,13 +603,14 @@ namespace WaymarkPresetPlugin
 			{
 				return;
 			}
+
 			bool showingEditingView = EditingPresetIndex > -1 && ScratchEditingPreset != null;
 			if( !showingEditingView )
 			{
 				CapturedWaymarkIndex = -1;	//	Shouldn't be necessary, but better to be safe than potentially muck up a preset.
 			}
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 350, 380 ), new Vector2( int.MaxValue, int.MaxValue ) );
-			if( ImGui.Begin( $"Map View{(showingEditingView ? " - Editing" : "")}###MapViewWindow", ref mMapWindowVisible,
+			if ( ImGui.Begin( $"Map View{(showingEditingView ? " - Editing" : "")}###MapViewWindow", ref mMapWindowVisible,
 				ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
 				//	Get TerritoryType ID of map to show, along with the (2D/XZ) zone coordinates of the waymarks.  Do this up front because we can be showing both normal presets or an editing scratch preset in the map view.
@@ -655,6 +668,9 @@ namespace WaymarkPresetPlugin
 								{
 									Vector2 windowSize = ImGui.GetWindowSize();
 									float imageSize = Math.Min( windowSize.X - 15, windowSize.Y - 60 );
+
+									ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0));
+									ImGui.BeginChild("Map Image", new Vector2(imageSize), false, ImGuiWindowFlags.NoDecoration);
 									Vector2 mapLowerBounds = new Vector2( Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.X - mMapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.Y - mMapZoom * 0.5f ) ) );
 									Vector2 mapUpperBounds = new Vector2( Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.X + mMapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mMapPan.Y + mMapZoom * 0.5f ) ) );
 									ImGui.ImageButton( mapList[mSelectedSubMapIndex].ImGuiHandle, new Vector2( imageSize, imageSize ), mapLowerBounds, mapUpperBounds, 0, new Vector4( 0, 0, 0, 1 ), new Vector4( 1, 1, 1, 1 ) );
@@ -706,6 +722,7 @@ namespace WaymarkPresetPlugin
 									}
 									mMapPan.X = Math.Min( 1.0f - mMapZoom * 0.5f, Math.Max( 0.0f + mMapZoom * 0.5f, mMapPan.X ) );
 									mMapPan.Y = Math.Min( 1.0f - mMapZoom * 0.5f, Math.Max( 0.0f + mMapZoom * 0.5f, mMapPan.Y ) );
+
 									string cursorPosText = "X: ---, Y: ---";
 									if( ImGui.IsItemHovered() )
 									{
@@ -719,8 +736,7 @@ namespace WaymarkPresetPlugin
 										Vector2 mapRealCoords = mapInfo[mSelectedSubMapIndex].GetMapCoordinates( mapNormCoords * 2048.0f );
 										cursorPosText = $"X: {mapRealCoords.X.ToString( "0.00" )}, Y: {mapRealCoords.Y.ToString( "0.00" )}";
 									}
-									ImGui.Text( cursorPosText );
-									Vector2 waymarkIconOffset = new Vector2( -3, -25 );
+									Vector2 iconSize = new Vector2(15, 15);
 									for( int i = 0; i < 8; ++i )
 									{
 										if( markerActiveFlags[i] )
@@ -731,8 +747,8 @@ namespace WaymarkPresetPlugin
 																									new Vector2( imageSize ),
 																									mapWidgetScreenPos );
 											
-											ImGui.GetWindowDrawList().AddCircleFilled( waymarkMapPt, 4.0f, mMapMarkerColors[i] );
-											ImGui.GetWindowDrawList().AddText( waymarkMapPt + waymarkIconOffset, mMapMarkerColors[i], mMapMarkerLabels[i] );
+											var icon = mapMarkerTextures[i];
+											ImGui.GetWindowDrawList().AddImage(icon.ImGuiHandle, waymarkMapPt - iconSize, waymarkMapPt + iconSize);
 
 											//	Capture the waymark if appropriate.
 											if( showingEditingView &&
@@ -748,6 +764,9 @@ namespace WaymarkPresetPlugin
 											}
 										}
 									}
+									ImGui.EndChild();
+									ImGui.PopStyleVar();
+									ImGui.Text(cursorPosText);
 								}
 								//	Put the radio buttons down below since they'll not commonly be used.  Set the selected map index to zero first if applicable.
 								if( mapList.Count <= 1 || mSelectedSubMapIndex >= mapList.Count )
@@ -784,6 +803,7 @@ namespace WaymarkPresetPlugin
 					ImGui.Text( "No Preset Selected" );
 				}
 			}
+
 			ImGui.End();
 		}
 
@@ -965,11 +985,10 @@ namespace WaymarkPresetPlugin
 		protected Dictionary<UInt16, List<TextureWrap>> MapTextureDict { get; set; } = new Dictionary<UInt16, List<TextureWrap>>();
 		protected Mutex mMapTextureDictMutex = new Mutex();
 		protected int mSelectedSubMapIndex = 0;
-		protected float mMapZoom = 1.0f;
+		protected float mMapZoom = 0.25f;
 		protected Vector2 mMapPan = new Vector2( 0.5f, 0.5f );
 		protected Dictionary<char, TextureWrap> WaymarkTextureDict { get; set; } = new Dictionary<char, TextureWrap>();
-		protected uint[] mMapMarkerColors = new uint[8];
-		protected string[] mMapMarkerLabels = new string[8];
+		protected TextureWrap[] mapMarkerTextures = new TextureWrap[8];
 		protected int CapturedWaymarkIndex { get; set; } = -1;
 		protected Vector2 CapturedWaymarkOffset { get; set; } = new Vector2( 0, 0 );
 		protected Vector4 WaymarkCaptureBounds { get; set; } = new Vector4( -8, -23, 8, 6 );
