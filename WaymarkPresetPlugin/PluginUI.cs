@@ -82,24 +82,36 @@ namespace WaymarkPresetPlugin
 				}
 			}*/
 
-			//*****TODO: This probably needs to be modified once we can actually get the real icons through lumina.*****
-			mMapMarkerColors[0] = 0xFF0000FF;
-			mMapMarkerColors[1] = 0xFF00FFFF;
-			mMapMarkerColors[2] = 0xFFFF0000;
-			mMapMarkerColors[3] = 0xFFFF00FF;
-			mMapMarkerColors[4] = 0xFF0000FF;
-			mMapMarkerColors[5] = 0xFF00FFFF;
-			mMapMarkerColors[6] = 0xFFFF0000;
-			mMapMarkerColors[7] = 0xFFFF00FF;
+			var paths = new List<string>
+			{
+				"ui/icon/061000/061241.tex", // A
+				"ui/icon/061000/061242.tex", // B
+				"ui/icon/061000/061243.tex", // C
+				"ui/icon/061000/061247.tex", // D
+				"ui/icon/061000/061244.tex", // 1
+				"ui/icon/061000/061245.tex", // 2
+				"ui/icon/061000/061246.tex", // 3
+				"ui/icon/061000/061248.tex", // 4
+			};
+			for (int i = 0; i < 8; i++)
+			{
+				//*****TODO: This probably needs to be modified once we can actually get the real icons through lumina.*****
+				var texFile =  mPluginInterface.Data.GetFile(paths[i]);
+				var bytes = texFile.Data;
+				var imageDataBGRA = texFile.Data.Skip(80).ToArray();
+				var imageDataRGBA = new Byte[40 * 40 * 4];
+				
+				for (int j = 0; j < imageDataBGRA.Length; j += 4)
+				{
+					imageDataRGBA[j] = imageDataBGRA[j + 2];
+					imageDataRGBA[j + 1] = imageDataBGRA[j + 1];
+					imageDataRGBA[j + 2] = imageDataBGRA[j];
+					imageDataRGBA[j + 3] = imageDataBGRA[j + 3];
+				}
 
-			mMapMarkerLabels[0] = "A";
-			mMapMarkerLabels[1] = "B";
-			mMapMarkerLabels[2] = "C";
-			mMapMarkerLabels[3] = "D";
-			mMapMarkerLabels[4] = "1";
-			mMapMarkerLabels[5] = "2";
-			mMapMarkerLabels[6] = "3";
-			mMapMarkerLabels[7] = "4";
+				var tex = mPluginInterface.UiBuilder.LoadImageRaw(imageDataRGBA, 40, 40, 4);
+				mapMarkerTextures[i] = tex;
+			}
 		}
 
 		public void Draw()
@@ -365,9 +377,9 @@ namespace WaymarkPresetPlugin
 					ImGui.EndGroup();
 					ImGui.Text( "Preset Info:" );
 					ImGui.SameLine( ImGui.GetWindowWidth() - 79 );
-					if( ImGui.Button( "View Map" ) )
+					if( ImGui.Button( "Toggle Map" ) )
 					{
-						MapWindowVisible = true;
+						MapWindowVisible = !MapWindowVisible;
 					}
 					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames ) );
 					ImGui.Spacing();
@@ -720,7 +732,7 @@ namespace WaymarkPresetPlugin
 										cursorPosText = $"X: {mapRealCoords.X.ToString( "0.00" )}, Y: {mapRealCoords.Y.ToString( "0.00" )}";
 									}
 									ImGui.Text( cursorPosText );
-									Vector2 waymarkIconOffset = new Vector2( -3, -25 );
+									Vector2 iconSize = new Vector2(15, 15);
 									for( int i = 0; i < 8; ++i )
 									{
 										if( markerActiveFlags[i] )
@@ -731,8 +743,8 @@ namespace WaymarkPresetPlugin
 																									new Vector2( imageSize ),
 																									mapWidgetScreenPos );
 											
-											ImGui.GetWindowDrawList().AddCircleFilled( waymarkMapPt, 4.0f, mMapMarkerColors[i] );
-											ImGui.GetWindowDrawList().AddText( waymarkMapPt + waymarkIconOffset, mMapMarkerColors[i], mMapMarkerLabels[i] );
+											var icon = mapMarkerTextures[i];
+											ImGui.GetWindowDrawList().AddImage(icon.ImGuiHandle, waymarkMapPt - iconSize, waymarkMapPt + iconSize);
 
 											//	Capture the waymark if appropriate.
 											if( showingEditingView &&
@@ -968,8 +980,7 @@ namespace WaymarkPresetPlugin
 		protected float mMapZoom = 1.0f;
 		protected Vector2 mMapPan = new Vector2( 0.5f, 0.5f );
 		protected Dictionary<char, TextureWrap> WaymarkTextureDict { get; set; } = new Dictionary<char, TextureWrap>();
-		protected uint[] mMapMarkerColors = new uint[8];
-		protected string[] mMapMarkerLabels = new string[8];
+		protected TextureWrap[] mapMarkerTextures = new TextureWrap[8];
 		protected int CapturedWaymarkIndex { get; set; } = -1;
 		protected Vector2 CapturedWaymarkOffset { get; set; } = new Vector2( 0, 0 );
 		protected Vector4 WaymarkCaptureBounds { get; set; } = new Vector4( -8, -23, 8, 6 );
