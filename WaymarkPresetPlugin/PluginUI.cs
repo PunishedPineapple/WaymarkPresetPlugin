@@ -985,7 +985,7 @@ namespace WaymarkPresetPlugin
 		protected Dictionary<UInt16, List<TextureWrap>> MapTextureDict { get; set; } = new Dictionary<UInt16, List<TextureWrap>>();
 		protected Mutex mMapTextureDictMutex = new Mutex();
 		protected int mSelectedSubMapIndex = 0;
-		protected float mMapZoom = 1.0f;
+		protected float mMapZoom = 0.25f;
 		protected Vector2 mMapPan = new Vector2( 0.5f, 0.5f );
 		protected Dictionary<char, TextureWrap> WaymarkTextureDict { get; set; } = new Dictionary<char, TextureWrap>();
 		protected TextureWrap[] mapMarkerTextures = new TextureWrap[8];
