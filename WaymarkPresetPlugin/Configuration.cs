@@ -14,7 +14,7 @@ namespace WaymarkPresetPlugin
 		}
 
 		//  Our own configuration options and data.
-		public WaymarkPresetLibrary PresetLibrary { get; set; } = new WaymarkPresetLibrary();
+		public WaymarkPresetLibrary PresetLibrary { get; protected set; } = new WaymarkPresetLibrary();
 
 		//	Need a real backing field on the following properties for use with ImGui.
 		public bool mSortPresetsByZone = true;
