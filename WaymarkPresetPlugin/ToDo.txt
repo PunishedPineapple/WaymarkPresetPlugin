@@ -5,8 +5,9 @@
 
 Low Priority:
 
+- Have the MapViewState dictionary be saved/loaded to the config file if we can find a good place to save when the plugin is unloaded.
 - Make the library enumerable and protect the presets list.  This doesn't completely solve the potential for untracked changes (names and zone IDs can change), but it helps.  To be able to fully remove sorting the presets each frame, presets would have to have change events for those fields as well to which the library could subscribe.
-- Use waymark icons instead of just plain text for markers on maps once Dalamud has updated Lumina.
+- Fix waymark icon loading once Dalamud has updated Lumina.
 - Maybe add "preferred for zone" or "starred" bool/checkmark in the info pane/editor as a field in a preset to tell if it should be given priority for auto load?
 - Probably throttle checking the content finder link type in the future so that UI rendering doesn't call into the game a trillion times a second if we want to go back to removing the direct place button when not in an instance.
 - Switch preset import text box to be one with a hint if that ever gets fixed in the C# ImGui bindings.
