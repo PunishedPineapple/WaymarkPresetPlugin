@@ -90,7 +90,7 @@ namespace WaymarkPresetPlugin
 			if( pWaymarkData != IntPtr.Zero )
 			{
 				//	Don't catch exceptions here; better to have the caller do it probably.
-				Marshal.Copy( pWaymarkData, data, 0, 104 );
+				lock( mPresetMemoryLockObject ) Marshal.Copy( pWaymarkData, data, 0, 104 );
 			}
 
 			return data;
@@ -102,7 +102,7 @@ namespace WaymarkPresetPlugin
 			if( data.Length >= 104 && pWaymarkData != IntPtr.Zero )
 			{
 				//	Don't catch exceptions here; better to have the caller do it probably.
-				Marshal.Copy( data, 0, pWaymarkData, 104 );
+				lock( mPresetMemoryLockObject ) Marshal.Copy( data, 0, pWaymarkData, 104 );
 				return true;
 			}
 			else
@@ -262,5 +262,7 @@ namespace WaymarkPresetPlugin
 		private static GetCurrentContentFinderLinkTypeDelegate mdGetCurrentContentFinderLinkType;
 		private static DirectPlacePresetDelegate mdDirectPlacePreset;
 		private static GetCurrentWaymarkDataDelegate mdGetCurrentWaymarkData;
+
+		private static readonly object mPresetMemoryLockObject = new object();
 	}
 }
