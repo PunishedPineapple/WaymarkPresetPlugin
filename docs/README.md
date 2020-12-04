@@ -11,18 +11,26 @@ This is a plugin for [XIVLauncher/Dalamud](https://github.com/goatcorp/FFXIVQuic
 	* Importing a preset from another user or program is also very simple; just paste the preset into the text box, and click the "Import" button.  Presets from any program that uses the Paisley Park JSON format are accepted.  If you don't see the text box go empty and a new preset appear in the library, that means that the preset you pasted was invalid.
 * Once you have imported one or more presets, you will now see a listing of those presets above the "Import Options" area.  By default, these presets are grouped by the zones to which they apply.
 * Clicking on one of these presets will display an additional pane to the right of the list.  This pane has a few different functions:
-	* The first, and most obvious, is that it shows the coordinates, zone ID, and last-modified time of the selected preset.
-	* Next, the five buttons at the top of the pane will copy the selected preset into the corresponding slot in the game's waymark dialog, allowing it to be placed while in a duty.  This overwrites whatever was in that slot, so make sure that you've backed up whatever was in that slot if you want to keep it.
-	* Finally, the edit and delete buttons at the bottom.  The delete button is self-explanatory.  The edit button brings up a window that allows you to directly edit the coordinates of each waymark, which waymarks are active, and the zone to which the preset applies.
+	* Shows the coordinates, zone, and last-modified time of the selected preset.
+	* The five buttons at the top of the pane will copy the selected preset into the corresponding slot in the game's waymark dialog, allowing it to be placed while in a duty.  This overwrites whatever was in that slot, so make sure that you've backed up whatever was in that slot if you want to keep it.
+	* The "Map View" button shows a window with the zone map and placed waymark icons (these can be dragged when the editor window is also open).
+	* Finally, the export, edit, and delete buttons at the bottom.  The export and delete buttons are self-explanatory.  The edit button brings up a window that allows you to directly edit the coordinates of each waymark, which waymarks are active, and the zone to which the preset applies.
 
 ## Direct Placement
-**Note: Temporarily disabled in 1.0.1.0 pending new Actor struct info.**
 
-~~This plugin supports placing a preset directly from the plugin as of version 1.0.0.0; however, this must be enabled in the plugin settings.  The reason for this is that placing from the plugin goes a little bit deeper into the game's chain of how waymark presets are placed, and while I've tried to be careful, and this feature has been tested and appears to work without issue, it is possible that something has been missed.  Copying presets from the library into a slot in the game's menu is quite clear-cut and simple.  Direct placement less so.~~
+Placing a preset directly from the plugin was added in version 1.0.0.0; however, this must be enabled in the plugin settings.  The reason for this is that placing from the plugin goes a little bit deeper into the game's chain of how waymark presets are placed, and while I've tried to be careful, and this feature has been tested and appears to work without issue, it is possible that something has been missed.  Copying presets from the library into a slot in the game's menu is quite clear-cut and simple.  Direct placement less so.
+
+Saving current waymarks directly is also supported as of version 1.1.0.0 with the same caveats.
 
 One more thing to note about this feature: it performs most of the checks that the game does, including checking that you are in an instance type that allows waymarks to be saved, and checking that you are not in combat.  The only thing that it does not check is that the zone of the preset matches the zone that you are currently in.
 
 I am sorry that this will not work outside of instances, but there appear to be additional checks further down the chain that prevent this.  If someone else wants to figure it out, go ahead, but I don't personally want to spend the time going deeper into figuring it all out.
+
+## Map View Notes
+
+The map view has two major limitations:
+* For dungeons/raids that have multiple maps, all active waymarks are displayed on all maps.  This is planned to be fixed at some point, but the solution is currently unknown.
+* Dragging waymarks on the map while editing in zones that have uneven ground will generally give undesirable results, in that the height of the waymark will not be constrained to the ground.  You may end up with waymarks that the game won't place, or even with waymarks below the ground or floating in the air.  This is not likely to be addressed due to the immense amount of work for very little payoff.
 
 ## IMPORTANT
 As is the case with all third-party programs and tools, this plugin *does not* operate through an official API; it digs into the game and operates on the best information available inferred from game behavior and structure.  Something could always go wrong, SE could find out and punish you, something unintended and bad could happen, etc.  Use of this plugin is very much at your own risk.  There are no guarantees, express or implied.  I've made my best effort to keep it as safe as I can, and that's it.
