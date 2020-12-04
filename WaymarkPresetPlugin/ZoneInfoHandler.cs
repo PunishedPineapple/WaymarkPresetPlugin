@@ -43,12 +43,12 @@ namespace WaymarkPresetPlugin
 					{
 						if( !mZoneInfoDict.ContainsKey( zone.Unknown10 ) )
 						{
-							string dutyName = contentRow.Name.Trim();
+							string dutyName = contentRow.Name.ToString().Trim();
 							if( dutyName.Length > 0 )
 							{
 								dutyName = dutyName.First().ToString().ToUpper() + dutyName.Substring( 1 );
 							}
-							mZoneInfoDict.Add( zone.Unknown10, new ZoneInfo( dutyName, zone.PlaceName.Value.Name, zone.RowId, zone.Map.Value.Id.Split( '/' )[0], zone.Unknown10, contentRow.Content ) );
+							mZoneInfoDict.Add( zone.Unknown10, new ZoneInfo( dutyName, zone.PlaceName.Value.Name, zone.RowId, zone.Map.Value.Id.ToString().Split( '/' )[0], zone.Unknown10, contentRow.Content ) );
 						}
 						if( !mTerritoryTypeIDToContentFinderIDDict.ContainsKey( zone.RowId ) )
 						{
@@ -63,7 +63,7 @@ namespace WaymarkPresetPlugin
 			//	testing each map name for something other than a "/00" and then incrementing until we find where the maps stop existing.
 			foreach( Map map in mapSheet.ToList() )
 			{
-				string mapZoneKey = map.Id.Split( '/' )[0];
+				string mapZoneKey = map.Id.ToString().Split( '/' )[0];
 
 				if( !mMapInfoDict.ContainsKey( mapZoneKey ) )
 				{
