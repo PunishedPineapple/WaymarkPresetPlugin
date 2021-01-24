@@ -183,7 +183,7 @@ namespace WaymarkPresetPlugin
 				{
 					try
 					{
-						MemoryHandler.DirectPlacePreset( mConfiguration.PresetLibrary.Presets[libraryIndex].GetAsGamePreset() );
+						MemoryHandler.PlacePreset( mConfiguration.PresetLibrary.Presets[libraryIndex].GetAsGamePreset(), mConfiguration.AllowClientSidePlacementInOverworldZones );
 						return "";
 					}
 					catch( Exception e )

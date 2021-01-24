@@ -70,7 +70,14 @@ namespace WaymarkPresetPlugin
 		public bool AllowDirectPlacePreset
 		{
 			get { return mAllowDirectPlacePreset; }
-			set { mAllowDirectPlacePreset = value; }
+			set { mAllowDirectPlacePreset = value; if( value == false ) mAllowClientSidePlacementInOverworldZones = false; }
+		}
+
+		public bool mAllowClientSidePlacementInOverworldZones = false;
+		public bool AllowClientSidePlacementInOverworldZones
+		{
+			get { return mAllowClientSidePlacementInOverworldZones && mAllowDirectPlacePreset; }
+			set { mAllowClientSidePlacementInOverworldZones = value; }
 		}
 
 		public bool mAutoPopulatePresetsOnEnterInstance = false;

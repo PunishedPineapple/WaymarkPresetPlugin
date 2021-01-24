@@ -11,8 +11,9 @@ namespace WaymarkPresetPlugin
 	//	arrays is absolutely fucked, and you can't really do indexers for a lot of the nested structures here, so it seems that
 	//	we have to just do almost everything as only an explicit field I guess.
 
-	//	The representation of each actual waymark in-memory.  The floats are what is used to render the marker, and adjusting 
-	//	them or the flag immediately changes the waymark.  The parallel int (x1000) values are probably used for transmission to server.
+	//	The representation of each actual waymark in-memory.  The floats are what is used to render the marker, and adjusting
+	//	them or the flag immediately changes the waymark.  The parallel int (x1000) values are used for saving a preset and
+	//	probably also for transmission to server when placing a waymark or preset.
 	[StructLayout( LayoutKind.Explicit, Size = 0x20 )]
 	public struct GameWaymark
 	{

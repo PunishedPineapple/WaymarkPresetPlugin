@@ -72,22 +72,28 @@ namespace WaymarkPresetPlugin
 			mPluginInterface = null;
 		}
 
-		public static bool FoundSavedPresetSigs()
+		private static bool FoundSavedPresetSigs()
 		{
 			return	mdGetUISAVESectionAddress != null &&
 					mdGetPresetAddressForSlot != null;
 		}
 
-		public static bool FoundDirectPlacementSigs()
+		private static bool FoundDirectPlacementSigs()
 		{
 			return	mdGetCurrentContentFinderLinkType != null &&
 					mdDirectPlacePreset != null &&
 					mpWaymarksObj != IntPtr.Zero;
 		}
 
-		public static bool FoundDirectSaveSigs()
+		private static bool FoundDirectSaveSigs()
 		{
 			return	mdGetCurrentWaymarkData != null &&
+					mpWaymarksObj != IntPtr.Zero;
+		}
+
+		private static bool FoundClientPlaceSigs()
+		{
+			return	mdGetCurrentContentFinderLinkType != null &&
 					mpWaymarksObj != IntPtr.Zero;
 		}
 
@@ -142,20 +148,32 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public static bool IsSafeToDirectPlacePreset()
+		private static bool IsSafeToDirectPlacePreset()
 		{
 			//	Basically impose all of the same conditions that the game does, but without checking the preset's zone ID.
-			/*if( !FoundDirectPlacementSigs() ) return false;
+			if( !FoundDirectPlacementSigs() ) return false;
 			byte currentContentLinkType = mdGetCurrentContentFinderLinkType.Invoke();
 			return	mPluginInterface != null &&
 					mPluginInterface.ClientState.LocalPlayer != null &&
 					mPluginInterface.ClientState.LocalPlayer.Address != IntPtr.Zero &&
 					!IsCharacterInCombat() &&
-					currentContentLinkType > 0 && currentContentLinkType < 4;*/
-			return true;    //***** TODO: Revert. *****
+					currentContentLinkType > 0 && currentContentLinkType < 4;
+			return true;
 		}
 
-		public static void DirectPlacePreset( GamePreset preset )
+		public static void PlacePreset( GamePreset preset, bool allowClientSide = false )
+		{
+			if( allowClientSide && InOverworldZone() )
+			{
+				PlacePreset_ClientSide( preset );
+			}
+			else
+			{
+				DirectPlacePreset( preset );
+			}
+		}
+
+		private static void DirectPlacePreset( GamePreset preset )
 		{
 			if( IsSafeToDirectPlacePreset() )
 			{
@@ -172,7 +190,7 @@ namespace WaymarkPresetPlugin
 			if( mPluginInterface != null && FoundDirectSaveSigs() )
 			{
 				byte currentContentLinkType = mdGetCurrentContentFinderLinkType.Invoke();
-				if( true /*currentContentLinkType > 0 && currentContentLinkType < 4*/ ) //***** TODO: Revert. *****
+				if( currentContentLinkType >= 0 && currentContentLinkType < 4 )	//	Same as the game check, but let it do overworld maps too.
 				{
 					GamePreset_Placement rawWaymarkData = new GamePreset_Placement();
 					unsafe
@@ -181,7 +199,7 @@ namespace WaymarkPresetPlugin
 					}
 
 					rPresetData = new GamePreset( rawWaymarkData );
-					rPresetData.ContentFinderConditionID = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mPluginInterface.ClientState.TerritoryType );
+					rPresetData.ContentFinderConditionID = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mPluginInterface.ClientState.TerritoryType );	//*****TODO: How do we get this as a territory type for non-instanced zones? The return type might need to be changed, or pass in another ref paramter or something. *****
 					rPresetData.UnixTime = (Int32)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 					return true;
 				}
@@ -211,33 +229,49 @@ namespace WaymarkPresetPlugin
 			return true;
 		}
 
+		private static bool InOverworldZone()
+		{
+			return	mdGetCurrentContentFinderLinkType != null &&
+					mdGetCurrentContentFinderLinkType.Invoke() == 0;
+		}
+
 		//*****TODO: Only need this if we want to be able to set the offset via config instead of rebuilding for each new game version, although the offset within the object is unlikely to frequently change.*****
 		public static void SetClientSideWaymarksOffset( IntPtr offset )
 		{
 			mClientSideWaymarksOffset = offset;
 		}
 
-		/*public static void PlacePreset_ClientSide( GamePreset presetData )
+		//	Only allow client-side placement if we're in a valid content type (i.e., only allow in overworld zones).  SE has made it pretty clear that they don't
+		//	want waymarks changing in battle instances, so let's try to not poke the bear too much, assuming that they can even understand nuance or would see this...
+		private static bool IsSafeToClientPlace()
 		{
-			//	Get the data into the format used by the game's waymark struct.
-			IntPtr pClientSideWaymarks = new IntPtr( mpWaymarksObj.ToInt64() + mClientSideWaymarksOffset.ToInt64() );
-			byte[] formattedData = GetWaymarkDataForClientSidePlace( presetData );
-
-			//	Copy it in.
-			Marshal.Copy( formattedData, 0, pClientSideWaymarks, formattedData.Length );
+			return	FoundClientPlaceSigs() &&
+					mdGetCurrentContentFinderLinkType.Invoke() == 0;
 		}
 
-		public static bool GetCurrentWaymarksAsPresetData_ClientSide( ref GamePreset presetData )
+		private static void PlacePreset_ClientSide( GamePreset preset )
 		{
+			//	Check whether we shouldn't be doing this.
+			if( !IsSafeToClientPlace() ) return;
 
-		}*/
+			//	Find where we will be overwriting the waymarks.
+			IntPtr pClientSideWaymarks = new IntPtr( mpWaymarksObj.ToInt64() + mClientSideWaymarksOffset.ToInt64() );
+
+			//*****TODO: Should we instead read in the extant data and only overwrite the floats?
+			//GameWaymarks waymarkData = (GameWaymarks)Marshal.PtrToStructure( pClientSideWaymarks, typeof( GameWaymarks ) );
+			//Write float coords and flags and send back out.
+			//Marshal.StructureToPtr( waymarkData, pClientSideWaymarks, false );
+
+			//	Do the actual writing.
+			Marshal.StructureToPtr( new GameWaymarks( preset ), pClientSideWaymarks, false );
+		}
 
 		public static readonly int MaxPresetSlotNum = 5;
 		private static readonly IntPtr CharacterStructCombatFlagsOffset = new IntPtr( 0x1980 );
 
 		private static DalamudPluginInterface mPluginInterface;
 		private static IntPtr mpWaymarksObj;
-		private static IntPtr mClientSideWaymarksOffset;
+		private static IntPtr mClientSideWaymarksOffset = new IntPtr( 0x1B0 );	//*****TODO: Feels bad initializing this with a magic number.  Not sure best thing to do.*****
 
 		private delegate IntPtr GetConfigSectionDelegate( IntPtr pConfigFile, byte sectionIndex );
 		private delegate IntPtr GetPresetAddressForSlotDelegate( IntPtr pMarkerDataStart, uint slotNum );
