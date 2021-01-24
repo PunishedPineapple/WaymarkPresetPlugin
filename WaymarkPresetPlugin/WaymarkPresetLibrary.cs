@@ -18,11 +18,11 @@ namespace WaymarkPresetPlugin
 			return Presets.Count - 1;
 		}
 
-		public int ImportPreset( byte[] rawData )
+		public int ImportPreset( GamePreset gamePresetData )
 		{
 			try
 			{
-				WaymarkPreset importedPreset = WaymarkPreset.Parse( rawData );
+				WaymarkPreset importedPreset = WaymarkPreset.Parse( gamePresetData );
 				importedPreset.Name = "Imported";
 				Presets.Add( importedPreset );
 				return Presets.Count - 1;

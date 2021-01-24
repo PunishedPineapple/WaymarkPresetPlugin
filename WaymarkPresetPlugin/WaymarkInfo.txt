@@ -1,0 +1,32 @@
+﻿Last updated for patch 5.4 (2020-12-08).
+
+Waymark Object/Struct Fields:
+
+0x0		- Probable vtable pointer.
+...		- Unknown, haven't seen anything here change yet, but some parts accessed every frame.
+0x158	- Last timer ticks (kinda) when markers changed.  Array of eight 64-bit numbers.  First field in the struct to change with placed waymark.  Changing this manually causes it to be reset to zero instantly.
+0x198	- Last timer tick (kinda) of any waymark changing, and then zeroed again a few seconds later, maybe as a server response.
+0x1A0	- Probably the flag to signal that waymark data has been changed on client and needs to be sent to server.  Setting this without a tick count in the above field fails to do anything, and setting the tick count just gets itself overwritten as well.
+0x1B0	- A-marker displayed XYZ (floats).  These can be edited with instant visual-only results (i.e., this is probably where client-side PP is setting things).
+0x1C0	- A-marker XYZ x1000 (ints).  These are what are read in when saving a preset, but changing these does not immediately affect displayed markers.
+0x1CC	- A-marker visible flag.  Can be edited for client-side results.  Remaining three bytes probably just padding.
+0x1D0	- B-marker coords start...
+...		- Repeated for all eight waymarks, unknown whether anything past that tied to this struct/object.
+
+
+Miscellaneous Information:
+
+Placing a preset sets the following in the waymark struct:
+	Perf counter time of update for each waymark.
+	The visibility flag for each waymark.
+	...then...
+	Int coords of each waymark.
+	Float coords of each waymark.
+	Sets unknown global variable to perf counter time while setting coords.
+	Calls unknown function on global variable eight bytes after previous one.
+	Seems to set perf counter time of each waymark again.
+	...a bunch of stuff I don't understand...
+	Calls function that flags waymark data as updated.
+
+
+Image offset 7A85F9 appears to maybe be the call to reset the flag from a server response that waymarks were synced.

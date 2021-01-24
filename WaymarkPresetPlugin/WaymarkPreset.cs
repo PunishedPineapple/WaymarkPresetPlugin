@@ -32,136 +32,112 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public static WaymarkPreset Parse( byte[] rawData )
+		public static WaymarkPreset Parse( GamePreset gamePreset )
 		{
-			if( rawData.Length != 104 )
-			{
-				throw new Exception( "Unexpected data length in WaymarkPreset.Parse" );
-			}
-			WaymarkPreset preset = new WaymarkPreset();
+			WaymarkPreset newPreset = new WaymarkPreset();
 
-			preset.A.X = BitConverter.ToInt32( rawData, 0 ) / 1000.0f;
-			preset.A.Y = BitConverter.ToInt32( rawData, 4 ) / 1000.0f;
-			preset.A.Z = BitConverter.ToInt32( rawData, 8 ) / 1000.0f;
-			preset.A.Active = ( rawData[96] & 0b00000001 ) > 0;
-			preset.A.ID = 0;
+			newPreset.A.X = gamePreset.A.X / 1000.0f;
+			newPreset.A.Y = gamePreset.A.Y / 1000.0f;
+			newPreset.A.Z = gamePreset.A.Z / 1000.0f;
+			newPreset.A.Active = gamePreset.ActiveMarkers[0];
+			newPreset.A.ID = 0;
 
-			preset.B.X = BitConverter.ToInt32( rawData, 12 ) / 1000.0f;
-			preset.B.Y = BitConverter.ToInt32( rawData, 16 ) / 1000.0f;
-			preset.B.Z = BitConverter.ToInt32( rawData, 20 ) / 1000.0f;
-			preset.B.Active = ( rawData[96] & 0b00000010 ) > 0;
-			preset.B.ID = 1;
+			newPreset.B.X = gamePreset.B.X / 1000.0f;
+			newPreset.B.Y = gamePreset.B.Y / 1000.0f;
+			newPreset.B.Z = gamePreset.B.Z / 1000.0f;
+			newPreset.B.Active = gamePreset.ActiveMarkers[1];
+			newPreset.B.ID = 1;
 
-			preset.C.X = BitConverter.ToInt32( rawData, 24 ) / 1000.0f;
-			preset.C.Y = BitConverter.ToInt32( rawData, 28 ) / 1000.0f;
-			preset.C.Z = BitConverter.ToInt32( rawData, 32 ) / 1000.0f;
-			preset.C.Active = ( rawData[96] & 0b00000100 ) > 0;
-			preset.C.ID = 2;
+			newPreset.C.X = gamePreset.C.X / 1000.0f;
+			newPreset.C.Y = gamePreset.C.Y / 1000.0f;
+			newPreset.C.Z = gamePreset.C.Z / 1000.0f;
+			newPreset.C.Active = gamePreset.ActiveMarkers[2];
+			newPreset.C.ID = 2;
 
-			preset.D.X = BitConverter.ToInt32( rawData, 36 ) / 1000.0f;
-			preset.D.Y = BitConverter.ToInt32( rawData, 40 ) / 1000.0f;
-			preset.D.Z = BitConverter.ToInt32( rawData, 44 ) / 1000.0f;
-			preset.D.Active = ( rawData[96] & 0b00001000 ) > 0;
-			preset.D.ID = 3;
+			newPreset.D.X = gamePreset.D.X / 1000.0f;
+			newPreset.D.Y = gamePreset.D.Y / 1000.0f;
+			newPreset.D.Z = gamePreset.D.Z / 1000.0f;
+			newPreset.D.Active = gamePreset.ActiveMarkers[3];
+			newPreset.D.ID = 3;
 
-			preset.One.X = BitConverter.ToInt32( rawData, 48 ) / 1000.0f;
-			preset.One.Y = BitConverter.ToInt32( rawData, 52 ) / 1000.0f;
-			preset.One.Z = BitConverter.ToInt32( rawData, 56 ) / 1000.0f;
-			preset.One.Active = ( rawData[96] & 0b00010000 ) > 0;
-			preset.One.ID = 4;
+			newPreset.One.X = gamePreset.One.X / 1000.0f;
+			newPreset.One.Y = gamePreset.One.Y / 1000.0f;
+			newPreset.One.Z = gamePreset.One.Z / 1000.0f;
+			newPreset.One.Active = gamePreset.ActiveMarkers[4];
+			newPreset.One.ID = 4;
 
-			preset.Two.X = BitConverter.ToInt32( rawData, 60 ) / 1000.0f;
-			preset.Two.Y = BitConverter.ToInt32( rawData, 64 ) / 1000.0f;
-			preset.Two.Z = BitConverter.ToInt32( rawData, 68 ) / 1000.0f;
-			preset.Two.Active = ( rawData[96] & 0b00100000 ) > 0;
-			preset.Two.ID = 5;
+			newPreset.Two.X = gamePreset.Two.X / 1000.0f;
+			newPreset.Two.Y = gamePreset.Two.Y / 1000.0f;
+			newPreset.Two.Z = gamePreset.Two.Z / 1000.0f;
+			newPreset.Two.Active = gamePreset.ActiveMarkers[5];
+			newPreset.Two.ID = 5;
 
-			preset.Three.X = BitConverter.ToInt32( rawData, 72 ) / 1000.0f;
-			preset.Three.Y = BitConverter.ToInt32( rawData, 76 ) / 1000.0f;
-			preset.Three.Z = BitConverter.ToInt32( rawData, 80 ) / 1000.0f;
-			preset.Three.Active = ( rawData[96] & 0b01000000 ) > 0;
-			preset.Three.ID = 6;
+			newPreset.Three.X = gamePreset.Three.X / 1000.0f;
+			newPreset.Three.Y = gamePreset.Three.Y / 1000.0f;
+			newPreset.Three.Z = gamePreset.Three.Z / 1000.0f;
+			newPreset.Three.Active = gamePreset.ActiveMarkers[6];
+			newPreset.Three.ID = 6;
 
-			preset.Four.X = BitConverter.ToInt32( rawData, 84 ) / 1000.0f;
-			preset.Four.Y = BitConverter.ToInt32( rawData, 88 ) / 1000.0f;
-			preset.Four.Z = BitConverter.ToInt32( rawData, 92 ) / 1000.0f;
-			preset.Four.Active = ( rawData[96] & 0b10000000 ) > 0;
-			preset.Four.ID = 7;
+			newPreset.Four.X = gamePreset.Four.X / 1000.0f;
+			newPreset.Four.Y = gamePreset.Four.Y / 1000.0f;
+			newPreset.Four.Z = gamePreset.Four.Z / 1000.0f;
+			newPreset.Four.Active = gamePreset.ActiveMarkers[7];
+			newPreset.Four.ID = 7;
 
-			preset.MapID = BitConverter.ToUInt16( rawData, 98 );
+			newPreset.MapID = gamePreset.ContentFinderConditionID;
+			newPreset.Time = DateTimeOffset.FromUnixTimeSeconds( gamePreset.UnixTime );
 
-			preset.Time = DateTimeOffset.FromUnixTimeSeconds( BitConverter.ToInt32( rawData, 100 ) );
-
-			return preset;
+			return newPreset;
 		}
 
-		public byte[] ConstructGamePreset()
+		public GamePreset GetAsGamePreset()
 		{
-			//	List is easy because we can just push data on to it.
-			List<byte> byteData = new List<byte>();
+			GamePreset preset = new GamePreset();
 
-			//	Waymark coordinates.
-			byteData.AddRange( BitConverter.GetBytes( A.Active ? (Int32)( A.X * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( A.Active ? (Int32)( A.Y * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( A.Active ? (Int32)( A.Z * 1000.0 ) : 0 ) );
+			preset.ActiveMarkers[0] = A.Active;
+			preset.A.X = A.Active ? (int)( A.X * 1000.0 ) : 0;
+			preset.A.Y = A.Active ? (int)( A.Y * 1000.0 ) : 0;
+			preset.A.Z = A.Active ? (int)( A.Z * 1000.0 ) : 0;
 
-			byteData.AddRange( BitConverter.GetBytes( B.Active ? (Int32)( B.X * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( B.Active ? (Int32)( B.Y * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( B.Active ? (Int32)( B.Z * 1000.0 ) : 0 ) );
+			preset.ActiveMarkers[1] = B.Active;
+			preset.B.X = B.Active ? (int)( B.X * 1000.0 ) : 0;
+			preset.B.Y = B.Active ? (int)( B.Y * 1000.0 ) : 0;
+			preset.B.Z = B.Active ? (int)( B.Z * 1000.0 ) : 0;
 
-			byteData.AddRange( BitConverter.GetBytes( C.Active ? (Int32)( C.X * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( C.Active ? (Int32)( C.Y * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( C.Active ? (Int32)( C.Z * 1000.0 ) : 0 ) );
+			preset.ActiveMarkers[2] = C.Active;
+			preset.C.X = C.Active ? (int)( C.X * 1000.0 ) : 0;
+			preset.C.Y = C.Active ? (int)( C.Y * 1000.0 ) : 0;
+			preset.C.Z = C.Active ? (int)( C.Z * 1000.0 ) : 0;
 
-			byteData.AddRange( BitConverter.GetBytes( D.Active ? (Int32)( D.X * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( D.Active ? (Int32)( D.Y * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( D.Active ? (Int32)( D.Z * 1000.0 ) : 0 ) );
+			preset.ActiveMarkers[3] = D.Active;
+			preset.D.X = D.Active ? (int)( D.X * 1000.0 ) : 0;
+			preset.D.Y = D.Active ? (int)( D.Y * 1000.0 ) : 0;
+			preset.D.Z = D.Active ? (int)( D.Z * 1000.0 ) : 0;
 
-			byteData.AddRange( BitConverter.GetBytes( One.Active ? (Int32)( One.X * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( One.Active ? (Int32)( One.Y * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( One.Active ? (Int32)( One.Z * 1000.0 ) : 0 ) );
+			preset.ActiveMarkers[4] = One.Active;
+			preset.One.X = One.Active ? (int)( One.X * 1000.0 ) : 0;
+			preset.One.Y = One.Active ? (int)( One.Y * 1000.0 ) : 0;
+			preset.One.Z = One.Active ? (int)( One.Z * 1000.0 ) : 0;
 
-			byteData.AddRange( BitConverter.GetBytes( Two.Active ? (Int32)( Two.X * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( Two.Active ? (Int32)( Two.Y * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( Two.Active ? (Int32)( Two.Z * 1000.0 ) : 0 ) );
+			preset.ActiveMarkers[5] = Two.Active;
+			preset.Two.X = Two.Active ? (int)( Two.X * 1000.0 ) : 0;
+			preset.Two.Y = Two.Active ? (int)( Two.Y * 1000.0 ) : 0;
+			preset.Two.Z = Two.Active ? (int)( Two.Z * 1000.0 ) : 0;
 
-			byteData.AddRange( BitConverter.GetBytes( Three.Active ? (Int32)( Three.X * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( Three.Active ? (Int32)( Three.Y * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( Three.Active ? (Int32)( Three.Z * 1000.0 ) : 0 ) );
+			preset.ActiveMarkers[6] = Three.Active;
+			preset.Three.X = Three.Active ? (int)( Three.X * 1000.0 ) : 0;
+			preset.Three.Y = Three.Active ? (int)( Three.Y * 1000.0 ) : 0;
+			preset.Three.Z = Three.Active ? (int)( Three.Z * 1000.0 ) : 0;
 
-			byteData.AddRange( BitConverter.GetBytes( Four.Active ? (Int32)( Four.X * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( Four.Active ? (Int32)( Four.Y * 1000.0 ) : 0 ) );
-			byteData.AddRange( BitConverter.GetBytes( Four.Active ? (Int32)( Four.Z * 1000.0 ) : 0 ) );
+			preset.ActiveMarkers[7] = Four.Active;
+			preset.Four.X = Four.Active ? (int)( Four.X * 1000.0 ) : 0;
+			preset.Four.Y = Four.Active ? (int)( Four.Y * 1000.0 ) : 0;
+			preset.Four.Z = Four.Active ? (int)( Four.Z * 1000.0 ) : 0;
 
-			//	Which waymarks are active.
-			byte activeMask = 0x00;
-			if( A.Active )		activeMask |= 0b00000001;
-			if( B.Active )		activeMask |= 0b00000010;
-			if( C.Active )		activeMask |= 0b00000100;
-			if( D.Active )		activeMask |= 0b00001000;
-			if( One.Active )	activeMask |= 0b00010000;
-			if( Two.Active )	activeMask |= 0b00100000;
-			if( Three.Active )	activeMask |= 0b01000000;
-			if( Four.Active )	activeMask |= 0b10000000;
-			byteData.Add( activeMask );
+			preset.ContentFinderConditionID = MapID;
+			preset.UnixTime = (int)Time.ToUnixTimeSeconds();
 
-			//	Reserved byte.
-			byteData.Add( (byte)0x00 );
-
-			//	Territory ID.
-			byteData.AddRange( BitConverter.GetBytes( MapID ) );
-
-			//	Time last modified.
-			byteData.AddRange( BitConverter.GetBytes( (Int32)Time.ToUnixTimeSeconds() ) );
-
-			//	Shouldn't ever come up with the wrong length, but just in case...
-			if( byteData.Count != 104 )
-			{
-				throw new Exception( "Error in WaymarkPreset.ConstructGamePreset(): Constructed byte array was of an unexpected length." );
-			}
-
-			//	Send it out.
-			return byteData.ToArray();
+			return preset;
 		}
 
 		public string GetPresetDataString( GetZoneNameDelegate dGetZoneName = null, bool showIDToo = false )

@@ -57,12 +57,14 @@ namespace WaymarkPresetPlugin
 				}
 
 				mpWaymarksObj = mPluginInterface.TargetModuleScanner.GetStaticAddressFromSig( "41 80 F9 08 7C BB 48 8D ?? ?? ?? 48 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 0F 94 C0 EB 19", 11 );
+
+				//	Write this address to log to help with digging around in memory if we need to.
+				PluginLog.LogInformation( $"Waymarks object address: 0x{mpWaymarksObj.ToString( "X" )}" );
 			}
 			catch( Exception e )
 			{
 				throw new Exception( $"Error in MemoryHandler.Init: Unable to find all required function signatures; this probably means that the plugin needs to be updated due to changes in Final Fantasy XIV.  Raw exception as follows:\r\n{e}" );
 			}
-
 		}
 
 		public static void Uninit()
@@ -83,26 +85,36 @@ namespace WaymarkPresetPlugin
 					mpWaymarksObj != IntPtr.Zero;
 		}
 
-		public static byte[] ReadSlot( uint slotNum )
+		public static bool FoundDirectSaveSigs()
+		{
+			return	mdGetCurrentWaymarkData != null &&
+					mpWaymarksObj != IntPtr.Zero;
+		}
+
+		public static GamePreset ReadSlot( uint slotNum )
 		{
 			IntPtr pWaymarkData = GetGameWaymarkDataPointerForSlot( slotNum );
-			byte[] data = new byte[104];
+			GamePreset preset = new GamePreset();
 			if( pWaymarkData != IntPtr.Zero )
 			{
 				//	Don't catch exceptions here; better to have the caller do it probably.
-				lock( mPresetMemoryLockObject ) Marshal.Copy( pWaymarkData, data, 0, 104 );
+				lock( mPresetMemoryLockObject ) preset = (GamePreset)Marshal.PtrToStructure( pWaymarkData, typeof( GamePreset ) );
+			}
+			else
+			{
+				throw new ArgumentOutOfRangeException( $"Error in \"WaymarkPresetPlugin.MemoryHandler.ReadSlot()\": Slot number ({slotNum}) was either invalid, or pointer for valid slot number could not be located." );
 			}
 
-			return data;
+			return preset;
 		}
 
-		public static bool WriteSlot( uint slotNum, byte[] data )
+		public static bool WriteSlot( uint slotNum, GamePreset preset )
 		{
 			IntPtr pWaymarkData = GetGameWaymarkDataPointerForSlot( slotNum );
-			if( data.Length >= 104 && pWaymarkData != IntPtr.Zero )
+			if( pWaymarkData != IntPtr.Zero )
 			{
 				//	Don't catch exceptions here; better to have the caller do it probably.
-				lock( mPresetMemoryLockObject ) Marshal.Copy( data, 0, pWaymarkData, 104 );
+				lock( mPresetMemoryLockObject ) Marshal.StructureToPtr( preset, pWaymarkData, false );
 				return true;
 			}
 			else
@@ -113,7 +125,7 @@ namespace WaymarkPresetPlugin
 
 		public static IntPtr GetGameWaymarkDataPointerForSlot( uint slotNum )
 		{
-			if( !FoundSavedPresetSigs() || slotNum < 1 || slotNum > 5 )
+			if( !FoundSavedPresetSigs() || slotNum < 1 || slotNum > MaxPresetSlotNum )
 			{
 				return IntPtr.Zero;
 			}
@@ -133,74 +145,44 @@ namespace WaymarkPresetPlugin
 		public static bool IsSafeToDirectPlacePreset()
 		{
 			//	Basically impose all of the same conditions that the game does, but without checking the preset's zone ID.
-			if( !FoundDirectPlacementSigs() ) return false;
+			/*if( !FoundDirectPlacementSigs() ) return false;
 			byte currentContentLinkType = mdGetCurrentContentFinderLinkType.Invoke();
 			return	mPluginInterface != null &&
 					mPluginInterface.ClientState.LocalPlayer != null &&
 					mPluginInterface.ClientState.LocalPlayer.Address != IntPtr.Zero &&
 					!IsCharacterInCombat() &&
-					currentContentLinkType > 0 && currentContentLinkType < 4;
+					currentContentLinkType > 0 && currentContentLinkType < 4;*/
+			return true;    //***** TODO: Revert. *****
 		}
 
-		public static void DirectPlacePreset( byte[] presetData )
+		public static void DirectPlacePreset( GamePreset preset )
 		{
 			if( IsSafeToDirectPlacePreset() )
 			{
-				byte[] formattedData = GetPresetDataForDirectPlace( presetData );
-
+				GamePreset_Placement placementStruct = new GamePreset_Placement( preset );
 				unsafe
 				{
-					fixed( byte* pFormattedData = formattedData )
-					{
-						mdDirectPlacePreset.Invoke( mpWaymarksObj, new IntPtr( pFormattedData ) );
-					}
+					mdDirectPlacePreset.Invoke( mpWaymarksObj, new IntPtr( &placementStruct ) );
 				}
 			}
 		}
 
-		private static byte[] GetPresetDataForDirectPlace( byte[] presetData )
+		public static bool GetCurrentWaymarksAsPresetData( ref GamePreset rPresetData )
 		{
-			if( presetData.Length != 104 )
-			{
-				throw new Exception( "Error in GetPresetDataForDirectPlace(): Invalid length of passed preset data!" );
-			}
-
-			//	This is probably actually a struct in the game, but for various reasons (i.e., variable sizes of bools in C#), we'll just construct a byte array instead.
-			byte[] newData = new byte[0xB0];	//	Go with the size of the entire local stack in the disassembled program just so we don't risk an access violation or risk accessing junk memory.
-
-			for( int i = 0; i < 8; ++i )
-			{
-				newData[i] = (byte)( presetData[96] >> i & 0x1 );
-				Array.Copy( presetData, i * 12 + 0, newData, i * 4 +  8, 4 );
-				Array.Copy( presetData, i * 12 + 4, newData, i * 4 + 40, 4 );
-				Array.Copy( presetData, i * 12 + 8, newData, i * 4 + 72, 4 );
-			}
-
-			return newData;
-		}
-
-		public static bool GetCurrentWaymarksAsPresetData( ref byte[] presetData )
-		{
-			if( mPluginInterface != null && true /*TODO: found the right sigs*/ )
+			if( mPluginInterface != null && FoundDirectSaveSigs() )
 			{
 				byte currentContentLinkType = mdGetCurrentContentFinderLinkType.Invoke();
-				if( currentContentLinkType > 0 && currentContentLinkType < 4 )
+				if( true /*currentContentLinkType > 0 && currentContentLinkType < 4*/ ) //***** TODO: Revert. *****
 				{
-					byte[] rawWaymarkData = new byte[104];
+					GamePreset_Placement rawWaymarkData = new GamePreset_Placement();
 					unsafe
 					{
-						fixed( byte* pRawWaymarkData = rawWaymarkData )
-						{
-							mdGetCurrentWaymarkData.Invoke( mpWaymarksObj, new IntPtr( pRawWaymarkData ) );
-						}
+						mdGetCurrentWaymarkData.Invoke( mpWaymarksObj, new IntPtr( &rawWaymarkData ) );
 					}
 
-					presetData = ConvertWaymarkObjDataToSavedPresetFormat( rawWaymarkData );
-
-					UInt16 currentZone = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mPluginInterface.ClientState.TerritoryType );
-					UInt32 currentTimestamp = (UInt32)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-					Array.Copy( BitConverter.GetBytes( currentZone ), 0, presetData, 98, 2 );
-					Array.Copy( BitConverter.GetBytes( currentTimestamp ), 0, presetData, 100, 4 );
+					rPresetData = new GamePreset( rawWaymarkData );
+					rPresetData.ContentFinderConditionID = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mPluginInterface.ClientState.TerritoryType );
+					rPresetData.UnixTime = (Int32)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 					return true;
 				}
 			}
@@ -208,54 +190,64 @@ namespace WaymarkPresetPlugin
 			return false;
 		}
 
-		private static byte[] ConvertWaymarkObjDataToSavedPresetFormat( byte[] waymarkData )
-		{
-			if( waymarkData.Length != 104 )
-			{
-				throw new Exception( "Error in ConvertWaymarkObjDataToSavedPresetFormat(): Invalid length of passed waymark data!" );
-			}
-
-			//	The coordinates/flags only occupy 98 bytes, but make it the full 104 bytes long so that it's the full length of a preset.
-			byte[] newData = new byte[104];
-
-			for( int i = 0; i < 8; ++i )
-			{
-				newData[96] |= (byte)( ( waymarkData[i] > 0 ? 1 : 0 ) << i );
-				Array.Copy( waymarkData, i * 4 +  8, newData, i * 12 + 0, 4 );
-				Array.Copy( waymarkData, i * 4 + 40, newData, i * 12 + 4, 4 );
-				Array.Copy( waymarkData, i * 4 + 72, newData, i * 12 + 8, 4 );
-			}
-
-			return newData;
-		}
-
 		private static bool IsCharacterInCombat()
 		{
-			byte flags = 0;
-
 			if( mPluginInterface.ClientState.LocalPlayer != null &&
 				mPluginInterface.ClientState.LocalPlayer.Address != IntPtr.Zero )
 			{
 				try
 				{
-					flags = Marshal.ReadByte( new IntPtr( mPluginInterface.ClientState.LocalPlayer.Address.ToInt64() + 0x1906 ) );
+					byte flags = Marshal.ReadByte( new IntPtr( mPluginInterface.ClientState.LocalPlayer.Address.ToInt64() + CharacterStructCombatFlagsOffset.ToInt64() ) );
+					return ( flags & 2 ) > 0;
 				}
 				catch
 				{
+					//	Default to assuming in-combat for safety.
+					return true;
 				}
 			}
 
-			return ( flags & 2 ) > 0;
+			//	Default to assuming in-combat for safety.
+			return true;
 		}
+
+		//*****TODO: Only need this if we want to be able to set the offset via config instead of rebuilding for each new game version, although the offset within the object is unlikely to frequently change.*****
+		public static void SetClientSideWaymarksOffset( IntPtr offset )
+		{
+			mClientSideWaymarksOffset = offset;
+		}
+
+		/*public static void PlacePreset_ClientSide( GamePreset presetData )
+		{
+			//	Get the data into the format used by the game's waymark struct.
+			IntPtr pClientSideWaymarks = new IntPtr( mpWaymarksObj.ToInt64() + mClientSideWaymarksOffset.ToInt64() );
+			byte[] formattedData = GetWaymarkDataForClientSidePlace( presetData );
+
+			//	Copy it in.
+			Marshal.Copy( formattedData, 0, pClientSideWaymarks, formattedData.Length );
+		}
+
+		public static bool GetCurrentWaymarksAsPresetData_ClientSide( ref GamePreset presetData )
+		{
+
+		}*/
+
+		public static readonly int MaxPresetSlotNum = 5;
+		private static readonly IntPtr CharacterStructCombatFlagsOffset = new IntPtr( 0x1980 );
 
 		private static DalamudPluginInterface mPluginInterface;
 		private static IntPtr mpWaymarksObj;
+		private static IntPtr mClientSideWaymarksOffset;
 
 		private delegate IntPtr GetConfigSectionDelegate( IntPtr pConfigFile, byte sectionIndex );
 		private delegate IntPtr GetPresetAddressForSlotDelegate( IntPtr pMarkerDataStart, uint slotNum );
 		private delegate byte GetCurrentContentFinderLinkTypeDelegate();
 		private delegate void DirectPlacePresetDelegate( IntPtr pObj, IntPtr pData );
 		private delegate void GetCurrentWaymarkDataDelegate( IntPtr pObj, IntPtr pData );
+
+		//	***** TODO: Testing *****
+		//private delegate IntPtr GetIsInCombatDelegate();
+		//private static GetIsInCombatDelegate mdGetIsInCombat;
 
 		private static GetConfigSectionDelegate mdGetUISAVESectionAddress;
 		private static GetPresetAddressForSlotDelegate mdGetPresetAddressForSlot;

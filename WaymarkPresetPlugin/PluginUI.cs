@@ -144,8 +144,8 @@ namespace WaymarkPresetPlugin
 					ImGui.SameLine( ImGui.GetWindowWidth() - 163 );  //*****TODO: The magic number is cheap and hacky; actually get the button width if we can.*****
 					if( ImGui.Button( "Save Current Waymarks" ) )
 					{
-						byte[] currentWaymarks = null;
-						if( MemoryHandler.GetCurrentWaymarksAsPresetData( ref currentWaymarks ) && currentWaymarks != null )
+						GamePreset currentWaymarks = new GamePreset();
+						if( MemoryHandler.GetCurrentWaymarksAsPresetData( ref currentWaymarks ) )
 						{
 							mConfiguration.PresetLibrary.ImportPreset( currentWaymarks );
 						}
@@ -369,7 +369,7 @@ namespace WaymarkPresetPlugin
 						ImGui.SameLine();
 						if( ImGui.Button( "Place" ) )
 						{
-							MemoryHandler.DirectPlacePreset( mConfiguration.PresetLibrary.Presets[SelectedPreset].ConstructGamePreset() );
+							MemoryHandler.DirectPlacePreset( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset() );
 						}
 					}
 
@@ -788,7 +788,7 @@ namespace WaymarkPresetPlugin
 									ImGui.Text( cursorPosText );
 									if( mapInfo.Length > 1 )
 									{
-										string submapInfoString = $"Sub-Map: {mapInfo[selectedSubMapIndex].PlaceNameSub} ({selectedSubMapIndex + 1})";
+										string submapInfoString = $"Sub-Map: {mapInfo[selectedSubMapIndex].PlaceNameSub} ({selectedSubMapIndex + 1}/{mapInfo.Length})";
 										ImGui.SameLine( mapWidgetSize_Px - ImGui.CalcTextSize( submapInfoString ).X );
 										ImGui.Text( submapInfoString );
 									}
@@ -855,19 +855,15 @@ namespace WaymarkPresetPlugin
 
 		protected void CopyPresetToGameSlot( WaymarkPreset preset, uint slot )
 		{
-			if( ZoneInfoHandler.IsKnownContentFinderID( preset.MapID ) && slot >= 1 && slot <= 5 )
+			if( ZoneInfoHandler.IsKnownContentFinderID( preset.MapID ) && slot >= 1 && slot <= MemoryHandler.MaxPresetSlotNum )
 			{
-				byte[] gamePresetData = preset.ConstructGamePreset();
-				if( gamePresetData.Length == 104 )
+				try
 				{
-					try
-					{
-						MemoryHandler.WriteSlot( slot, gamePresetData );
-					}
-					catch( Exception e )
-					{
-						PluginLog.Log( $"Error while copying preset data to game slot: {e}" );
-					}
+					MemoryHandler.WriteSlot( slot, preset.GetAsGamePreset() );
+				}
+				catch( Exception e )
+				{
+					PluginLog.Log( $"Error while copying preset data to game slot: {e}" );
 				}
 			}
 		}

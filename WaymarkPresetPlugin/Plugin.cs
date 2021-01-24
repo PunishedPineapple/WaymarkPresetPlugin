@@ -147,12 +147,10 @@ namespace WaymarkPresetPlugin
 			if( args.Length == 1 &&
 				uint.TryParse( args, out gameSlotToCopy ) &&
 				gameSlotToCopy >= 1 &&
-				gameSlotToCopy <= 5 )
+				gameSlotToCopy <= MemoryHandler.MaxPresetSlotNum )
 			{
 				if( MemoryHandler.FoundSavedPresetSigs() )
 				{
-					byte[] gamePreset = new byte[104];
-
 					try
 					{
 						WaymarkPreset tempPreset = WaymarkPreset.Parse( MemoryHandler.ReadSlot( gameSlotToCopy ) );
@@ -179,24 +177,24 @@ namespace WaymarkPresetPlugin
 		{
 			if( mConfiguration.AllowDirectPlacePreset )
 			{
-				int slotNum = -1;
-				bool validSlot = int.TryParse( args.Trim(), out slotNum ) && slotNum >= 0 && slotNum < mConfiguration.PresetLibrary.Presets.Count;
-				if( validSlot )
+				int libraryIndex = -1;
+				bool validIndex = int.TryParse( args.Trim(), out libraryIndex ) && libraryIndex >= 0 && libraryIndex < mConfiguration.PresetLibrary.Presets.Count;
+				if( validIndex )
 				{
 					try
 					{
-						MemoryHandler.DirectPlacePreset( mConfiguration.PresetLibrary.Presets[slotNum].ConstructGamePreset() );
+						MemoryHandler.DirectPlacePreset( mConfiguration.PresetLibrary.Presets[libraryIndex].GetAsGamePreset() );
 						return "";
 					}
 					catch( Exception e )
 					{
-						PluginLog.Log( $"An unknown error occured while attempting to place preset {slotNum} : {e}" );
-						return $"An unknown error occured placing preset {slotNum}.";
+						PluginLog.Log( $"An unknown error occured while attempting to place preset {libraryIndex} : {e}" );
+						return $"An unknown error occured placing preset {libraryIndex}.";
 					}
 				}
 				else
 				{
-					return $"Invalid preset number \"{slotNum}\"";
+					return $"Invalid preset number \"{libraryIndex}\"";
 				}
 			}
 			else
@@ -256,7 +254,7 @@ namespace WaymarkPresetPlugin
 			//	Auto-save presets on leaving instance.
 			if( mConfiguration.AutoSavePresetsOnInstanceLeave && ZoneInfoHandler.IsKnownContentFinderID( prevTerritoryTypeInfo.ContentFinderConditionID ) )
 			{
-				for( uint i = 1; i <= 5; ++i )
+				for( uint i = 1; i <= MemoryHandler.MaxPresetSlotNum; ++i )
 				{
 					try
 					{
@@ -280,28 +278,24 @@ namespace WaymarkPresetPlugin
 			if( mConfiguration.AutoPopulatePresetsOnEnterInstance && ZoneInfoHandler.IsKnownContentFinderID( newTerritoryTypeInfo.ContentFinderConditionID ) )
 			{
 				//*****TODO: Eventually maybe have this check for a "preferred" flag on the presets and use that to help select which five to use, rather than just the first five from the zone.
-				var presetsToAutoLoad = mConfiguration.PresetLibrary.Presets.Where( x => x.MapID == newTerritoryTypeInfo.ContentFinderConditionID ).Take( 5 ).ToList();
-				for( int i = 0; i < 5; ++i )
+				var presetsToAutoLoad = mConfiguration.PresetLibrary.Presets.Where( x => x.MapID == newTerritoryTypeInfo.ContentFinderConditionID ).Take( MemoryHandler.MaxPresetSlotNum ).ToList();
+				for( int i = 0; i < MemoryHandler.MaxPresetSlotNum; ++i )
 				{
-					//	Start out with an array of zeroes (which is how the game indicates an empty slot), and get an actual preset if we can.
-					byte[] gamePresetData = new byte[104];
+					GamePreset gamePresetData = new GamePreset();
 
 					if( i < presetsToAutoLoad.Count )
 					{
 						var preset = presetsToAutoLoad[i];
-						gamePresetData = preset.ConstructGamePreset();
+						gamePresetData = preset.GetAsGamePreset();
 					}
 
-					if( gamePresetData.Length == 104 )
+					try
 					{
-						try
-						{
-							MemoryHandler.WriteSlot( (uint)i + 1, gamePresetData );
-						}
-						catch( Exception e )
-						{
-							PluginLog.Log( $"Error while auto copying preset data to game slot {i}: {e}" );
-						}
+						MemoryHandler.WriteSlot( (uint)i + 1, gamePresetData );
+					}
+					catch( Exception e )
+					{
+						PluginLog.Log( $"Error while auto copying preset data to game slot {i}: {e}" );
 					}
 				}
 			}
