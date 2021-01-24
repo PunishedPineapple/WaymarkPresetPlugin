@@ -72,26 +72,26 @@ namespace WaymarkPresetPlugin
 			mPluginInterface = null;
 		}
 
-		private static bool FoundSavedPresetSigs()
+		public static bool FoundSavedPresetSigs()
 		{
 			return	mdGetUISAVESectionAddress != null &&
 					mdGetPresetAddressForSlot != null;
 		}
 
-		private static bool FoundDirectPlacementSigs()
+		public static bool FoundDirectPlacementSigs()
 		{
 			return	mdGetCurrentContentFinderLinkType != null &&
 					mdDirectPlacePreset != null &&
 					mpWaymarksObj != IntPtr.Zero;
 		}
 
-		private static bool FoundDirectSaveSigs()
+		public static bool FoundDirectSaveSigs()
 		{
 			return	mdGetCurrentWaymarkData != null &&
 					mpWaymarksObj != IntPtr.Zero;
 		}
 
-		private static bool FoundClientPlaceSigs()
+		public static bool FoundClientPlaceSigs()
 		{
 			return	mdGetCurrentContentFinderLinkType != null &&
 					mpWaymarksObj != IntPtr.Zero;
@@ -158,7 +158,6 @@ namespace WaymarkPresetPlugin
 					mPluginInterface.ClientState.LocalPlayer.Address != IntPtr.Zero &&
 					!IsCharacterInCombat() &&
 					currentContentLinkType > 0 && currentContentLinkType < 4;
-			return true;
 		}
 
 		public static void PlacePreset( GamePreset preset, bool allowClientSide = false )
