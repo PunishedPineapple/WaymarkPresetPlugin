@@ -3,6 +3,9 @@
 ## Purpose
 This is a plugin for [XIVLauncher/Dalamud](https://github.com/goatcorp/FFXIVQuickLauncher) that stores unlimited waymark presets.
 
+## Obtaining Presets
+Em-Six has a [collection of presets for current and older content on their wiki](https://github.com/Em-Six/FFXIVWaymarkPresets/wiki).  See the Usage section below for how to import these.
+
 ## Usage
 * This plugin operates on a "library" of presets that is maintained separately from the game itself.  It only interacts with the game's saved presets when you tell it to.
 * Type `/pwaymark` in the game's chat window to bring up the main GUI for the plugin.
