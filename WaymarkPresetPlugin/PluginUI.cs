@@ -323,7 +323,7 @@ namespace WaymarkPresetPlugin
 			ImGui.End();
 		}
 
-        private float buttonMapViewWidth = 79; // Previous frame's Map view button width
+		private float buttonMapViewWidth = 79; // Previous frame's Map view button width
 
 		protected void DrawInfoWindow()
 		{
@@ -377,14 +377,14 @@ namespace WaymarkPresetPlugin
 
 					ImGui.EndGroup();
 					ImGui.Text( "Preset Info:" );
-                    float padding = 15;
+					float padding = 15;
 					ImGui.SameLine( ImGui.GetWindowWidth() - buttonMapViewWidth - padding );
 					if( ImGui.Button( "Map View" ) )
 					{
 						MapWindowVisible = !MapWindowVisible;
-                    }
-                    buttonMapViewWidth = ImGui.GetItemRectSize().X;
-                    ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames ) );
+					}
+					buttonMapViewWidth = ImGui.GetItemRectSize().X;
+					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames ) );
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
@@ -569,7 +569,7 @@ namespace WaymarkPresetPlugin
 
 			ImGui.SetNextWindowSize( new Vector2( 430, 370 ) * ImGui.GetIO().FontGlobalScale);
 			if( ImGui.Begin( "Waymark Settings", ref mSettingsWindowVisible,
-                ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
+				ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
 				ImGui.Checkbox( "Always show preset info pane.", ref mConfiguration.mAlwaysShowInfoPane );
 				ImGui.Checkbox( "Clicking the selected preset unselects it.", ref mConfiguration.mAllowUnselectPreset );
@@ -605,7 +605,7 @@ namespace WaymarkPresetPlugin
 				{
 					MainWindowVisible = true;
 				}
-                buttonLibraryWidth = ImGui.GetItemRectSize().X;
+				buttonLibraryWidth = ImGui.GetItemRectSize().X;
 			}
 			ImGui.End();
 		}
