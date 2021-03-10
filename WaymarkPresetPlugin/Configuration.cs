@@ -70,15 +70,16 @@ namespace WaymarkPresetPlugin
 		public bool AllowDirectPlacePreset
 		{
 			get { return mAllowDirectPlacePreset; }
-			set { mAllowDirectPlacePreset = value; if( value == false ) mAllowClientSidePlacementInOverworldZones = false; }
+			set { mAllowDirectPlacePreset = value; }
+			//set { mAllowDirectPlacePreset = value; if( value == false ) mAllowClientSidePlacementInOverworldZones = false; }
 		}
 
-		public bool mAllowClientSidePlacementInOverworldZones = false;
+		/*public bool mAllowClientSidePlacementInOverworldZones = false;
 		public bool AllowClientSidePlacementInOverworldZones
 		{
 			get { return mAllowClientSidePlacementInOverworldZones && mAllowDirectPlacePreset; }
 			set { mAllowClientSidePlacementInOverworldZones = value; }
-		}
+		}*/
 
 		public bool mAutoPopulatePresetsOnEnterInstance = false;
 		public bool AutoPopulatePresetsOnEnterInstance
@@ -92,6 +93,13 @@ namespace WaymarkPresetPlugin
 		{
 			get { return mAutoSavePresetsOnInstanceLeave; }
 			set { mAutoSavePresetsOnInstanceLeave = value; }
+		}
+
+		public bool mSuppressCommandLineResponses = false;
+		public bool SuppressCommandLineResponses
+		{
+			get { return mSuppressCommandLineResponses; }
+			set { mSuppressCommandLineResponses = value; }
 		}
 
 		public string GetZoneName( UInt16 ID )

@@ -80,6 +80,7 @@ namespace WaymarkPresetPlugin
 			}
 
 			//	Process the commands.
+			bool suppressResponse = mConfiguration.SuppressCommandLineResponses;
 			string commandResponse = "";
 			if( subCommand.Length == 0 )
 			{
@@ -97,9 +98,22 @@ namespace WaymarkPresetPlugin
 			{
 				commandResponse = ProcessTextCommand_Place( subCommandArgs );
 			}
+			else if( subCommand.ToLower() == "import" )
+			{
+				commandResponse = ProcessTextCommand_Import( subCommandArgs );
+			}
+			else if( subCommand.ToLower() == "export" )
+			{
+				commandResponse = ProcessTextCommand_Export( subCommandArgs );
+			}
 			else if( subCommand.ToLower() == "exportall" )
 			{
 				commandResponse = ProcessTextCommand_ExportAll( subCommandArgs );
+			}
+			else if( subCommand.ToLower() == "help" || subCommand.ToLower() == "?" )
+			{
+				commandResponse = ProcessTextCommand_Help( subCommandArgs );
+				suppressResponse = false;
 			}
 			else
 			{
@@ -107,7 +121,7 @@ namespace WaymarkPresetPlugin
 			}
 
 			//	Send any feedback to the user.
-			if( commandResponse.Length > 0 )
+			if( commandResponse.Length > 0 && !suppressResponse )
 			{
 				mPluginInterface.Framework.Gui.Chat.Print( commandResponse );
 			}
@@ -117,7 +131,7 @@ namespace WaymarkPresetPlugin
 		{
 			if( args.ToLower() == "commands" )
 			{
-				return $"Valid commands are as follows: config, slotinfo, exportall{( mConfiguration.AllowDirectPlacePreset ? ", place" : "" )}.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
+				return $"Valid commands are as follows: config, slotinfo, import, export, exportall{( mConfiguration.AllowDirectPlacePreset ? ", place" : "" )}.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
 			}
 			else if( args.ToLower() == "config" )
 			{
@@ -130,6 +144,14 @@ namespace WaymarkPresetPlugin
 			else if( mConfiguration.AllowDirectPlacePreset && args.ToLower() == "place" )
 			{
 				return "Places the preset at the specified library index (if possible).  Usage \"/pwaymark place <index>\".  Index can be any valid libary preset number.";
+			}
+			else if( args.ToLower() == "import" )
+			{
+				return "Copies one of the game's five preset slots to the library.  Usage \"/pwaymark import <slot>\".  The slot number can be any valid game slot.  Command-line import of a formatted preset string is not supported due to length restrictions in the game's chat box.";
+			}
+			else if( args.ToLower() == "export" )
+			{
+				return "Copies a preset from the library to the specified game slot *or* copies a preset to the clipboard, depending on flags and parameters.  Usage \"/pwaymark export [-t] [-g] <slot|index> [slot]\".  The slot number can be any valid game slot, and index can be any valid library preset number.  Use of the -g flag specifies that the first number is a game slot, not a library index.  Use of the -t flag includes the last-modified time in the clipboard export.";
 			}
 			else if( args.ToLower() == "exportall" )
 			{
@@ -183,7 +205,7 @@ namespace WaymarkPresetPlugin
 				{
 					try
 					{
-						MemoryHandler.PlacePreset( mConfiguration.PresetLibrary.Presets[libraryIndex].GetAsGamePreset(), mConfiguration.AllowClientSidePlacementInOverworldZones );
+						MemoryHandler.PlacePreset( mConfiguration.PresetLibrary.Presets[libraryIndex].GetAsGamePreset() /*, mConfiguration.AllowClientSidePlacementInOverworldZones*/ );
 						return "";
 					}
 					catch( Exception e )
@@ -200,6 +222,141 @@ namespace WaymarkPresetPlugin
 			else
 			{
 				return "Direct placement from the library is not currently allowed; see the plugin settings for more information.";
+			}
+		}
+
+		protected string ProcessTextCommand_Import( string args )
+		{
+			uint gameSlotToCopy;
+			if( args.Length == 1 &&
+				uint.TryParse( args, out gameSlotToCopy ) &&
+				gameSlotToCopy >= 1 &&
+				gameSlotToCopy <= MemoryHandler.MaxPresetSlotNum )
+			{
+				if( MemoryHandler.FoundSavedPresetSigs() )
+				{
+					try
+					{
+						WaymarkPreset tempPreset = WaymarkPreset.Parse( MemoryHandler.ReadSlot( gameSlotToCopy ) );
+						int importedIndex = mConfiguration.PresetLibrary.ImportPreset( tempPreset );
+						return $"Imported game preset {gameSlotToCopy} as library preset {importedIndex}.";
+					}
+					catch( Exception e )
+					{
+						PluginLog.Log( $"An unknown error occured while trying to read the game's waymark data: {e}" );
+						return "An unknown error occured while trying to read the game's waymark data.";
+					}
+				}
+				else
+				{
+					return "Unable to read game's waymark data.";
+				}
+			}
+			else
+			{
+				return $"An invalid game slot number was provided.";
+			}
+		}
+
+		protected string ProcessTextCommand_Export( string args )
+		{
+			var parameters = args.Split();
+			bool includeTimestamp = parameters.Contains( "-t" );
+			bool useGameSlot = parameters.Contains( "-g" );
+			int scratchVal;
+			var slotIndexNumbers = parameters.Where( x => int.TryParse( x, out scratchVal ) ).ToList();
+			WaymarkPreset presetToExport = null;
+
+			try
+			{
+				if( slotIndexNumbers.Count < 1 )
+				{
+					return "No slot or index numbers were provided.";
+				}
+				else if( slotIndexNumbers.Count == 1 )
+				{
+					int indexToExport = int.Parse( slotIndexNumbers[0] );
+					if( useGameSlot )
+					{
+						if( indexToExport >= 1 && indexToExport <= MemoryHandler.MaxPresetSlotNum )
+						{
+							presetToExport = WaymarkPreset.Parse( MemoryHandler.ReadSlot( (uint)indexToExport ) );
+						}
+						else
+						{
+							return $"An invalid game slot number ({indexToExport}) was provided.";
+						}
+					}
+					else
+					{
+						if( indexToExport >= 0 && indexToExport < mConfiguration.PresetLibrary.Presets.Count )
+						{
+							presetToExport = mConfiguration.PresetLibrary.Presets[indexToExport];
+						}
+						else
+						{
+							return $"An invalid library index ({indexToExport}) was provided.";
+						}
+					}
+
+					string exportStr = "";
+					if( args.ToLower().Trim() == "-t" )
+					{
+
+						exportStr += JsonConvert.SerializeObject( presetToExport ) + "\r\n";
+
+					}
+					else
+					{
+						exportStr += WaymarkPresetExport.GetExportString( presetToExport ) + "\r\n";
+					}
+
+					Win32Clipboard.CopyTextToClipboard( exportStr );
+
+					return "Copied to clipboard.";
+				}
+				else
+				{
+					int indexToExport = int.Parse( slotIndexNumbers[0] );
+					int exportTargetIndex = int.Parse( slotIndexNumbers[1] );
+					if( useGameSlot )
+					{
+						if( indexToExport >= 1 && indexToExport <= MemoryHandler.MaxPresetSlotNum )
+						{
+							presetToExport = WaymarkPreset.Parse( MemoryHandler.ReadSlot( (uint)indexToExport ) );
+						}
+						else
+						{
+							return $"An invalid game slot number to export ({indexToExport}) was provided.";
+						}
+					}
+					else
+					{
+						if( indexToExport >= 0 && indexToExport < mConfiguration.PresetLibrary.Presets.Count )
+						{
+							presetToExport = mConfiguration.PresetLibrary.Presets[indexToExport];
+						}
+						else
+						{
+							return $"An invalid library index ({indexToExport}) was provided.";
+						}
+					}
+
+					if( exportTargetIndex >= 1 && indexToExport <= MemoryHandler.MaxPresetSlotNum )
+					{
+						MemoryHandler.WriteSlot( (uint)exportTargetIndex, presetToExport.GetAsGamePreset() );
+						return $"Preset exported to game slot.";
+					}
+					else
+					{
+						return $"An invalid game slot number({indexToExport}) was provided as the target.";
+					}
+				}
+			}
+			catch( Exception e )
+			{
+				PluginLog.Log( $"Unknown error occured while export the preset: {e}" );
+				return "Unknown error occured while trying to export the preset.";
 			}
 		}
 
@@ -225,7 +382,7 @@ namespace WaymarkPresetPlugin
 
 				Win32Clipboard.CopyTextToClipboard( str );
 
-				return "";
+				return "Waymark library copied to clipboard.";
 			}
 			catch( Exception e )
 			{

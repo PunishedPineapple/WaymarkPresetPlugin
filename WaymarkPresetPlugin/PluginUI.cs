@@ -323,8 +323,6 @@ namespace WaymarkPresetPlugin
 			ImGui.End();
 		}
 
-		private float buttonMapViewWidth = 79; // Previous frame's Map view button width
-
 		protected void DrawInfoWindow()
 		{
 			if( !MainWindowVisible || ( SelectedPreset < 0 && !mConfiguration.AlwaysShowInfoPane ) )
@@ -371,19 +369,18 @@ namespace WaymarkPresetPlugin
 						ImGui.SameLine();
 						if( ImGui.Button( "Place" ) )
 						{
-							MemoryHandler.PlacePreset( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset(), mConfiguration.AllowClientSidePlacementInOverworldZones );
+							MemoryHandler.PlacePreset( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset() /*, mConfiguration.AllowClientSidePlacementInOverworldZones*/ );
 						}
 					}
 
 					ImGui.EndGroup();
 					ImGui.Text( "Preset Info:" );
-					float padding = 15;
-					ImGui.SameLine( ImGui.GetWindowWidth() - buttonMapViewWidth - padding );
+					ImGui.SameLine( ImGui.GetWindowWidth() - mButtonMapViewWidth - mRightAlignPadding );
 					if( ImGui.Button( "Map View" ) )
 					{
 						MapWindowVisible = !MapWindowVisible;
 					}
-					buttonMapViewWidth = ImGui.GetItemRectSize().X;
+					mButtonMapViewWidth = ImGui.GetItemRectSize().X;
 					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames ) );
 					ImGui.Spacing();
 					ImGui.Spacing();
@@ -558,8 +555,6 @@ namespace WaymarkPresetPlugin
 			ImGui.End();
 		}
 
-		private float buttonLibraryWidth = 90; //previous frame's library button width
-
 		protected void DrawSettingsWindow()
 		{
 			if( !SettingsWindowVisible )
@@ -582,15 +577,16 @@ namespace WaymarkPresetPlugin
 				ImGuiHelpMarker( "The primary use of this is if you need to know the preset index to use within a text command.  You can always leave this disabled if you only use the GUI." );
 				ImGui.Checkbox( "Allow placement/saving of presets directly.", ref mConfiguration.mAllowDirectPlacePreset );
 				ImGuiHelpMarker( "Enables buttons to save and place presets to/from the library, bypassing the game's preset UI entirely.  Please read the plugin site's readme before enabling this." );
-				if( !mConfiguration.AllowDirectPlacePreset ) mConfiguration.AllowClientSidePlacementInOverworldZones = false;
+				/*if( !mConfiguration.AllowDirectPlacePreset ) mConfiguration.AllowClientSidePlacementInOverworldZones = false;
 				ImGui.Indent();
 					ImGui.Checkbox( "Allow placement of waymarks client-side in overworld zones.", ref mConfiguration.mAllowClientSidePlacementInOverworldZones );
 					ImGuiHelpMarker( "Lets the plugin attempt to place waymarks in overworld zones that do not function with the game's preset interface.  These will only be visible client-side, and not to other party/alliance members.  This is out of specification behavior for the game, so please read this plugin's readme before enabling." );
-				ImGui.Unindent();
+				ImGui.Unindent();*/
 				ImGui.Checkbox( "Autoload presets from library.", ref mConfiguration.mAutoPopulatePresetsOnEnterInstance );
 				ImGuiHelpMarker( "Automatically loads the first five presets that exist in the library for a zone when you load into it.  THIS WILL OVERWRITE THE GAME'S SLOTS WITHOUT WARNING, so please do not turn this on until you are certain that you have saved any data that you want to keep.  Consider using this with the auto-import option below to reduce the risk of inadvertent preset loss." );
 				ImGui.Checkbox( "Autosave presets to library.", ref mConfiguration.mAutoSavePresetsOnInstanceLeave );
 				ImGuiHelpMarker( "Automatically copies any populated game preset slots into the library upon exiting an instance." );
+				ImGui.Checkbox( "Suppress responses to text commands (besides \"help\").", ref mConfiguration.mSuppressCommandLineResponses );
 				if( !mConfiguration.ShowFilterOnCurrentZoneCheckbox ) FilterOnCurrentZone = false;
 				ImGui.Spacing();
 				if( ImGui.Button( "Save and Close" ) )
@@ -599,13 +595,12 @@ namespace WaymarkPresetPlugin
 					SettingsWindowVisible = false;
 				}
 
-				float padding = 10;
-				ImGui.SameLine( ImGui.GetWindowWidth() - buttonLibraryWidth - padding );
+				ImGui.SameLine( ImGui.GetWindowWidth() - mButtonLibraryWidth - mRightAlignPadding );
 				if( ImGui.Button( "Show Library" ) )
 				{
 					MainWindowVisible = true;
 				}
-				buttonLibraryWidth = ImGui.GetItemRectSize().X;
+				mButtonLibraryWidth = ImGui.GetItemRectSize().X;
 			}
 			ImGui.End();
 		}
@@ -1044,6 +1039,12 @@ namespace WaymarkPresetPlugin
 		protected ZoneSearcher EditWindowZoneSearcher { get; set; } = new ZoneSearcher();
 		protected string mEditWindowZoneFilterString = "";
 		protected bool EditWindowZoneComboWasOpen { get; set; } = false;
+		
+		//	Padding and storing width to right-align buttons.  Initialization value probably doesn't much matter for the saved button widths, since they'll be updated after the first rendered frame.
+		private float mRightAlignPadding = 15;
+		private float mButtonMapViewWidth = 79;
+		private float mButtonLibraryWidth = 90;
+
 		protected Dictionary<UInt16, List<TextureWrap>> MapTextureDict { get; set; } = new Dictionary<UInt16, List<TextureWrap>>();
 		protected Mutex mMapTextureDictMutex = new Mutex();
 		//protected Dictionary<char, TextureWrap> WaymarkIconTextureDict { get; set; } = new Dictionary<char, TextureWrap>();
