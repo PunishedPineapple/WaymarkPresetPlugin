@@ -24,13 +24,6 @@ namespace WaymarkPresetPlugin
 			set { mSortPresetsByZone = value; }
 		}
 
-		public bool mShowDutyNames = true;
-		public bool ShowDutyNames
-		{
-			get { return mShowDutyNames; }
-			set { mShowDutyNames = value; }
-		}
-
 		public bool mAlwaysShowInfoPane = false;
 		public bool AlwaysShowInfoPane
 		{
@@ -112,7 +105,7 @@ namespace WaymarkPresetPlugin
 
 		protected string GetZoneNameHelperFunc( UInt16 ID, bool showID )
 		{
-			string str = ShowDutyNames ? ZoneInfoHandler.GetZoneInfoFromContentFinderID( ID ).DutyName : ZoneInfoHandler.GetZoneInfoFromContentFinderID( ID ).ZoneName;
+			string str = /*ShowDutyNames ?*/ ZoneInfoHandler.GetZoneInfoFromContentFinderID( ID ).DutyName /*: ZoneInfoHandler.GetZoneInfoFromContentFinderID( ID ).ZoneName*/;
 			str += showID ? $" ({ID})" : "";
 			return str;
 		}
