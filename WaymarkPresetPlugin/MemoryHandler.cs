@@ -16,19 +16,25 @@ namespace WaymarkPresetPlugin
 		{
 			if( pluginInterface == null )
 			{
-				throw new Exception( "Error in MemoryHandler.Init: A null plugin interface was passed!" );
+				throw new Exception( "Error in \"MemoryHandler.Init()\": A null plugin interface was passed!" );
 			}
 
 			//	Save this off.
 			mPluginInterface = pluginInterface;
 
+			//	Get Function Pointers, etc.
 			try
 			{
-				//	Get Function Pointers
 				IntPtr fpGetUISAVESectionAddress = mPluginInterface.TargetModuleScanner.ScanText( "40 53 48 83 EC 20 48 8B 0D ?? ?? ?? ?? 0F B7 DA" );
 				if( fpGetUISAVESectionAddress != IntPtr.Zero )
 				{
 					mdGetUISAVESectionAddress = Marshal.GetDelegateForFunctionPointer<GetConfigSectionDelegate>( fpGetUISAVESectionAddress );
+				}
+
+				//	Write this address to log to help with digging around in memory if we need to.
+				if( mdGetUISAVESectionAddress != null )
+				{
+					PluginLog.LogInformation( $"FMARKER.DAT address: 0x{mdGetUISAVESectionAddress.Invoke( IntPtr.Zero, mFMARKERDATIndex ).ToString( "X" )}" );
 				}
 
 				IntPtr fpGetPresetAddressForSlot = mPluginInterface.TargetModuleScanner.ScanText( "4C 8B C9 85 D2 78 0A 83 FA 08 73 05" );
@@ -60,16 +66,27 @@ namespace WaymarkPresetPlugin
 
 				//	Write this address to log to help with digging around in memory if we need to.
 				PluginLog.LogInformation( $"Waymarks object address: 0x{mpWaymarksObj.ToString( "X" )}" );
+
+				//*****TODO:	Ideally we would check the size of the FMARKER.DAT section against the expected number of presets and the struct size, and
+				//				warn the user if it doesn't all line up (or maybe only if it's not divisible?), but it doesn't appear to store the size of
+				//				the config section like it does in UISAVE.DAT, so this may not be feasible.  We could consider checking the difference between
+				//				the pointer to this section and the next section, but that seems a bit unreliable.*****
 			}
 			catch( Exception e )
 			{
-				throw new Exception( $"Error in MemoryHandler.Init: Unable to find all required function signatures; this probably means that the plugin needs to be updated due to changes in Final Fantasy XIV.  Raw exception as follows:\r\n{e}" );
+				throw new Exception( $"Error in \"MemoryHandler.Init()\" while searching for required function signatures; this probably means that the plugin needs to be updated due to changes in Final Fantasy XIV.  Raw exception as follows:\r\n{e}" );
 			}
 		}
 
 		public static void Uninit()
 		{
-			mPluginInterface = null;
+			mPluginInterface					= null;
+			mpWaymarksObj						= IntPtr.Zero;
+			mdGetUISAVESectionAddress			= null;
+			mdGetPresetAddressForSlot			= null;
+			mdGetCurrentContentFinderLinkType	= null;
+			mdDirectPlacePreset					= null;
+			mdGetCurrentWaymarkData				= null;
 		}
 
 		public static bool FoundSavedPresetSigs()
@@ -137,7 +154,7 @@ namespace WaymarkPresetPlugin
 			}
 			else
 			{
-				IntPtr pWaymarksLocation = mdGetUISAVESectionAddress.Invoke( IntPtr.Zero, 0x11 );
+				IntPtr pWaymarksLocation = mdGetUISAVESectionAddress.Invoke( IntPtr.Zero, mFMARKERDATIndex );
 
 				if( pWaymarksLocation != IntPtr.Zero )
 				{
@@ -214,7 +231,7 @@ namespace WaymarkPresetPlugin
 			{
 				try
 				{
-					byte flags = Marshal.ReadByte( new IntPtr( mPluginInterface.ClientState.LocalPlayer.Address.ToInt64() + CharacterStructCombatFlagsOffset.ToInt64() ) );
+					byte flags = Marshal.ReadByte( new IntPtr( mPluginInterface.ClientState.LocalPlayer.Address.ToInt64() + mCharacterStructCombatFlagsOffset.ToInt64() ) );
 					return ( flags & 2 ) > 0;
 				}
 				catch
@@ -265,22 +282,22 @@ namespace WaymarkPresetPlugin
 			Marshal.StructureToPtr( new GameWaymarks( preset ), pClientSideWaymarks, false );
 		}
 
+		//	Magic Numbers
 		public static readonly int MaxPresetSlotNum = 5;
-		private static readonly IntPtr CharacterStructCombatFlagsOffset = new IntPtr( 0x1980 );
+		private static readonly byte mFMARKERDATIndex = 0x11;
+		private static readonly IntPtr mCharacterStructCombatFlagsOffset = new IntPtr( 0x1980 );
+		private static IntPtr mClientSideWaymarksOffset = new IntPtr( 0x1B0 );  //*****TODO: Feels bad initializing this with a magic number.  Not sure best thing to do.*****
 
+		//	Misc.
 		private static DalamudPluginInterface mPluginInterface;
 		private static IntPtr mpWaymarksObj;
-		private static IntPtr mClientSideWaymarksOffset = new IntPtr( 0x1B0 );	//*****TODO: Feels bad initializing this with a magic number.  Not sure best thing to do.*****
 
+		//	Delgates
 		private delegate IntPtr GetConfigSectionDelegate( IntPtr pConfigFile, byte sectionIndex );
 		private delegate IntPtr GetPresetAddressForSlotDelegate( IntPtr pMarkerDataStart, uint slotNum );
 		private delegate byte GetCurrentContentFinderLinkTypeDelegate();
 		private delegate void DirectPlacePresetDelegate( IntPtr pObj, IntPtr pData );
 		private delegate void GetCurrentWaymarkDataDelegate( IntPtr pObj, IntPtr pData );
-
-		//	***** TODO: Testing *****
-		//private delegate IntPtr GetIsInCombatDelegate();
-		//private static GetIsInCombatDelegate mdGetIsInCombat;
 
 		private static GetConfigSectionDelegate mdGetUISAVESectionAddress;
 		private static GetPresetAddressForSlotDelegate mdGetPresetAddressForSlot;
