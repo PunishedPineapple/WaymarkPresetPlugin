@@ -34,12 +34,16 @@ namespace WaymarkPresetPlugin
 			//	ID of the maps for these zones too.  The best solution (for the time being) seems to be to store a pseudo map name string (the base of the map names for that zone) that can be cross-referenced later.
 			foreach( TerritoryType zone in territorySheet.ToList() )
 			{
-				if( zone.ExclusiveType == 2 && !mZoneInfoDict.ContainsKey( zone.Unknown10 ) )
+				if( !mZoneInfoDict.ContainsKey( zone.Unknown10 ) && (
+						zone.ExclusiveType == 2 ||
+						mBodgeIncludeContentFinderConditionIDs.Contains( zone.Unknown10 )
+					) )
 				{
 					ContentFinderCondition contentRow = contentFinderSheet.GetRow( zone.Unknown10 );
-					if( contentRow != null &&
-						contentRow.ContentLinkType > 0 &&
-						contentRow.ContentLinkType < 3 )
+					if(	contentRow != null && (
+							( contentRow.ContentLinkType > 0 && contentRow.ContentLinkType < 3 ) ||
+							mBodgeIncludeContentFinderConditionIDs.Contains( zone.Unknown10 )
+						) )
 					{
 						if( !mZoneInfoDict.ContainsKey( zone.Unknown10 ) )
 						{
@@ -138,6 +142,15 @@ namespace WaymarkPresetPlugin
 		private static Dictionary<UInt16, ZoneInfo> mZoneInfoDict = new Dictionary<ushort, ZoneInfo>();
 		private static Dictionary<uint, UInt16> mTerritoryTypeIDToContentFinderIDDict = new Dictionary<uint, ushort>();
 		private static Dictionary<string, List<MapInfo>> mMapInfoDict = new Dictionary<string, List<MapInfo>>();
+
+		//	This is to hard-code that some zones should be included, even if they don't otherwise meet the criteria.  There are a small handful of
+		//	ContentFinderCondition IDs that support waymark presets, but are content link type #3, and don't otherwise distinguish themselves in the
+		//	sheets in any way that I have found.  There is a separate function that gets called at runtime that determines whether presets are allowed
+		//	based on some flag about the current duty, but it doesn't seem to have something in the sheets that corresponds to it perfectly.
+		private static List<UInt16> mBodgeIncludeContentFinderConditionIDs = new List<UInt16>{
+			760,	// Delubrum Reginae
+			761		// Delubrum Reginae (Savage)
+		};
 	}
 
 	public struct ZoneInfo
