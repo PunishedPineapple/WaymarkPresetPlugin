@@ -546,7 +546,7 @@ namespace WaymarkPresetPlugin
 					EditingPresetIndex = -1;
 					ScratchEditingPreset = null;
 				}
-				ImGui.SameLine( ImGui.GetWindowWidth() - 79 );  //*****TODO: The magic number is cheap and hacky; actually get the button width if we can.*****
+				ImGui.SameLine( ImGui.GetWindowWidth() - mButtonMapViewWidth - mRightAlignPadding );
 				if( ImGui.Button( "Map View" ) )
 				{
 					MapWindowVisible = !MapWindowVisible;
