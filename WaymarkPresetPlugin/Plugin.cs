@@ -300,15 +300,13 @@ namespace WaymarkPresetPlugin
 					}
 
 					string exportStr = "";
-					if( args.ToLower().Trim() == "-t" )
+					if( includeTimestamp )
 					{
-
-						exportStr += JsonConvert.SerializeObject( presetToExport ) + "\r\n";
-
+						exportStr = JsonConvert.SerializeObject( presetToExport );
 					}
 					else
 					{
-						exportStr += WaymarkPresetExport.GetExportString( presetToExport ) + "\r\n";
+						exportStr = WaymarkPresetExport.GetExportString( presetToExport );
 					}
 
 					Win32Clipboard.CopyTextToClipboard( exportStr );
