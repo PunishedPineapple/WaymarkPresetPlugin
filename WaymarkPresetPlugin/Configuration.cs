@@ -38,11 +38,11 @@ namespace WaymarkPresetPlugin
 			set { mAllowUnselectPreset = value; }
 		}
 
-		public bool mShowFilterOnCurrentZoneCheckbox = true;
-		public bool ShowFilterOnCurrentZoneCheckbox
+		public bool mFilterOnCurrentZone = false;
+		public bool FilterOnCurrentZone
 		{
-			get { return mShowFilterOnCurrentZoneCheckbox; }
-			set { mShowFilterOnCurrentZoneCheckbox = value; }
+			get { return mFilterOnCurrentZone; }
+			set { mFilterOnCurrentZone = value; }
 		}
 
 		public bool mShowIDNumberNextToZoneNames = false;

@@ -135,10 +135,9 @@ namespace WaymarkPresetPlugin
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 340 ) * ImGui.GetIO().FontGlobalScale, new Vector2( float.MaxValue, float.MaxValue ) );
 			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
-				if( mConfiguration.ShowFilterOnCurrentZoneCheckbox )
-				{
-					ImGui.Checkbox( "Filter on Current Zone", ref mFilterOnCurrentZone );
-				}
+				bool previouslyFilteredOnZone = mConfiguration.FilterOnCurrentZone;
+				ImGui.Checkbox( "Filter on Current Zone", ref mConfiguration.mFilterOnCurrentZone );
+				if( mConfiguration.FilterOnCurrentZone != previouslyFilteredOnZone ) mConfiguration.Save();	//	I'd rather just save the state when the plugin is unloaded, but that's not been feasible in the past.
 				if( mConfiguration.AllowDirectPlacePreset )
 				{
 					ImGui.SameLine( ImGui.GetWindowWidth() - 163 );  //*****TODO: The magic number is cheap and hacky; actually get the button width if we can.*****
@@ -159,7 +158,7 @@ namespace WaymarkPresetPlugin
 						var dict = mConfiguration.PresetLibrary.GetSortedIndices();
 						foreach( var zone in dict )
 						{
-							if( !FilterOnCurrentZone || zone.Key == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) )
+							if( !mConfiguration.FilterOnCurrentZone || zone.Key == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) )
 							{
 								if( ImGui.CollapsingHeader( ZoneInfoHandler.GetZoneInfoFromContentFinderID( zone.Key ).DutyName.ToString() ) )
 								{
@@ -193,7 +192,7 @@ namespace WaymarkPresetPlugin
 						{
 							for( int i = 0; i < mConfiguration.PresetLibrary.Presets.Count; ++i )
 							{
-								if( !FilterOnCurrentZone || mConfiguration.PresetLibrary.Presets[i].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) )
+								if( !mConfiguration.FilterOnCurrentZone || mConfiguration.PresetLibrary.Presets[i].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) )
 								{
 									if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}###_Preset_{i}", i == SelectedPreset ) )
 									{
@@ -562,14 +561,13 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 430, 370 ) * ImGui.GetIO().FontGlobalScale);
+			ImGui.SetNextWindowSize( new Vector2( 430, 340 ) * ImGui.GetIO().FontGlobalScale);
 			if( ImGui.Begin( "Waymark Settings", ref mSettingsWindowVisible,
 				ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
 				ImGui.Checkbox( "Always show preset info pane.", ref mConfiguration.mAlwaysShowInfoPane );
 				ImGui.Checkbox( "Clicking the selected preset unselects it.", ref mConfiguration.mAllowUnselectPreset );
 				ImGui.Checkbox( "Categorize presets by zone.", ref mConfiguration.mSortPresetsByZone );
-				ImGui.Checkbox( "Show \"Filter on Current Zone\" checkbox.", ref mConfiguration.mShowFilterOnCurrentZoneCheckbox );
 				ImGui.Checkbox( "Show ID numbers next to zone names.", ref mConfiguration.mShowIDNumberNextToZoneNames );
 				ImGuiHelpMarker( "Shows the internal Content Finder ID of the zone/duty in some places.  Generally only used for debugging." );
 				ImGui.Checkbox( "Show the index of the preset within the library.", ref mConfiguration.mShowLibraryIndexInPresetList );
@@ -586,7 +584,6 @@ namespace WaymarkPresetPlugin
 				ImGui.Checkbox( "Autosave presets to library.", ref mConfiguration.mAutoSavePresetsOnInstanceLeave );
 				ImGuiHelpMarker( "Automatically copies any populated game preset slots into the library upon exiting an instance." );
 				ImGui.Checkbox( "Suppress responses to text commands (besides \"help\").", ref mConfiguration.mSuppressCommandLineResponses );
-				if( !mConfiguration.ShowFilterOnCurrentZoneCheckbox ) FilterOnCurrentZone = false;
 				ImGui.Spacing();
 				if( ImGui.Button( "Save and Close" ) )
 				{
@@ -1018,13 +1015,6 @@ namespace WaymarkPresetPlugin
 		{
 			get { return mPresetImportString; }
 			set { mPresetImportString = value; }
-		}
-
-		protected bool mFilterOnCurrentZone = false;
-		public bool FilterOnCurrentZone
-		{
-			get { return mFilterOnCurrentZone; }
-			set { mFilterOnCurrentZone = value; }
 		}
 
 		public Vector2 MainWindowPos { get; protected set; }
