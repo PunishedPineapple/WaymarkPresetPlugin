@@ -239,6 +239,7 @@ namespace WaymarkPresetPlugin
 					{
 						WaymarkPreset tempPreset = WaymarkPreset.Parse( MemoryHandler.ReadSlot( gameSlotToCopy ) );
 						int importedIndex = mConfiguration.PresetLibrary.ImportPreset( tempPreset );
+						mConfiguration.Save();
 						return $"Imported game preset {gameSlotToCopy} as library preset {importedIndex}.";
 					}
 					catch( Exception e )
