@@ -131,8 +131,8 @@ namespace WaymarkPresetPlugin
 			}
 
 			//	Draw the window.
-			ImGui.SetNextWindowSize( new Vector2( 375, 340 ), ImGuiCond.FirstUseEver );
-			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 340 ), new Vector2( float.MaxValue, float.MaxValue ) );
+			ImGui.SetNextWindowSize( new Vector2( 375, 340 ) * ImGui.GetIO().FontGlobalScale, ImGuiCond.FirstUseEver );
+			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 340 ) * ImGui.GetIO().FontGlobalScale, new Vector2( float.MaxValue, float.MaxValue ) );
 			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
 				if( mConfiguration.ShowFilterOnCurrentZoneCheckbox )
@@ -323,6 +323,8 @@ namespace WaymarkPresetPlugin
 			ImGui.End();
 		}
 
+		private float buttonMapViewWidth = 79; // Previous frame's Map view button width
+
 		protected void DrawInfoWindow()
 		{
 			if( !MainWindowVisible || ( SelectedPreset < 0 && !mConfiguration.AlwaysShowInfoPane ) )
@@ -330,7 +332,7 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 250, 340 ) );
+			ImGui.SetNextWindowSize( new Vector2( 250, 340 ) * ImGui.GetIO().FontGlobalScale);
 			ImGui.SetNextWindowPos( new Vector2( MainWindowPos.X + MainWindowSize.X, MainWindowPos.Y ) );
 			if( ImGui.Begin( "Preset Info", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar ) )
 			{
@@ -375,11 +377,13 @@ namespace WaymarkPresetPlugin
 
 					ImGui.EndGroup();
 					ImGui.Text( "Preset Info:" );
-					ImGui.SameLine( ImGui.GetWindowWidth() - 79 );
+					float padding = 15;
+					ImGui.SameLine( ImGui.GetWindowWidth() - buttonMapViewWidth - padding );
 					if( ImGui.Button( "Map View" ) )
 					{
 						MapWindowVisible = !MapWindowVisible;
 					}
+					buttonMapViewWidth = ImGui.GetItemRectSize().X;
 					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames ) );
 					ImGui.Spacing();
 					ImGui.Spacing();
@@ -443,7 +447,7 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 375, 425 ) );
+			ImGui.SetNextWindowSize( new Vector2( 375, 425 ) * ImGui.GetIO().FontGlobalScale);
 			if( ImGui.Begin( "Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize ) )
 			{
 				if( ScratchEditingPreset != null )
@@ -554,6 +558,8 @@ namespace WaymarkPresetPlugin
 			ImGui.End();
 		}
 
+		private float buttonLibraryWidth = 90; //previous frame's library button width
+
 		protected void DrawSettingsWindow()
 		{
 			if( !SettingsWindowVisible )
@@ -561,7 +567,7 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 430, 370 ) );
+			ImGui.SetNextWindowSize( new Vector2( 430, 370 ) * ImGui.GetIO().FontGlobalScale);
 			if( ImGui.Begin( "Waymark Settings", ref mSettingsWindowVisible,
 				ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
@@ -592,11 +598,14 @@ namespace WaymarkPresetPlugin
 					mConfiguration.Save();
 					SettingsWindowVisible = false;
 				}
-				ImGui.SameLine( ImGui.GetWindowWidth() - 90 );	//*****TODO: The magic number is cheap and hacky; actually get the button width if we can.*****
+
+				float padding = 10;
+				ImGui.SameLine( ImGui.GetWindowWidth() - buttonLibraryWidth - padding );
 				if( ImGui.Button( "Show Library" ) )
 				{
 					MainWindowVisible = true;
 				}
+				buttonLibraryWidth = ImGui.GetItemRectSize().X;
 			}
 			ImGui.End();
 		}
@@ -613,7 +622,7 @@ namespace WaymarkPresetPlugin
 			{
 				CapturedWaymarkIndex = -1;	//	Shouldn't be necessary, but better to be safe than potentially muck up a preset.
 			}
-			ImGui.SetNextWindowSizeConstraints( new Vector2( 350, 380 ), new Vector2( int.MaxValue, int.MaxValue ) );
+			ImGui.SetNextWindowSizeConstraints( new Vector2( 350, 380 ) * ImGui.GetIO().FontGlobalScale, new Vector2( int.MaxValue, int.MaxValue ) );
 			if( ImGui.Begin( $"Map View{(showingEditingView ? " - Editing" : "")}###MapViewWindow", ref mMapWindowVisible,
 				ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
