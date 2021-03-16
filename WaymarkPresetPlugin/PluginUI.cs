@@ -790,28 +790,24 @@ namespace WaymarkPresetPlugin
 									}
 									ImGui.EndChild();
 									ImGui.PopStyleVar();
-									ImGui.Text( cursorPosText );
-									if( mapInfo.Length > 1 )
+
+									if (mapList.Count <= 1 || selectedSubMapIndex >= mapList.Count)
 									{
-										string submapInfoString = $"Sub-Map: {mapInfo[selectedSubMapIndex].PlaceNameSub} ({selectedSubMapIndex + 1}/{mapInfo.Length})";
-										ImGui.SameLine( mapWidgetSize_Px - ImGui.CalcTextSize( submapInfoString ).X );
-										ImGui.Text( submapInfoString );
+										selectedSubMapIndex = 0;
 									}
-								}
-								//	Put the radio buttons down below since they'll not commonly be used.  Set the selected map index to zero first if applicable.
-								if( mapList.Count <= 1 || selectedSubMapIndex >= mapList.Count )
-								{
-									selectedSubMapIndex = 0;
-								}
-								else
-								{
-									for( int i = 0; i < mapList.Count; ++i )
+									else
 									{
-										if( ImGui.RadioButton( $"{mapInfo[i].PlaceNameSub}##{i}SelectedMapIndex", i == selectedSubMapIndex ) )
+										List<string> subMaps = new List<string>();
+										foreach (MapInfo map in mapInfo)
 										{
-											selectedSubMapIndex = i;
+											subMaps.Add(map.PlaceNameSub);
 										}
+
+										ImGui.Combo("", ref selectedSubMapIndex, subMaps.ToArray(), mapList.Count);
+										ImGui.SameLine();
 									}
+
+									ImGui.Text(cursorPosText);
 								}
 							}
 						}
