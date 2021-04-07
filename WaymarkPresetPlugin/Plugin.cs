@@ -343,8 +343,14 @@ namespace WaymarkPresetPlugin
 
 					if( exportTargetIndex >= 1 && exportTargetIndex <= MemoryHandler.MaxPresetSlotNum )
 					{
-						MemoryHandler.WriteSlot( (uint)exportTargetIndex, presetToExport.GetAsGamePreset() );
-						return $"Preset exported to game slot.";
+						if( MemoryHandler.WriteSlot( (uint)exportTargetIndex, presetToExport.GetAsGamePreset() ) )
+						{
+							return $"Preset exported to game slot {exportTargetIndex}.";
+						}
+						else
+						{
+							return $"Unable to write to game slot {exportTargetIndex}!";
+						}
 					}
 					else
 					{
