@@ -10,7 +10,7 @@ Low Priority:
 - Make the library enumerable and protect the presets list.  This doesn't completely solve the potential for untracked changes (names and zone IDs can change), but it helps.  To be able to fully remove sorting the presets each frame, presets would have to have change events for those fields as well to which the library could subscribe.
 - Fix waymark icon loading once Dalamud has updated Lumina.
 - Maybe add "preferred for zone" or "starred" bool/checkmark in the info pane/editor as a field in a preset to tell if it should be given priority for auto load?
-- Switch preset import text box to be one with a hint if that ever gets fixed in the C# ImGui bindings.
+	- I feel like this would be getting into the area of more complexity than it's worth.
 - Make the preset info use a monospace font for coordinate alignment.
 - Give the UI a reference to the actual plugin object itself and see if we can get rid of duplicate functionality between the two parts.
 - Think about whether ints or possbily even fixed-precision coordinates would be preferable to floats going forward.  Eliminates impact of rounding errors, but makes interop with other existing programs more difficult, and may or may not interfere with any future direct placement/saving features.  Are rounding errors even a potential issue as-is?
@@ -19,9 +19,11 @@ Low Priority:
 	- Basic paths to bg lgbs for zones are in Bg column of TerritoryType sheet.
 	- Lumina command line to get basic bg lgb file information for say Pharos Sirius is therefore: Lumina.Cmd.exe file bg/ffxiv/sea_s1/dun/s1d4/level/bg.lgb extract --datapath "C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack"
 	- No idea how to process the lgb for the map boundaries though.
+- Try to constrain the aspect ratio of the map window if possible.
 
 
 New Functionality:
 
 - Look into placing a preset by placing each individual waymark to work around preset restrictions, but this honestly looks like a huge mess, and SE's code is doing timing stuff when placing a preset, so it might be even more weird.
+	- See the WaymarkInfo.txt for some of how this appears to be handled by the game.
 - Add buttons for clear waymarks and placing individual waymarks, as well as a button to open up the game's waymark interface.
