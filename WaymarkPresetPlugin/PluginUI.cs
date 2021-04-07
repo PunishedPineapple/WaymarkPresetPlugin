@@ -14,6 +14,7 @@ using ImGuiScene;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Text.RegularExpressions;
+using Dalamud.Interface;
 
 namespace WaymarkPresetPlugin
 {
@@ -247,7 +248,7 @@ namespace WaymarkPresetPlugin
 					if( MemoryHandler.FoundSavedPresetSigs() )
 					{
 						//ImGui.SameLine();
-						ImGui.Text( "Or import from game: " );
+						ImGui.Text( "Or import from game slot: " );
 						ImGui.SameLine();
 						if( ImGui.Button( "1" ) )
 						{
@@ -330,7 +331,7 @@ namespace WaymarkPresetPlugin
 			}
 
 			ImGui.SetNextWindowSize( new Vector2( 250, 340 ) * ImGui.GetIO().FontGlobalScale);
-			ImGui.SetNextWindowPos( new Vector2( MainWindowPos.X + MainWindowSize.X, MainWindowPos.Y ) );
+			ImGuiHelpers.SetNextWindowPosRelativeMainViewport( new Vector2( MainWindowPos.X + MainWindowSize.X, MainWindowPos.Y ) );
 			if( ImGui.Begin( "Preset Info", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar ) )
 			{
 				if( SelectedPreset >= 0 && SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
