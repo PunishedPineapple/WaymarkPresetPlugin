@@ -232,10 +232,7 @@ namespace WaymarkPresetPlugin
 				if( ImGui.CollapsingHeader( "Import Options" ) )
 				{
 					ImGui.BeginGroup(); //Buttons don't seem to work under a header without being in a group.
-					ImGui.Text( "Preset:" );
-					ImGui.SameLine();
-					ImGui.InputText( "##JSONImportTextBox", ref mPresetImportString, 1024 );   //Most exports max out around 500 characters with all waymarks, so this leaves heaps of room for a long name.
-					//ImGui.InputTextWithHint( "##JSONImportTextBox", "Paste Formatted Preset Here", mPresetImportString, 1024 );	//	InputTextWithHint seems to be unusable in the C# bindings due to buf not being a ref.
+					ImGui.InputTextWithHint( "##JSONImportTextBox", "Paste a preset here and click \"Import\".", ref mPresetImportString, 1024 );	//Most exports max out around 500 characters with all waymarks, so this leaves heaps of room for a long name.
 					ImGui.SameLine();
 					if( ImGui.Button( "Import" ) )
 					{
@@ -331,7 +328,7 @@ namespace WaymarkPresetPlugin
 			}
 
 			ImGui.SetNextWindowSize( new Vector2( 250, 340 ) * ImGui.GetIO().FontGlobalScale);
-			ImGuiHelpers.SetNextWindowPosRelativeMainViewport( new Vector2( MainWindowPos.X + MainWindowSize.X, MainWindowPos.Y ) );
+			ImGui.SetNextWindowPos( new Vector2( MainWindowPos.X + MainWindowSize.X, MainWindowPos.Y ) );	//Note that this does *not* need to be viewport-relative, since it is just an offset relative to the library window.
 			if( ImGui.Begin( "Preset Info", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar ) )
 			{
 				if( SelectedPreset >= 0 && SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
@@ -667,8 +664,12 @@ namespace WaymarkPresetPlugin
 							}
 							else
 							{
+								//	Some things that we'll need as we (attempt to) draw the map.
 								var mapList = MapTextureDict[(UInt16)territoryTypeIDToShow];
 								var mapInfo = ZoneInfoHandler.GetMapInfoFromTerritoryTypeID( territoryTypeIDToShow );
+								string cursorPosText = "X: ---, Y: ---";
+								Vector2 windowSize = ImGui.GetWindowSize();
+								float mapWidgetSize_Px = Math.Min( windowSize.X - 15 * ImGui.GetIO().FontGlobalScale, windowSize.Y - 63 * ImGui.GetIO().FontGlobalScale );
 
 								//	Ensure that the submap/zoom/pan for this map exists.
 								if( !MapViewStateData.ContainsKey( territoryTypeIDToShow ) )
@@ -688,9 +689,6 @@ namespace WaymarkPresetPlugin
 									//	Aliases
 									ref float mapZoom = ref MapViewStateData[territoryTypeIDToShow].SubMapViewData[selectedSubMapIndex].Zoom;
 									ref Vector2 mapPan = ref MapViewStateData[territoryTypeIDToShow].SubMapViewData[selectedSubMapIndex].Pan;
-
-									Vector2 windowSize = ImGui.GetWindowSize();
-									float mapWidgetSize_Px = Math.Min( windowSize.X - 15, windowSize.Y - 60 );
 
 									ImGui.PushStyleVar( ImGuiStyleVar.WindowPadding, new Vector2( 0 ) );
 									ImGui.BeginChild( "##MapImageContainer", new Vector2( mapWidgetSize_Px ), false, ImGuiWindowFlags.NoDecoration );
@@ -746,7 +744,6 @@ namespace WaymarkPresetPlugin
 									mapPan.X = Math.Min( 1.0f - mapZoom * 0.5f, Math.Max( 0.0f + mapZoom * 0.5f, mapPan.X ) );
 									mapPan.Y = Math.Min( 1.0f - mapZoom * 0.5f, Math.Max( 0.0f + mapZoom * 0.5f, mapPan.Y ) );
 
-									string cursorPosText = "X: ---, Y: ---";
 									if( ImGui.IsItemHovered() )
 									{
 										Vector2 mapPixelCoords = ImGui.GetMousePos() - mapWidgetScreenPos;
@@ -764,11 +761,11 @@ namespace WaymarkPresetPlugin
 										if( markerActiveFlags[i] )
 										{
 											Vector2 waymarkMapPt = MapTextureCoordsToScreenCoords(	mapInfo[selectedSubMapIndex].GetPixelCoordinates( marker2dCoords[i] ),
-																									mapLowerBounds,	
+																									mapLowerBounds,
 																									mapUpperBounds,
 																									new Vector2( mapWidgetSize_Px ),
 																									mapWidgetScreenPos );
-											
+
 											ImGui.GetWindowDrawList().AddImage( WaymarkIconTextures[i].ImGuiHandle, waymarkMapPt - mWaymarkMapIconHalfSize_Px, waymarkMapPt + mWaymarkMapIconHalfSize_Px );
 
 											//	Capture the waymark if appropriate.
@@ -791,24 +788,28 @@ namespace WaymarkPresetPlugin
 									}
 									ImGui.EndChild();
 									ImGui.PopStyleVar();
+									ImGui.Text( cursorPosText );
+								}
 
-									if (mapList.Count <= 1 || selectedSubMapIndex >= mapList.Count)
+								if( mapList.Count <= 1 || selectedSubMapIndex >= mapList.Count )
+								{
+									selectedSubMapIndex = 0;
+								}
+								else
+								{
+									float subMapComboWidth = 0.0f;
+									List<string> subMaps = new List<string>();
+									for( int i = 0; i < mapInfo.Length; ++i )
 									{
-										selectedSubMapIndex = 0;
+										string subMapName = mapInfo[i].PlaceNameSub.Trim().Length < 1 ? $"Unnamed Sub-map {i + 1}" : mapInfo[i].PlaceNameSub;
+										subMaps.Add( subMapName );
+										subMapComboWidth = Math.Max( subMapComboWidth, ImGui.CalcTextSize( subMapName ).X );
 									}
-									else
-									{
-										List<string> subMaps = new List<string>();
-										foreach (MapInfo map in mapInfo)
-										{
-											subMaps.Add(map.PlaceNameSub);
-										}
+									subMapComboWidth += 40.0f;
 
-										ImGui.Combo("", ref selectedSubMapIndex, subMaps.ToArray(), mapList.Count);
-										ImGui.SameLine();
-									}
-
-									ImGui.Text(cursorPosText);
+									ImGui.SameLine( Math.Max( mapWidgetSize_Px /*- ImGui.CalcTextSize( cursorPosText ).X*/ - subMapComboWidth + 8, 0 ) );
+									ImGui.SetNextItemWidth( subMapComboWidth );
+									ImGui.Combo( "", ref selectedSubMapIndex, subMaps.ToArray(), mapList.Count );
 								}
 							}
 						}
