@@ -173,7 +173,7 @@ namespace WaymarkPresetPlugin
 			return	mPluginInterface != null &&
 					mPluginInterface.ClientState.LocalPlayer != null &&
 					mPluginInterface.ClientState.LocalPlayer.Address != IntPtr.Zero &&
-					!IsCharacterInCombat() &&
+					!mPluginInterface.ClientState.Condition[Dalamud.Game.ClientState.ConditionFlag.InCombat] &&
 					currentContentLinkType > 0 && currentContentLinkType < 4;
 		}
 
@@ -224,27 +224,6 @@ namespace WaymarkPresetPlugin
 			return false;
 		}
 
-		private static bool IsCharacterInCombat()
-		{
-			if( mPluginInterface.ClientState.LocalPlayer != null &&
-				mPluginInterface.ClientState.LocalPlayer.Address != IntPtr.Zero )
-			{
-				try
-				{
-					byte flags = Marshal.ReadByte( new IntPtr( mPluginInterface.ClientState.LocalPlayer.Address.ToInt64() + mCharacterStructCombatFlagsOffset.ToInt64() ) );
-					return ( flags & 2 ) > 0;
-				}
-				catch
-				{
-					//	Default to assuming in-combat for safety.
-					return true;
-				}
-			}
-
-			//	Default to assuming in-combat for safety.
-			return true;
-		}
-
 		private static bool InOverworldZone()
 		{
 			return	mdGetCurrentContentFinderLinkType != null &&
@@ -285,7 +264,6 @@ namespace WaymarkPresetPlugin
 		//	Magic Numbers
 		public static readonly int MaxPresetSlotNum = 5;
 		private static readonly byte mFMARKERDATIndex = 0x11;
-		private static readonly IntPtr mCharacterStructCombatFlagsOffset = new IntPtr( 0x1980 );
 		private static IntPtr mClientSideWaymarksOffset = new IntPtr( 0x1B0 );  //*****TODO: Feels bad initializing this with a magic number.  Not sure best thing to do.*****
 
 		//	Misc.
