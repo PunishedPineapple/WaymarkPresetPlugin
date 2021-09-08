@@ -201,11 +201,11 @@ namespace WaymarkPresetPlugin
 		}
 		public Vector2 GetMapCoordinates( Vector2 pixelCoordinates )
 		{
-			return ( pixelCoordinates - new Vector2( 1024.0f, 1024.0f ) ) / (float)SizeFactor * 100.0f - Offset;
+			return ( pixelCoordinates - new Vector2( 1024f ) ) / (float)SizeFactor * 100f - Offset;
 		}
 		public Vector2 GetPixelCoordinates( Vector2 mapCoordinates )
 		{
-			return ( mapCoordinates + Offset ) / 100.0f * (float)SizeFactor + new Vector2( 1024.0f, 1024.0f );
+			return ( mapCoordinates + Offset ) / 100f * (float)SizeFactor + new Vector2( 1024f );
 		}
 	}
 }
