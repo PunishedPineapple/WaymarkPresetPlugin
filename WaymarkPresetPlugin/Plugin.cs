@@ -1,50 +1,64 @@
-﻿using Dalamud.Game.Command;
-using Dalamud.Plugin;
+﻿using Dalamud.Plugin;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState;
+using Dalamud.Game.Command;
+using Dalamud.Game.Gui;
+using Dalamud.Game;
+using Dalamud.Data;
+using Dalamud.Logging;
 using System;
-using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Xml.Serialization;
 using Newtonsoft.Json;
-using System.Collections.Generic;
-using Newtonsoft.Json.Schema;
 
 namespace WaymarkPresetPlugin
 {
 	public class Plugin : IDalamudPlugin
 	{
 		//	Initialization
-		public void Initialize( DalamudPluginInterface pluginInterface )
+		public Plugin(
+			DalamudPluginInterface pluginInterface,
+			ClientState clientState,
+			CommandManager commandManager,
+			Condition condition,
+			ChatGui chatGui,
+			DataManager dataManager,
+			SigScanner sigScanner )
 		{
+			//	API Access
+			mPluginInterface	= pluginInterface;
+			mClientState		= clientState;
+			mCommandManager		= commandManager;
+			mCondition			= condition;
+			mChatGui			= chatGui;
+			mSigScanner			= sigScanner;
+			mDataManager		= dataManager;
+
 			//	Configuration
-			mPluginInterface = pluginInterface;
 			mConfiguration = mPluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 			mConfiguration.Initialize( mPluginInterface );
-			MemoryHandler.Init( mPluginInterface );
-			ZoneInfoHandler.Init( mPluginInterface );
+			MemoryHandler.Init( mSigScanner, mClientState, mCondition );
+			ZoneInfoHandler.Init( mDataManager );
 
 			//	Text Command Initialization
-			mPluginInterface.CommandManager.AddHandler( mTextCommandName, new CommandInfo( ProcessTextCommand )
+			mCommandManager.AddHandler( mTextCommandName, new CommandInfo( ProcessTextCommand )
 			{
 				HelpMessage = "Performs waymark preset commands.  Use \"/pwaymark help\" for detailed usage information."
 			} );
 
 			//	UI Initialization
-			mUI = new PluginUI( mConfiguration, mPluginInterface );
-			mPluginInterface.UiBuilder.OnBuildUi += DrawUI;
-			mPluginInterface.UiBuilder.OnOpenConfigUi += ( sender, args ) => DrawConfigUI();
-			mUI.SetCurrentTerritoryTypeID( mPluginInterface.ClientState.TerritoryType );
+			mUI = new PluginUI( mConfiguration, mPluginInterface, mDataManager );
+			mPluginInterface.UiBuilder.Draw += DrawUI;
+			mPluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
+			mUI.SetCurrentTerritoryTypeID( mClientState.TerritoryType );
 			mUI.Initialize();
 
 			//	Event Subscription
-			mPluginInterface.ClientState.TerritoryChanged += OnTerritoryChanged;
+			mClientState.TerritoryChanged += OnTerritoryChanged;
 
 			//	Tell the user if there's something out of the ordinary.
 			if( !MemoryHandler.FoundSavedPresetSigs() )
 			{
-				mPluginInterface.Framework.Gui.Chat.Print( "Error initializing WaymarkPresetPlugin: Cannot write to or read from game." );
+				mChatGui.Print( "Error initializing WaymarkPresetPlugin: Cannot write to or read from game." );
 			}
 		}
 
@@ -53,8 +67,10 @@ namespace WaymarkPresetPlugin
 		{
 			MemoryHandler.Uninit();
 			mUI.Dispose();
-			mPluginInterface.CommandManager.RemoveHandler( mTextCommandName );
-			mPluginInterface.Dispose();
+			mClientState.TerritoryChanged -= OnTerritoryChanged;
+			mPluginInterface.UiBuilder.Draw -= DrawUI;
+			mPluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;
+			mCommandManager.RemoveHandler( mTextCommandName );
 		}
 
 		//	Text Commands
@@ -123,7 +139,7 @@ namespace WaymarkPresetPlugin
 			//	Send any feedback to the user.
 			if( commandResponse.Length > 0 && !suppressResponse )
 			{
-				mPluginInterface.Framework.Gui.Chat.Print( commandResponse );
+				mChatGui.Print( commandResponse );
 			}
 		}
 
@@ -469,6 +485,12 @@ namespace WaymarkPresetPlugin
 		public UInt16 CurrentTerritoryTypeID { get; protected set; }
 
 		protected DalamudPluginInterface mPluginInterface;
+		protected ClientState mClientState;
+		protected CommandManager mCommandManager;
+		protected Condition mCondition;
+		protected ChatGui mChatGui;
+		protected SigScanner mSigScanner;
+		protected DataManager mDataManager;
 		protected Configuration mConfiguration;
 		protected PluginUI mUI;
 	}

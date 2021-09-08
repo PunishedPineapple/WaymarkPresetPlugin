@@ -2,19 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Security.Policy;
-using Newtonsoft.Json;
-using System.Diagnostics.Eventing.Reader;
 using Lumina.Excel;
-using Lumina.Excel.GeneratedSheets;
 using System.Linq;
 using Dalamud.Plugin;
-using Dalamud.Data.LuminaExtensions;
+using Dalamud.Data;
+using Dalamud.Utility;
+using Dalamud.Logging;
 using ImGuiScene;
 using System.Threading.Tasks;
 using System.Threading;
-using System.Text.RegularExpressions;
-using Dalamud.Interface;
 
 namespace WaymarkPresetPlugin
 {
@@ -23,10 +19,11 @@ namespace WaymarkPresetPlugin
 	public class PluginUI : IDisposable
 	{
 		//	Construction
-		public PluginUI( Configuration configuration, DalamudPluginInterface pluginInterface )
+		public PluginUI( Configuration configuration, DalamudPluginInterface pluginInterface, DataManager dataManager )
 		{
 			mConfiguration = configuration;
 			mPluginInterface = pluginInterface;
+			mDataManager = dataManager;
 		}
 
 		//	Destruction
@@ -55,7 +52,7 @@ namespace WaymarkPresetPlugin
 		public void Initialize()
 		{
 			//	Get the field markers sheet so that we can look up the textures we need.  Get it in English specifically so that we can more reliably parse the rows for what we want.
-			ExcelSheet<Lumina.Excel.GeneratedSheets.FieldMarker> fieldMarkerSheet = mPluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.FieldMarker>( Dalamud.ClientLanguage.English );
+			ExcelSheet<Lumina.Excel.GeneratedSheets.FieldMarker> fieldMarkerSheet = mDataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.FieldMarker>( Dalamud.ClientLanguage.English );
 
 			//*****TODO: This needs to be picked back up and finished once we can actually get the real icons through lumina.*****
 			//	Find the rows that we want and get the texture names from them.
@@ -98,7 +95,7 @@ namespace WaymarkPresetPlugin
 			for( int i = 0; i < 8; ++i )
 			{
 				//*****TODO: This probably needs to be modified once we can actually get the real icons through lumina.*****
-				var texFile =  mPluginInterface.Data.GetFile( paths[i] );
+				var texFile =  mDataManager.GetFile( paths[i] );
 				var imageDataBGRA = texFile.Data.Skip( 80 ).ToArray();
 				var imageDataRGBA = new Byte[40 * 40 * 4];
 				
@@ -897,8 +894,8 @@ namespace WaymarkPresetPlugin
 							try
 							{
 								//	TODO: Check for the *m file and/or use the discovery flags to determine whether we need to composite the textures.*****
-								var texFile = mPluginInterface.Data.GetFile<Lumina.Data.Files.TexFile>( map.GetMapFilePath() );
-								var parchmentTexFile = mPluginInterface.Data.GetFile<Lumina.Data.Files.TexFile>( map.GetMapParchmentImageFilePath() );
+								var texFile = mDataManager.GetFile<Lumina.Data.Files.TexFile>( map.GetMapFilePath() );
+								var parchmentTexFile = mDataManager.GetFile<Lumina.Data.Files.TexFile>( map.GetMapParchmentImageFilePath() );
 								if( texFile != null )
 								{
 									byte[] texData = MapTextureBlend( texFile.GetRgbaImageData(), parchmentTexFile == null ? null : parchmentTexFile.GetRgbaImageData() );
@@ -983,8 +980,8 @@ namespace WaymarkPresetPlugin
 		}
 
 		protected Configuration mConfiguration;
-
 		protected DalamudPluginInterface mPluginInterface;
+		protected DataManager mDataManager;
 
 		//	Need a real backing field on the following properties for use with ImGui.
 		protected bool mMainWindowVisible = false;

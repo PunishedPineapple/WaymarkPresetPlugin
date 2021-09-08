@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
-using Dalamud.Plugin;
+using Dalamud.Data;
+
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
 
@@ -13,12 +12,12 @@ namespace WaymarkPresetPlugin
 {
 	public static class ZoneInfoHandler
 	{
-		public static void Init( DalamudPluginInterface pluginInterface )
+		public static void Init( DataManager dataManager )
 		{
 			//	Get the game sheets that we need to populate a zone dictionary.
-			ExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType> territorySheet = pluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>();
-			ExcelSheet<Lumina.Excel.GeneratedSheets.ContentFinderCondition> contentFinderSheet = pluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.ContentFinderCondition>();
-			ExcelSheet<Lumina.Excel.GeneratedSheets.Map> mapSheet = pluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.Map>();
+			ExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType> territorySheet = dataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>();
+			ExcelSheet<Lumina.Excel.GeneratedSheets.ContentFinderCondition> contentFinderSheet = dataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.ContentFinderCondition>();
+			ExcelSheet<Lumina.Excel.GeneratedSheets.Map> mapSheet = dataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Map>();
 
 			//	Clean out anything that we had before.
 			mZoneInfoDict.Clear();

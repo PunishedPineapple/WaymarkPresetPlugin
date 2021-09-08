@@ -1,5 +1,7 @@
 ﻿High Priority:
 
+- Update JSON for API level, icon, screenshots, etc.
+- Use properties instead of constructor for new API access?  Not sure which is best decision...
 - Nothing for now.
 
 

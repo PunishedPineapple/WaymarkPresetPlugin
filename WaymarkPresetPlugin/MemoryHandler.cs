@@ -1,31 +1,40 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
-using Dalamud.Game.Command;
-using Dalamud.Plugin;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState;
+using Dalamud.Game;
+using Dalamud.Logging;
 
 namespace WaymarkPresetPlugin
 {
 	public static class MemoryHandler
 	{
-		public static void Init( DalamudPluginInterface pluginInterface )
+		public static void Init( SigScanner sigScanner, ClientState clientState, Condition condition )
 		{
-			if( pluginInterface == null )
+			if( sigScanner == null )
 			{
-				throw new Exception( "Error in \"MemoryHandler.Init()\": A null plugin interface was passed!" );
+				throw new Exception( "Error in \"MemoryHandler.Init()\": A null SigScanner was passed!" );
 			}
 
-			//	Save this off.
-			mPluginInterface = pluginInterface;
+			if( clientState == null )
+			{
+				throw new Exception( "Error in \"MemoryHandler.Init()\": A null ClientState was passed!" );
+			}
+
+			if( condition == null )
+			{
+				throw new Exception( "Error in \"MemoryHandler.Init()\": A null Condition was passed!" );
+			}
+
+			//	Save off the client state and condition access.
+			mClientState = clientState;
+			mCondition = condition;
 
 			//	Get Function Pointers, etc.
 			try
 			{
-				IntPtr fpGetUISAVESectionAddress = mPluginInterface.TargetModuleScanner.ScanText( "40 53 48 83 EC 20 48 8B 0D ?? ?? ?? ?? 0F B7 DA" );
+				IntPtr fpGetUISAVESectionAddress = sigScanner.ScanText( "40 53 48 83 EC 20 48 8B 0D ?? ?? ?? ?? 0F B7 DA" );
 				if( fpGetUISAVESectionAddress != IntPtr.Zero )
 				{
 					mdGetUISAVESectionAddress = Marshal.GetDelegateForFunctionPointer<GetConfigSectionDelegate>( fpGetUISAVESectionAddress );
@@ -37,32 +46,32 @@ namespace WaymarkPresetPlugin
 					PluginLog.LogInformation( $"FMARKER.DAT address: 0x{mdGetUISAVESectionAddress.Invoke( IntPtr.Zero, mFMARKERDATIndex ).ToString( "X" )}" );
 				}
 
-				IntPtr fpGetPresetAddressForSlot = mPluginInterface.TargetModuleScanner.ScanText( "4C 8B C9 85 D2 78 0A 83 FA 08 73 05" );
+				IntPtr fpGetPresetAddressForSlot = sigScanner.ScanText( "4C 8B C9 85 D2 78 0A 83 FA 08 73 05" );
 				if( fpGetPresetAddressForSlot != IntPtr.Zero )
 				{
 					mdGetPresetAddressForSlot = Marshal.GetDelegateForFunctionPointer<GetPresetAddressForSlotDelegate>( fpGetPresetAddressForSlot );
 				}
 
 				//*****TODO: Determine actual proper sig.*****
-				IntPtr fpGetCurrentContentFinderLinkType = mPluginInterface.TargetModuleScanner.ScanText( "48 83 EC 28 48 8B 05 ?? ?? ?? ?? 48 85 C0 0F 84 A8 00 00 00 83 B8 ?? 2F 00 00 06 0F 85 9B 00 00 00" );
+				IntPtr fpGetCurrentContentFinderLinkType = sigScanner.ScanText( "48 83 EC 28 48 8B 05 ?? ?? ?? ?? 48 85 C0 0F 84 A8 00 00 00 83 B8 ?? 2F 00 00 06 0F 85 9B 00 00 00" );
 				if( fpGetCurrentContentFinderLinkType != IntPtr.Zero )
 				{
 					mdGetCurrentContentFinderLinkType = Marshal.GetDelegateForFunctionPointer<GetCurrentContentFinderLinkTypeDelegate>( fpGetCurrentContentFinderLinkType );
 				}
 
-				IntPtr fpDirectPlacePreset = mPluginInterface.TargetModuleScanner.ScanText( "E8 ?? ?? ?? ?? 84 C0 0F 94 C0 EB 19" );
+				IntPtr fpDirectPlacePreset = sigScanner.ScanText( "E8 ?? ?? ?? ?? 84 C0 0F 94 C0 EB 19" );
 				if( fpDirectPlacePreset != IntPtr.Zero )
 				{
 					mdDirectPlacePreset = Marshal.GetDelegateForFunctionPointer<DirectPlacePresetDelegate>( fpDirectPlacePreset );
 				}
 
-				IntPtr fpGetCurrentWaymarkData = mPluginInterface.TargetModuleScanner.ScanText( "48 89 ?? ?? ?? 57 48 83 ?? ?? 48 8B ?? 48 8B ?? 33 D2 48 8B" );
+				IntPtr fpGetCurrentWaymarkData = sigScanner.ScanText( "48 89 ?? ?? ?? 57 48 83 ?? ?? 48 8B ?? 48 8B ?? 33 D2 48 8B" );
 				if( fpGetCurrentWaymarkData != IntPtr.Zero )
 				{
 					mdGetCurrentWaymarkData = Marshal.GetDelegateForFunctionPointer<GetCurrentWaymarkDataDelegate>( fpGetCurrentWaymarkData );
 				}
 
-				mpWaymarksObj = mPluginInterface.TargetModuleScanner.GetStaticAddressFromSig( "41 80 F9 08 7C BB 48 8D ?? ?? ?? 48 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 0F 94 C0 EB 19", 11 );
+				mpWaymarksObj = sigScanner.GetStaticAddressFromSig( "41 80 F9 08 7C BB 48 8D ?? ?? ?? 48 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 0F 94 C0 EB 19", 11 );
 
 				//	Write this address to log to help with digging around in memory if we need to.
 				PluginLog.LogInformation( $"Waymarks object address: 0x{mpWaymarksObj.ToString( "X" )}" );
@@ -80,7 +89,8 @@ namespace WaymarkPresetPlugin
 
 		public static void Uninit()
 		{
-			mPluginInterface					= null;
+			mClientState						= null;
+			mCondition							= null;
 			mpWaymarksObj						= IntPtr.Zero;
 			mdGetUISAVESectionAddress			= null;
 			mdGetPresetAddressForSlot			= null;
@@ -170,10 +180,10 @@ namespace WaymarkPresetPlugin
 			//	Basically impose all of the same conditions that the game does, but without checking the preset's zone ID.
 			if( !FoundDirectPlacementSigs() ) return false;
 			byte currentContentLinkType = mdGetCurrentContentFinderLinkType.Invoke();
-			return	mPluginInterface != null &&
-					mPluginInterface.ClientState.LocalPlayer != null &&
-					mPluginInterface.ClientState.LocalPlayer.Address != IntPtr.Zero &&
-					!mPluginInterface.ClientState.Condition[Dalamud.Game.ClientState.ConditionFlag.InCombat] &&
+			return	mCondition != null &&
+					mClientState != null &&
+					mClientState.LocalPlayer != null &&
+					!mCondition[ConditionFlag.InCombat] &&
 					currentContentLinkType > 0 && currentContentLinkType < 4;
 		}
 
@@ -203,7 +213,7 @@ namespace WaymarkPresetPlugin
 
 		public static bool GetCurrentWaymarksAsPresetData( ref GamePreset rPresetData )
 		{
-			if( mPluginInterface != null && FoundDirectSaveSigs() )
+			if( mClientState != null && FoundDirectSaveSigs() )
 			{
 				byte currentContentLinkType = mdGetCurrentContentFinderLinkType.Invoke();
 				if( currentContentLinkType >= 0 && currentContentLinkType < 4 )	//	Same as the game check, but let it do overworld maps too.
@@ -215,7 +225,7 @@ namespace WaymarkPresetPlugin
 					}
 
 					rPresetData = new GamePreset( rawWaymarkData );
-					rPresetData.ContentFinderConditionID = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mPluginInterface.ClientState.TerritoryType );	//*****TODO: How do we get this as a territory type for non-instanced zones? The return type might need to be changed, or pass in another ref paramter or something. *****
+					rPresetData.ContentFinderConditionID = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType );	//*****TODO: How do we get this as a territory type for non-instanced zones? The return type might need to be changed, or pass in another ref paramter or something. *****
 					rPresetData.UnixTime = (Int32)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 					return true;
 				}
@@ -267,7 +277,8 @@ namespace WaymarkPresetPlugin
 		private static IntPtr mClientSideWaymarksOffset = new IntPtr( 0x1B0 );  //*****TODO: Feels bad initializing this with a magic number.  Not sure best thing to do.*****
 
 		//	Misc.
-		private static DalamudPluginInterface mPluginInterface;
+		private static ClientState mClientState;
+		private static Condition mCondition;
 		private static IntPtr mpWaymarksObj;
 
 		//	Delgates
