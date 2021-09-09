@@ -159,7 +159,7 @@ namespace WaymarkPresetPlugin
 			}
 			else if( mConfiguration.AllowDirectPlacePreset && args.ToLower() == "place" )
 			{
-				return "Places the preset at the specified library index (if possible).  Usage \"/pwaymark place <index>\".  Index can be any valid libary preset number.";
+				return "Places the preset with the specified name (if possible).  Quotes MUST be used around the name.  May also specify preset index without quotes instead.  Usage \"/pwaymark place \"<name>\"|<index>\".  Name must match exactly (besides case).  Index can be any valid libary preset number.";
 			}
 			else if( args.ToLower() == "import" )
 			{
@@ -215,9 +215,27 @@ namespace WaymarkPresetPlugin
 		{
 			if( mConfiguration.AllowDirectPlacePreset )
 			{
+				//	The index we will want to try to place once we find it.
 				int libraryIndex = -1;
-				bool validIndex = int.TryParse( args.Trim(), out libraryIndex ) && libraryIndex >= 0 && libraryIndex < mConfiguration.PresetLibrary.Presets.Count;
-				if( validIndex )
+
+				//	If argument is in quotes, search for the preset by name.
+				if( args.Trim().First() == '"' && args.Trim().Last() == '"' )
+				{
+					string presetName = args.Trim().Substring( 1, args.Trim().Length - 2 );
+					libraryIndex = mConfiguration.PresetLibrary.Presets.FindIndex( ( WaymarkPreset p ) => { return p.Name.Equals( presetName, StringComparison.OrdinalIgnoreCase ); } );
+					if( libraryIndex < 0 || libraryIndex >= mConfiguration.PresetLibrary.Presets.Count )
+					{
+						return $"Unable to find preset \"{presetName}\".";
+					}
+				}
+				//	Otherwise, search by index.
+				else if( !int.TryParse( args.Trim(), out libraryIndex ) )
+				{
+					return $"Invalid preset number \"{args}\".";
+				}
+				
+				//	Try to do the actual placement.
+				if( libraryIndex >= 0 && libraryIndex < mConfiguration.PresetLibrary.Presets.Count )
 				{
 					try
 					{
@@ -232,7 +250,7 @@ namespace WaymarkPresetPlugin
 				}
 				else
 				{
-					return $"Invalid preset number \"{libraryIndex}\"";
+					return $"Invalid preset number \"{libraryIndex}\".";
 				}
 			}
 			else
