@@ -52,8 +52,7 @@ namespace WaymarkPresetPlugin
 					mdGetPresetAddressForSlot = Marshal.GetDelegateForFunctionPointer<GetPresetAddressForSlotDelegate>( fpGetPresetAddressForSlot );
 				}
 
-				//*****TODO: Determine actual proper sig.*****
-				IntPtr fpGetCurrentContentFinderLinkType = sigScanner.ScanText( "48 83 EC 28 48 8B 05 ?? ?? ?? ?? 48 85 C0 0F 84 A8 00 00 00 83 B8 ?? 2F 00 00 06 0F 85 9B 00 00 00" );
+				IntPtr fpGetCurrentContentFinderLinkType = sigScanner.ScanText( "48 83 ?? ?? 48 8B ?? ?? ?? ?? ?? 48 85 ?? 0F ?? ?? ?? ?? ?? ?? B8 ?? ?? ?? ?? ?? 0F ?? ?? ?? ?? ?? ?? 89" );
 				if( fpGetCurrentContentFinderLinkType != IntPtr.Zero )
 				{
 					mdGetCurrentContentFinderLinkType = Marshal.GetDelegateForFunctionPointer<GetCurrentContentFinderLinkTypeDelegate>( fpGetCurrentContentFinderLinkType );
