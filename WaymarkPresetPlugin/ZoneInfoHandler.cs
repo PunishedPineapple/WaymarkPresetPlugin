@@ -33,29 +33,29 @@ namespace WaymarkPresetPlugin
 			//	ID of the maps for these zones too.  The best solution (for the time being) seems to be to store a pseudo map name string (the base of the map names for that zone) that can be cross-referenced later.
 			foreach( TerritoryType zone in territorySheet.ToList() )
 			{
-				if( !mZoneInfoDict.ContainsKey( zone.Unknown10 ) && (
+				if( !mZoneInfoDict.ContainsKey( (UInt16)zone.ContentFinderCondition.Row ) && (
 						zone.ExclusiveType == 2 ||
-						mBodgeIncludeContentFinderConditionIDs.Contains( zone.Unknown10 )
+						mBodgeIncludeContentFinderConditionIDs.Contains( (UInt16)zone.ContentFinderCondition.Row )
 					) )
 				{
-					ContentFinderCondition contentRow = contentFinderSheet.GetRow( zone.Unknown10 );
+					ContentFinderCondition contentRow = contentFinderSheet.GetRow( (UInt16)zone.ContentFinderCondition.Row );
 					if(	contentRow != null && (
 							( contentRow.ContentLinkType > 0 && contentRow.ContentLinkType < 3 ) ||
-							mBodgeIncludeContentFinderConditionIDs.Contains( zone.Unknown10 )
+							mBodgeIncludeContentFinderConditionIDs.Contains( (UInt16)zone.ContentFinderCondition.Row )
 						) )
 					{
-						if( !mZoneInfoDict.ContainsKey( zone.Unknown10 ) )
+						if( !mZoneInfoDict.ContainsKey( (UInt16)zone.ContentFinderCondition.Row ) )
 						{
 							string dutyName = contentRow.Name.ToString().Trim();
 							if( dutyName.Length > 0 )
 							{
 								dutyName = dutyName.First().ToString().ToUpper() + dutyName.Substring( 1 );
 							}
-							mZoneInfoDict.Add( zone.Unknown10, new ZoneInfo( dutyName, zone.PlaceName.Value.Name, zone.RowId, zone.Map.Value.Id.ToString().Split( '/' )[0], zone.Unknown10, contentRow.Content ) );
+							mZoneInfoDict.Add( (UInt16)zone.ContentFinderCondition.Row, new ZoneInfo( dutyName, zone.PlaceName.Value.Name, zone.RowId, zone.Map.Value.Id.ToString().Split( '/' )[0], (UInt16)zone.ContentFinderCondition.Row, contentRow.Content ) );
 						}
 						if( !mTerritoryTypeIDToContentFinderIDDict.ContainsKey( zone.RowId ) )
 						{
-							mTerritoryTypeIDToContentFinderIDDict.Add( zone.RowId, zone.Unknown10 );
+							mTerritoryTypeIDToContentFinderIDDict.Add( zone.RowId, (UInt16)zone.ContentFinderCondition.Row );
 						}
 					}
 				}
