@@ -144,7 +144,10 @@ namespace WaymarkPresetPlugin
 						GamePreset currentWaymarks = new GamePreset();
 						if( MemoryHandler.GetCurrentWaymarksAsPresetData( ref currentWaymarks ) )
 						{
-							mConfiguration.PresetLibrary.ImportPreset( currentWaymarks );
+							if( mConfiguration.PresetLibrary.ImportPreset( currentWaymarks ) >= 0 )
+							{
+								mConfiguration.Save();
+							}
 						}
 					}
 				}
@@ -518,6 +521,7 @@ namespace WaymarkPresetPlugin
 					ImGui.Spacing();
 					if( ImGui.Button( "Save" ) )
 					{
+						//*****TODO: Look into why this was even put in a try/catch block.  It doesn't seem like it needs it anymore, if it ever did.*****
 						try
 						{
 							mConfiguration.PresetLibrary.Presets[EditingPresetIndex] = ScratchEditingPreset.GetPreset();
