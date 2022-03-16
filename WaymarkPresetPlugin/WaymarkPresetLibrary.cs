@@ -74,6 +74,31 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
+		public int MovePreset( int indexToMove, int newPosition, bool placeAfter )
+		{
+			if( newPosition == indexToMove )
+			{
+				return indexToMove;
+			}
+			else if(	indexToMove >= 0 &&
+						indexToMove < Presets.Count &&
+						newPosition >= 0 &&
+						newPosition <= Presets.Count - ( placeAfter ? 1 : 0 ) )
+			{
+				var preset = Presets[indexToMove];
+				Presets.RemoveAt( indexToMove );
+				if( newPosition > indexToMove ) --newPosition;
+				if( placeAfter ) ++newPosition;
+				Presets.Insert( newPosition, preset );
+				//SortPresets();
+				return newPosition;
+			}
+			else
+			{
+				return -1;
+			}
+		}
+
 		public SortedDictionary<UInt16, List<int>> GetSortedIndices()
 		{
 			SortedDictionary<UInt16, List<int>> sortedIndices = new SortedDictionary<ushort, List<int>>();
