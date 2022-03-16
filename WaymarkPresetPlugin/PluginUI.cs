@@ -8,9 +8,11 @@ using Dalamud.Plugin;
 using Dalamud.Data;
 using Dalamud.Utility;
 using Dalamud.Logging;
+using Dalamud.Interface;
 using ImGuiScene;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace WaymarkPresetPlugin
 {
@@ -24,6 +26,8 @@ namespace WaymarkPresetPlugin
 			mConfiguration = configuration;
 			mPluginInterface = pluginInterface;
 			mDataManager = dataManager;
+			mpDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
+			if( mpDragAndDropData == IntPtr.Zero ) throw new Exception( "Error in PluginUI constructor: Unable to allocate memory for drag and drop info." );
 		}
 
 		//	Destruction
@@ -47,68 +51,20 @@ namespace WaymarkPresetPlugin
 			//	Release the mutex and dispose of it.
 			mMapTextureDictMutex.ReleaseMutex();
 			mMapTextureDictMutex.Dispose();
+
+			Marshal.FreeHGlobal( mpDragAndDropData );
 		}
 
 		public void Initialize()
 		{
-			//	Get the field markers sheet so that we can look up the textures we need.  Get it in English specifically so that we can more reliably parse the rows for what we want.
-			ExcelSheet<Lumina.Excel.GeneratedSheets.FieldMarker> fieldMarkerSheet = mDataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.FieldMarker>( Dalamud.ClientLanguage.English );
-
-			//*****TODO: This needs to be picked back up and finished once we can actually get the real icons through lumina.*****
-			//	Find the rows that we want and get the texture names from them.
-			/*foreach( var row in fieldMarkerSheet.ToList() )
-			{
-				var match = Regex.Match( row.Unknown3, "Waymark ([A-Z0-9])" );
-				if( match.Success )
-				{
-					try
-					{
-						var texFile = mPluginInterface.Data.GetIcon( row.Icon );
-						if( texFile != null )
-						{
-							var tex = mPluginInterface.UiBuilder.LoadImageRaw( texFile.Data, texFile.Header.Width, texFile.Header.Height, 4 );
-							if( tex != null && tex.ImGuiHandle != IntPtr.Zero )
-							{
-								WaymarkTextureDict.Add( match.Groups[0].Value.ToCharArray()[0], tex );
-							}
-						}
-					}
-					catch( Exception e )
-					{
-						throw new Exception( $"Error during UI initialization: Unable to load waymark icon texture: {e}" );
-					}
-				}
-			}*/
-
-			var paths = new List<string>
-			{
-				"ui/icon/061000/061241.tex", // A
-				"ui/icon/061000/061242.tex", // B
-				"ui/icon/061000/061243.tex", // C
-				"ui/icon/061000/061247.tex", // D
-				"ui/icon/061000/061244.tex", // 1
-				"ui/icon/061000/061245.tex", // 2
-				"ui/icon/061000/061246.tex", // 3
-				"ui/icon/061000/061248.tex", // 4
-			};
-
-			for( int i = 0; i < 8; ++i )
-			{
-				//*****TODO: This probably needs to be modified once we can actually get the real icons through lumina.*****
-				var texFile =  mDataManager.GetFile( paths[i] );
-				var imageDataBGRA = texFile.Data.Skip( 80 ).ToArray();
-				var imageDataRGBA = new Byte[40 * 40 * 4];
-				
-				for( int j = 0; j < imageDataBGRA.Length; j += 4 )
-				{
-					imageDataRGBA[j]	 = imageDataBGRA[j + 2];
-					imageDataRGBA[j + 1] = imageDataBGRA[j + 1];
-					imageDataRGBA[j + 2] = imageDataBGRA[j];
-					imageDataRGBA[j + 3] = imageDataBGRA[j + 3];
-				}
-
-				WaymarkIconTextures[i] = mPluginInterface.UiBuilder.LoadImageRaw( imageDataRGBA, 40, 40, 4 );
-			}
+			mWaymarkIconTextures[0] ??= mDataManager.GetImGuiTextureIcon( 61241 );	//A
+			mWaymarkIconTextures[1] ??= mDataManager.GetImGuiTextureIcon( 61242 );	//B
+			mWaymarkIconTextures[2] ??= mDataManager.GetImGuiTextureIcon( 61243 );	//C
+			mWaymarkIconTextures[3] ??= mDataManager.GetImGuiTextureIcon( 61247 );	//D
+			mWaymarkIconTextures[4] ??= mDataManager.GetImGuiTextureIcon( 61244 );	//1
+			mWaymarkIconTextures[5] ??= mDataManager.GetImGuiTextureIcon( 61245 );	//2
+			mWaymarkIconTextures[6] ??= mDataManager.GetImGuiTextureIcon( 61246 );	//3
+			mWaymarkIconTextures[7] ??= mDataManager.GetImGuiTextureIcon( 61248 );	//4
 		}
 
 		public void Draw()
@@ -151,6 +107,9 @@ namespace WaymarkPresetPlugin
 						}
 					}
 				}
+				int indexToMove = -1;
+				int indexToMoveTo = -1;
+				bool moveToAfter = false;
 				ImGui.BeginGroup();
 				if( mConfiguration.PresetLibrary.Presets.Count > 0 )
 				{
@@ -163,23 +122,90 @@ namespace WaymarkPresetPlugin
 							{
 								if( ImGui.CollapsingHeader( ZoneInfoHandler.GetZoneInfoFromContentFinderID( zone.Key ).DutyName.ToString() ) )
 								{
-									foreach( int index in zone.Value )
+									var indices = zone.Value;
+									for( int i = 0; i < indices.Count; ++i )
 									{
-										if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[index].Name}{(mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + index.ToString() + ")" : "")}###_Preset_{index}", index == SelectedPreset ) )
+										if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[indices[i]].Name}{(mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + indices[i].ToString() + ")" : "")}###_Preset_{indices[i]}", indices[i] == SelectedPreset ) )
 										{
 											//	It's probably a bad idea to allow the selection to change when a preset's being edited.
-											if( EditingPresetIndex == -1 )
+											if( !EditingPreset )
 											{
-												if( mConfiguration.AllowUnselectPreset && index == SelectedPreset )
+												if( mConfiguration.AllowUnselectPreset && indices[i] == SelectedPreset )
 												{
 													SelectedPreset = -1;
 												}
 												else
 												{
-													SelectedPreset = index;
+													SelectedPreset = indices[i];
 												}
 
 												WantToDeleteSelectedPreset = false;
+											}
+										}
+										if( !EditingPreset && ImGui.BeginDragDropSource( ImGuiDragDropFlags.None ) )
+										{
+											ImGui.SetDragDropPayload( $"PresetIdxZ{zone.Key}", mpDragAndDropData, sizeof( int ) );
+											Marshal.WriteInt32( mpDragAndDropData, indices[i] );
+											ImGui.Text( $"Moving: {mConfiguration.PresetLibrary.Presets[indices[i]].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + indices[i].ToString() + ")" : "" )}" );
+											ImGui.EndDragDropSource();
+										}
+										if( !EditingPreset && ImGui.BeginDragDropTarget() )
+										{
+											unsafe
+											{
+												ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zone.Key}", ImGuiDragDropFlags.None );
+												if( payload.NativePtr != null )
+												{
+													indexToMove = Marshal.ReadInt32( payload.Data );
+													indexToMoveTo = indices[i];
+												}
+											}
+											ImGui.EndDragDropTarget();
+										}
+										/*if( !EditingPreset ) //&& mouse over the current item)
+										{
+											ImGui.PushFont( UiBuilder.IconFont );
+											if( i > 0 )
+											{
+												ImGui.SameLine();
+												if( ImGui.SmallButton( $"\uF139###UpArrowButton{i}" )//ImGui.ArrowButton( $"###UpArrowButton{i}", ImGuiDir.Up ) )
+												{
+													indexToMove = indices[i];
+													indexToMoveTo = indices[i - 1];
+												}
+											}
+											if( i < indices.Count - 1 )
+											{
+												ImGui.SameLine();
+												if( ImGui.SmallButton( $"\uF13A###DownArrowButton{i}" )//ImGui.ArrowButton( $"###DownArrowButton{i}", ImGuiDir.Down ) )
+												{
+													indexToMove = indices[i];
+													indexToMoveTo = indices[i + 1];
+													moveToAfter = true;
+												}
+											}
+											ImGui.PopFont();
+										}*/
+									}
+									unsafe
+									{
+										if( ImGui.GetDragDropPayload().NativePtr != null )
+										{
+											int draggedIndex = Marshal.ReadInt32( mpDragAndDropData );
+											if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count && mConfiguration.PresetLibrary.Presets[draggedIndex].MapID == zone.Key )
+											{
+												ImGui.Selectable( "<Move To Bottom>" );
+												if( ImGui.BeginDragDropTarget() )
+												{
+													ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zone.Key}", ImGuiDragDropFlags.None );
+													if( payload.NativePtr != null )
+													{
+														indexToMove = Marshal.ReadInt32( payload.Data );
+														indexToMoveTo = indices.Last();
+														moveToAfter = true;
+													}
+													ImGui.EndDragDropTarget();
+												}
 											}
 										}
 									}
@@ -198,7 +224,7 @@ namespace WaymarkPresetPlugin
 									if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}###_Preset_{i}", i == SelectedPreset ) )
 									{
 										//	It's probably a bad idea to allow the selection to change when a preset's being edited.
-										if( EditingPresetIndex == -1 )
+										if( !EditingPreset )
 										{
 											if( mConfiguration.AllowUnselectPreset && i == SelectedPreset )
 											{
@@ -210,6 +236,64 @@ namespace WaymarkPresetPlugin
 											}
 
 											WantToDeleteSelectedPreset = false;
+										}
+									}
+									if( !EditingPreset && ImGui.BeginDragDropSource( ImGuiDragDropFlags.None ) )
+									{
+										ImGui.SetDragDropPayload( $"PresetIdxAnyZone", mpDragAndDropData, sizeof( int ) );
+										Marshal.WriteInt32( mpDragAndDropData, i );
+										ImGui.Text( $"Moving: {mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}" );
+										ImGui.EndDragDropSource();
+									}
+									if( !EditingPreset && ImGui.BeginDragDropTarget() )
+									{
+										unsafe
+										{
+											ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.None );
+											if( payload.NativePtr != null )
+											{
+												indexToMove = Marshal.ReadInt32( payload.Data );
+												indexToMoveTo = i;
+												//moveToAfter = i == indices.Count - 1;
+											}
+										}
+										ImGui.EndDragDropTarget();
+									}
+									/*if( !EditingPreset ) //&& mouse over the current item)
+									{
+										ImGui.SameLine();
+										if( i > 0 && mConfiguration.PresetLibrary.Presets[i-1].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) && ImGui.ArrowButton( "###UpArrowButton", ImGuiDir.Up ) )
+										{
+											indexToMove = i;
+											indexToMoveTo = i - 1;
+										}
+										ImGui.SameLine();
+										if( i < mConfiguration.PresetLibrary.Presets.Count - 1 && mConfiguration.PresetLibrary.Presets[i+1] ).MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) && ImGui.ArrowButton( "###DownArrowButton", ImGuiDir.Down ) )
+										{
+											indexToMove = i;
+											indexToMoveTo = i + 1;
+											moveToAfter = true;
+										}
+									}*/
+								}
+							}
+							unsafe
+							{
+								if( ImGui.GetDragDropPayload().NativePtr != null )
+								{
+									int draggedIndex = Marshal.ReadInt32( mpDragAndDropData );
+									if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count )
+									{
+										ImGui.Selectable( "<Move To Bottom>" );
+										if( ImGui.BeginDragDropTarget() )
+										{
+											ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.None );
+											if( payload.NativePtr != null )
+											{
+												indexToMove = Marshal.ReadInt32( payload.Data );
+												indexToMoveTo = mConfiguration.PresetLibrary.Presets.Count;
+											}
+											ImGui.EndDragDropTarget();
 										}
 									}
 								}
@@ -310,6 +394,21 @@ namespace WaymarkPresetPlugin
 					}
 					ImGui.EndGroup();
 				}
+
+				//	Handle moving a preset now if the user wanted to.
+				if( indexToMove >= 0 && indexToMoveTo >= 0 )
+				{
+					SelectedPreset = mConfiguration.PresetLibrary.MovePreset( indexToMove, indexToMoveTo, moveToAfter );
+					if( SelectedPreset == -1 )
+					{
+						PluginLog.LogDebug( $"Unable to move preset {indexToMove} to {( moveToAfter ? "after " : "" )}index {indexToMoveTo}." );
+					}
+					else
+					{
+						PluginLog.LogDebug( $"Moved preset {indexToMove} to index {SelectedPreset}." );
+						mConfiguration.Save();
+					}
+				}
 			}
 
 			//	Store the position and size so that we can keep the companion info window in the right place.
@@ -378,7 +477,9 @@ namespace WaymarkPresetPlugin
 						MapWindowVisible = !MapWindowVisible;
 					}
 					mButtonMapViewWidth = ImGui.GetItemRectSize().X;
+					//ImGui.PushFont( UiBuilder.MonoFont );
 					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames ) );
+					//ImGui.PopFont();
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
@@ -767,7 +868,7 @@ namespace WaymarkPresetPlugin
 																									new Vector2( mapWidgetSize_Px ),
 																									mapWidgetScreenPos );
 
-											ImGui.GetWindowDrawList().AddImage( WaymarkIconTextures[i].ImGuiHandle, waymarkMapPt - mWaymarkMapIconHalfSize_Px, waymarkMapPt + mWaymarkMapIconHalfSize_Px );
+											ImGui.GetWindowDrawList().AddImage( mWaymarkIconTextures[i].ImGuiHandle, waymarkMapPt - mWaymarkMapIconHalfSize_Px, waymarkMapPt + mWaymarkMapIconHalfSize_Px );
 
 											//	Capture the waymark if appropriate.
 											if( showingEditingView &&
@@ -1022,6 +1123,7 @@ namespace WaymarkPresetPlugin
 		public int SelectedPreset { get; protected set; } = -1;
 		public bool WantToDeleteSelectedPreset { get; protected set; } = false;
 		public int EditingPresetIndex { get; protected set; } = -1;
+		public bool EditingPreset => EditingPresetIndex != -1;
 		protected  ScratchPreset ScratchEditingPreset { get; set; }
 		protected UInt16 CurrentTerritoryTypeID { get; set; }
 		protected ZoneSearcher EditWindowZoneSearcher { get; set; } = new ZoneSearcher();
@@ -1035,12 +1137,12 @@ namespace WaymarkPresetPlugin
 
 		protected Dictionary<UInt16, List<TextureWrap>> MapTextureDict { get; set; } = new Dictionary<UInt16, List<TextureWrap>>();
 		protected Mutex mMapTextureDictMutex = new Mutex();
-		//protected Dictionary<char, TextureWrap> WaymarkIconTextureDict { get; set; } = new Dictionary<char, TextureWrap>();
-		protected TextureWrap[] WaymarkIconTextures { get; set; } = new TextureWrap[8];
+		protected readonly TextureWrap[] mWaymarkIconTextures = new TextureWrap[8];
 		protected int CapturedWaymarkIndex { get; set; } = -1;
 		protected Vector2 CapturedWaymarkOffset { get; set; } = new Vector2( 0, 0 );
 		protected static readonly Vector2 mWaymarkMapIconHalfSize_Px = new Vector2( 15, 15 );
 
+		protected readonly IntPtr mpDragAndDropData;
 		protected Dictionary<uint, MapViewState> MapViewStateData { get; set; } = new Dictionary<uint, MapViewState>();
 	}
 
