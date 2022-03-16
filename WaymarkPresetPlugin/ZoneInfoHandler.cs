@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 
 using Dalamud.Data;
+using Dalamud.Utility;
 
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
@@ -46,12 +47,12 @@ namespace WaymarkPresetPlugin
 					{
 						if( !mZoneInfoDict.ContainsKey( (UInt16)zone.ContentFinderCondition.Row ) )
 						{
-							string dutyName = contentRow.Name.ToString().Trim();
+							string dutyName = contentRow.Name.ToDalamudString().ToString().Trim();
 							if( dutyName.Length > 0 )
 							{
 								dutyName = dutyName.First().ToString().ToUpper() + dutyName.Substring( 1 );
 							}
-							mZoneInfoDict.Add( (UInt16)zone.ContentFinderCondition.Row, new ZoneInfo( dutyName, zone.PlaceName.Value.Name, zone.RowId, zone.Map.Value.Id.ToString().Split( '/' )[0], (UInt16)zone.ContentFinderCondition.Row, contentRow.Content ) );
+							mZoneInfoDict.Add( (UInt16)zone.ContentFinderCondition.Row, new ZoneInfo( dutyName, zone.PlaceName.Value.Name.ToDalamudString().ToString(), zone.RowId, zone.Map.Value.Id.ToString().Split( '/' )[0], (UInt16)zone.ContentFinderCondition.Row, contentRow.Content ) );
 						}
 						if( !mTerritoryTypeIDToContentFinderIDDict.ContainsKey( zone.RowId ) )
 						{
