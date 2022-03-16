@@ -26,8 +26,13 @@ namespace WaymarkPresetPlugin
 			mConfiguration = configuration;
 			mPluginInterface = pluginInterface;
 			mDataManager = dataManager;
-			mpDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
-			if( mpDragAndDropData == IntPtr.Zero ) throw new Exception( "Error in PluginUI constructor: Unable to allocate memory for drag and drop info." );
+			mpLibraryPresetDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
+			mpEditWaymarkDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
+			if( mpLibraryPresetDragAndDropData == IntPtr.Zero ||
+				mpEditWaymarkDragAndDropData == IntPtr.Zero )
+			{
+				throw new Exception( "Error in PluginUI constructor: Unable to allocate memory for drag and drop info." );
+			}
 		}
 
 		//	Destruction
@@ -52,7 +57,8 @@ namespace WaymarkPresetPlugin
 			mMapTextureDictMutex.ReleaseMutex();
 			mMapTextureDictMutex.Dispose();
 
-			Marshal.FreeHGlobal( mpDragAndDropData );
+			Marshal.FreeHGlobal( mpLibraryPresetDragAndDropData );
+			Marshal.FreeHGlobal( mpEditWaymarkDragAndDropData );
 		}
 
 		public void Initialize()
@@ -144,8 +150,8 @@ namespace WaymarkPresetPlugin
 										}
 										if( !EditingPreset && ImGui.BeginDragDropSource( ImGuiDragDropFlags.None ) )
 										{
-											ImGui.SetDragDropPayload( $"PresetIdxZ{zone.Key}", mpDragAndDropData, sizeof( int ) );
-											Marshal.WriteInt32( mpDragAndDropData, indices[i] );
+											ImGui.SetDragDropPayload( $"PresetIdxZ{zone.Key}", mpLibraryPresetDragAndDropData, sizeof( int ) );
+											Marshal.WriteInt32( mpLibraryPresetDragAndDropData, indices[i] );
 											ImGui.Text( $"Moving: {mConfiguration.PresetLibrary.Presets[indices[i]].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + indices[i].ToString() + ")" : "" )}" );
 											ImGui.EndDragDropSource();
 										}
@@ -154,7 +160,7 @@ namespace WaymarkPresetPlugin
 											unsafe
 											{
 												ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zone.Key}", ImGuiDragDropFlags.None );
-												if( payload.NativePtr != null )
+												if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
 												{
 													indexToMove = Marshal.ReadInt32( payload.Data );
 													indexToMoveTo = indices[i];
@@ -191,14 +197,14 @@ namespace WaymarkPresetPlugin
 									{
 										if( ImGui.GetDragDropPayload().NativePtr != null )
 										{
-											int draggedIndex = Marshal.ReadInt32( mpDragAndDropData );
+											int draggedIndex = Marshal.ReadInt32( mpLibraryPresetDragAndDropData );
 											if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count && mConfiguration.PresetLibrary.Presets[draggedIndex].MapID == zone.Key )
 											{
 												ImGui.Selectable( "<Move To Bottom>" );
 												if( ImGui.BeginDragDropTarget() )
 												{
 													ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zone.Key}", ImGuiDragDropFlags.None );
-													if( payload.NativePtr != null )
+													if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
 													{
 														indexToMove = Marshal.ReadInt32( payload.Data );
 														indexToMoveTo = indices.Last();
@@ -240,8 +246,8 @@ namespace WaymarkPresetPlugin
 									}
 									if( !EditingPreset && ImGui.BeginDragDropSource( ImGuiDragDropFlags.None ) )
 									{
-										ImGui.SetDragDropPayload( $"PresetIdxAnyZone", mpDragAndDropData, sizeof( int ) );
-										Marshal.WriteInt32( mpDragAndDropData, i );
+										ImGui.SetDragDropPayload( $"PresetIdxAnyZone", mpLibraryPresetDragAndDropData, sizeof( int ) );
+										Marshal.WriteInt32( mpLibraryPresetDragAndDropData, i );
 										ImGui.Text( $"Moving: {mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}" );
 										ImGui.EndDragDropSource();
 									}
@@ -250,7 +256,7 @@ namespace WaymarkPresetPlugin
 										unsafe
 										{
 											ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.None );
-											if( payload.NativePtr != null )
+											if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
 											{
 												indexToMove = Marshal.ReadInt32( payload.Data );
 												indexToMoveTo = i;
@@ -281,14 +287,14 @@ namespace WaymarkPresetPlugin
 							{
 								if( ImGui.GetDragDropPayload().NativePtr != null )
 								{
-									int draggedIndex = Marshal.ReadInt32( mpDragAndDropData );
+									int draggedIndex = Marshal.ReadInt32( mpLibraryPresetDragAndDropData );
 									if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count )
 									{
 										ImGui.Selectable( "<Move To Bottom>" );
 										if( ImGui.BeginDragDropTarget() )
 										{
 											ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.None );
-											if( payload.NativePtr != null )
+											if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
 											{
 												indexToMove = Marshal.ReadInt32( payload.Data );
 												indexToMoveTo = mConfiguration.PresetLibrary.Presets.Count;
@@ -542,8 +548,7 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 375, 425 ) * ImGui.GetIO().FontGlobalScale);
-			if( ImGui.Begin( "Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize ) )
+			if( ImGui.Begin( "Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize ) )
 			{
 				if( ScratchEditingPreset != null )
 				{
@@ -554,31 +559,48 @@ namespace WaymarkPresetPlugin
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.BeginGroup();
-					ImGui.Columns( 4 );
-					ImGui.Text( "Active" );
-					foreach( var waymark in ScratchEditingPreset.Waymarks )
+					if( ImGui.BeginTable( "###PresetEditorWaymarkTable", 4 ) )
 					{
-						ImGui.Checkbox( waymark.Label, ref waymark.Active );
+						ImGui.TableSetupColumn( "Active", ImGuiTableColumnFlags.WidthStretch );
+						ImGui.TableSetupColumn( "X", ImGuiTableColumnFlags.WidthStretch );
+						ImGui.TableSetupColumn( "Y", ImGuiTableColumnFlags.WidthStretch );
+						ImGui.TableSetupColumn( "Z", ImGuiTableColumnFlags.WidthStretch );
+						ImGui.TableHeadersRow();
+						
+						foreach( var waymark in ScratchEditingPreset.Waymarks )
+						{
+							ImGui.TableNextRow();
+							ImGui.TableSetColumnIndex( 0 );
+							ImGui.Checkbox( $"{waymark.Label}             ###{waymark.Label}", ref waymark.Active );
+							if( ImGui.BeginDragDropSource( ImGuiDragDropFlags.None ) )
+							{
+								ImGui.SetDragDropPayload( $"EditPresetWaymark", mpEditWaymarkDragAndDropData, sizeof( int ) );
+								Marshal.WriteInt32( mpEditWaymarkDragAndDropData, waymark.ID );
+								ImGui.Text( $"Swap Waymark {waymark.Label} with..." );
+								ImGui.EndDragDropSource();
+							}
+							if( ImGui.BeginDragDropTarget() )
+							{
+								unsafe
+								{
+									ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"EditPresetWaymark", ImGuiDragDropFlags.None );
+									if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
+									{
+										ScratchEditingPreset.SwapWaymarks( waymark.ID, Marshal.ReadInt32( payload.Data ) );
+									}
+								}
+								ImGui.EndDragDropTarget();
+							}
+							ImGui.TableSetColumnIndex( 1 );
+							ImGui.InputFloat( $"##{waymark.Label}-X", ref waymark.X );
+							ImGui.TableSetColumnIndex( 2 );
+							ImGui.InputFloat( $"##{waymark.Label}-Y", ref waymark.Y );
+							ImGui.TableSetColumnIndex( 3 );
+							ImGui.InputFloat( $"##{waymark.Label}-Z", ref waymark.Z );
+						}
+
+						ImGui.EndTable();
 					}
-					ImGui.NextColumn();
-					ImGui.Text( "X" );
-					foreach( var waymark in ScratchEditingPreset.Waymarks )
-					{
-						ImGui.InputFloat( $"##{waymark.Label}-X", ref waymark.X );
-					}
-					ImGui.NextColumn();
-					ImGui.Text( "Y" );
-					foreach( var waymark in ScratchEditingPreset.Waymarks )
-					{
-						ImGui.InputFloat( $"##{waymark.Label}-Y", ref waymark.Y );
-					}
-					ImGui.NextColumn();
-					ImGui.Text( "Z" );
-					foreach( var waymark in ScratchEditingPreset.Waymarks )
-					{
-						ImGui.InputFloat( $"##{waymark.Label}-Z", ref waymark.Z );
-					}
-					ImGui.Columns( 1 );
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
@@ -1142,7 +1164,9 @@ namespace WaymarkPresetPlugin
 		protected Vector2 CapturedWaymarkOffset { get; set; } = new Vector2( 0, 0 );
 		protected static readonly Vector2 mWaymarkMapIconHalfSize_Px = new Vector2( 15, 15 );
 
-		protected readonly IntPtr mpDragAndDropData;
+		protected readonly IntPtr mpLibraryPresetDragAndDropData;
+		protected readonly IntPtr mpEditWaymarkDragAndDropData;
+
 		protected Dictionary<uint, MapViewState> MapViewStateData { get; set; } = new Dictionary<uint, MapViewState>();
 	}
 
@@ -1177,6 +1201,31 @@ namespace WaymarkPresetPlugin
 			public int ID;
 			public bool Active;
 			public string Label;
+		}
+
+		public void SwapWaymarks( int index1, int index2 )
+		{
+			if( index1 == index2 ||
+				index1 < 0 ||
+				index2 < 0 ||
+				index1 >= Waymarks.Count ||
+				index2 >= Waymarks.Count )
+			return;
+
+			bool tempActive = Waymarks[index1].Active;
+			float tempX = Waymarks[index1].X;
+			float tempY = Waymarks[index1].Y;
+			float tempZ = Waymarks[index1].Z;
+
+			Waymarks[index1].Active = Waymarks[index2].Active;
+			Waymarks[index1].X = Waymarks[index2].X;
+			Waymarks[index1].Y = Waymarks[index2].Y;
+			Waymarks[index1].Z = Waymarks[index2].Z;
+
+			Waymarks[index2].Active = tempActive;
+			Waymarks[index2].X = tempX;
+			Waymarks[index2].Y = tempY;
+			Waymarks[index2].Z = tempZ;
 		}
 
 		public ScratchPreset( WaymarkPreset preset )
