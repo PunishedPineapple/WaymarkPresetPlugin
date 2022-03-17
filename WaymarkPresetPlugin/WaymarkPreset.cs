@@ -171,7 +171,25 @@ namespace WaymarkPresetPlugin
 
 		//	This looks gross, but it's easier to be compatible with PP presets if we have each waymark be a named member instead of in a collection :(
 		public string Name { get; set; } = "Unknown";
-		[JsonConverter( typeof( MapIDJsonConverter ) )] public UInt16 MapID { get; set; } = 0;	//PP sometimes gives bogus MapIDs that are outside the UInt16, so use a converter to handle those.
+
+		//	Don't serialize in order to read older configs properly.
+		[NonSerialized] protected UInt16 mMapID;
+
+		//	PP sometimes gives bogus MapIDs that are outside the UInt16, so use a converter to handle those.
+		[JsonConverter( typeof( MapIDJsonConverter ) )] public UInt16 MapID
+		{
+			get
+			{
+				return mMapID;
+			}
+			set
+			{
+				bool fireEvent = value != mMapID;
+				mMapID = value;
+				if( fireEvent ) MapIDChangedEvent?.Invoke( this, mMapID );
+			}
+		}
+
 		public DateTimeOffset Time { get; set; } = new DateTimeOffset( DateTimeOffset.Now.UtcDateTime );
 		public Waymark A { get; set; } = new Waymark();
 		public Waymark B { get; set; } = new Waymark();
@@ -181,6 +199,40 @@ namespace WaymarkPresetPlugin
 		public Waymark Two { get; set; } = new Waymark();
 		public Waymark Three { get; set; } = new Waymark();
 		public Waymark Four { get; set; } = new Waymark();
+
+		public Waymark this[int i]
+		{
+			get => i switch
+			{
+				0 => A,
+				1 => B,
+				2 => C,
+				3 => D,
+				4 => One,
+				5 => Two,
+				6 => Three,
+				7 => Four,
+				_ => throw new ArgumentOutOfRangeException( $"Error in WaymarkPreset indexer: Invalid index \"{i}\"" ),
+			};
+		}
+
+		public string GetNameForWaymarkIndex( int i, bool getLongName = false )
+		{
+			return i switch
+			{
+				0 => "A",
+				1 => "B",
+				2 => "C",
+				3 => "D",
+				4 => getLongName ? "One" : "1",
+				5 => getLongName ? "Two" : "2",
+				6 => getLongName ? "Three" : "3",
+				7 => getLongName ? "Four" : "4",
+				_ => throw new ArgumentOutOfRangeException( $"Error in WaymarkPreset.GetNameForWaymarkIndex(): Invalid index \"{i}\"" ),
+			};
+		}
+
+		public event Action<WaymarkPreset, UInt16> MapIDChangedEvent;
 
 		public virtual bool ShouldSerializeTime()	//More JSON bullshit because it has to be polymorphic for the serializer to check it in a derived class apparently.
 		{

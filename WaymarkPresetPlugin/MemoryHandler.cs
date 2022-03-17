@@ -43,7 +43,7 @@ namespace WaymarkPresetPlugin
 				//	Write this address to log to help with digging around in memory if we need to.
 				if( mdGetUISAVESectionAddress != null )
 				{
-					PluginLog.LogInformation( $"FMARKER.DAT address: 0x{mdGetUISAVESectionAddress.Invoke( IntPtr.Zero, mFMARKERDATIndex ).ToString( "X" )}" );
+					PluginLog.LogInformation( $"FMARKER.DAT address: 0x{mdGetUISAVESectionAddress.Invoke( IntPtr.Zero, mFMARKERDATIndex ):X}" );
 				}
 
 				IntPtr fpGetPresetAddressForSlot = sigScanner.ScanText( "4C 8B C9 85 D2 78 0A 83 FA 08 73 05" );
@@ -52,6 +52,18 @@ namespace WaymarkPresetPlugin
 					mdGetPresetAddressForSlot = Marshal.GetDelegateForFunctionPointer<GetPresetAddressForSlotDelegate>( fpGetPresetAddressForSlot );
 				}
 
+				//*****TODO:	Ideally we would check the size of the FMARKER.DAT section against the expected number of presets and the struct size, and
+				//				warn the user if it doesn't all line up (or maybe only if it's not divisible?), but it doesn't appear to store the size of
+				//				the config section like it does in UISAVE.DAT, so this may not be feasible.  We could consider checking the difference between
+				//				the pointer to this section and the next section, but that seems a bit unreliable.*****
+			}
+			catch( Exception e )
+			{
+				throw new Exception( $"Error in \"MemoryHandler.Init()\" while searching for required function signatures; this probably means that the plugin needs to be updated due to changes in Final Fantasy XIV.  Raw exception as follows:\r\n{e}" );
+			}
+
+			try
+			{
 				IntPtr fpGetCurrentContentFinderLinkType = sigScanner.ScanText( "48 83 ?? ?? 48 8B ?? ?? ?? ?? ?? 48 85 ?? 0F ?? ?? ?? ?? ?? ?? B8 ?? ?? ?? ?? ?? 0F ?? ?? ?? ?? ?? ?? 89" );
 				if( fpGetCurrentContentFinderLinkType != IntPtr.Zero )
 				{
@@ -73,16 +85,11 @@ namespace WaymarkPresetPlugin
 				mpWaymarksObj = sigScanner.GetStaticAddressFromSig( "41 80 F9 08 7C BB 48 8D ?? ?? ?? 48 8D ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 0F 94 C0 EB 19", 11 );
 
 				//	Write this address to log to help with digging around in memory if we need to.
-				PluginLog.LogInformation( $"Waymarks object address: 0x{mpWaymarksObj.ToString( "X" )}" );
-
-				//*****TODO:	Ideally we would check the size of the FMARKER.DAT section against the expected number of presets and the struct size, and
-				//				warn the user if it doesn't all line up (or maybe only if it's not divisible?), but it doesn't appear to store the size of
-				//				the config section like it does in UISAVE.DAT, so this may not be feasible.  We could consider checking the difference between
-				//				the pointer to this section and the next section, but that seems a bit unreliable.*****
+				PluginLog.LogInformation( $"Waymarks object address: 0x{mpWaymarksObj:X}" );
 			}
 			catch( Exception e )
 			{
-				throw new Exception( $"Error in \"MemoryHandler.Init()\" while searching for required function signatures; this probably means that the plugin needs to be updated due to changes in Final Fantasy XIV.  Raw exception as follows:\r\n{e}" );
+				PluginLog.LogWarning( $"Error in \"MemoryHandler.Init()\" while searching for \"optional\" function signatures;  this probably means that the plugin needs to be updated due to changes in FFXIV.  Raw exception as follows:\r\n{e}" );
 			}
 		}
 

@@ -9,10 +9,15 @@ using Dalamud.Data;
 using Dalamud.Utility;
 using Dalamud.Logging;
 using Dalamud.Interface;
+using Dalamud.Game.Command;
 using ImGuiScene;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Runtime.InteropServices;
+using Newtonsoft.Json;
+using System.IO;
+using Dalamud.Game.Gui;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace WaymarkPresetPlugin
 {
@@ -21,11 +26,13 @@ namespace WaymarkPresetPlugin
 	public class PluginUI : IDisposable
 	{
 		//	Construction
-		public PluginUI( Configuration configuration, DalamudPluginInterface pluginInterface, DataManager dataManager )
+		public PluginUI( Configuration configuration, DalamudPluginInterface pluginInterface, DataManager dataManager, CommandManager commandManager, GameGui gameGui )
 		{
 			mConfiguration = configuration;
 			mPluginInterface = pluginInterface;
 			mDataManager = dataManager;
+			mCommandManager = commandManager;
+			mGameGui = gameGui;
 			mpLibraryPresetDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
 			mpEditWaymarkDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
 			if( mpLibraryPresetDragAndDropData == IntPtr.Zero ||
@@ -33,23 +40,45 @@ namespace WaymarkPresetPlugin
 			{
 				throw new Exception( "Error in PluginUI constructor: Unable to allocate memory for drag and drop info." );
 			}
+
+			try
+			{
+				//	Try to read in the view state data.
+				string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"\\MapViewStateData_v1.json" );
+				string jsonStr = File.ReadAllText( viewStateDataFilePath );
+				var viewData = JsonConvert.DeserializeObject<Dictionary<uint, MapViewState>>( jsonStr );
+				if( viewData != null ) MapViewStateData = viewData;
+			}
+			catch( Exception e )
+			{
+				PluginLog.LogWarning( $"Unable to load map view state data: {e}" );
+			}
 		}
 
 		//	Destruction
 		public void Dispose()
 		{
-			//	Try to do this nicely for 10 seconds, but then just brute force it to clean up as much as we can.
-			mMapTextureDictMutex.WaitOne( 10000 );
+			//	Try to save off the view state data.
+			try
+			{
+				string jsonStr = JsonConvert.SerializeObject( MapViewStateData );
+				string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"\\MapViewStateData_v1.json" );
+				File.WriteAllText( viewStateDataFilePath, jsonStr );
+			}
+			catch( Exception e )
+			{
+				PluginLog.LogWarning( $"Unable to save map view state data: {e}" );
+			}
+
+			//	Try to do this nicely for a moment, but then just brute force it to clean up as much as we can.
+			mMapTextureDictMutex.WaitOne( 500 );
 
 			//	Clean up all of the map textures that we've loaded.
 			foreach( var mapTexturesList in MapTextureDict )
 			{
 				foreach( var tex in mapTexturesList.Value )
 				{
-					if( tex != null )
-					{
-						tex.Dispose();
-					}
+					tex?.Dispose();
 				}
 			}
 
@@ -57,6 +86,7 @@ namespace WaymarkPresetPlugin
 			mMapTextureDictMutex.ReleaseMutex();
 			mMapTextureDictMutex.Dispose();
 
+			//	Free the drag and drop data.
 			Marshal.FreeHGlobal( mpLibraryPresetDragAndDropData );
 			Marshal.FreeHGlobal( mpEditWaymarkDragAndDropData );
 		}
@@ -81,26 +111,124 @@ namespace WaymarkPresetPlugin
 			DrawMapWindow();
 			DrawEditorWindow();
 			DrawSettingsWindow();
+			if( GimpedModeWarningWindowVisible ) DrawGimpedModeWarningWindow();
+		}
+
+		protected void DrawGimpedModeWarningWindow()
+		{
+			ImGuiHelpers.ForceNextWindowMainViewport();
+			ImGuiHelpers.SetNextWindowPosRelativeMainViewport( ImGuiHelpers.MainViewport.Size / 2f - ImGuiHelpers.MainViewport.Size / 10f, ImGuiCond.Appearing );
+			ImGui.SetNextWindowSize( ImGuiHelpers.MainViewport.Size / 5f );
+			if( ImGui.Begin( "WARNING###WarningMissingSignaturesGimpedMode", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize ) )
+			{
+				ImGui.PushTextWrapPos( ImGuiHelpers.MainViewport.Size.X / 5.1f );
+				ImGui.Text( "One or more function signatures used by WaymarkPresetPlugin could not be found.  " +
+							"This probably means that FFXIV has been updated in a way that partially breaks this plugin.  " +
+							"If FFXIV has not recently been patched, please file a bug report on Github for this plugin.  " +
+							"You should be able to continue using the plugin to import presets from, and export them to " +
+							"the game's waymark preset window (you will have to close and reopen the window to see any " +
+							"exports)." );
+				ImGui.PopTextWrapPos();
+
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+
+				if( ImGui.Button( "Ok" ) )
+				{
+					GimpedModeWarningWindowVisible = false;
+					HaveShownGimpedModeWarningMessage = true;
+				}
+			}
+
+			ImGui.End();
 		}
 
 		protected void DrawMainWindow()
 		{
+			//	Handle game window docking stuff.
+			Vector2 dockedWindowPos = Vector2.Zero;
+			bool fieldMarkerAddonVisible = false;
+			unsafe
+			{
+				var pFieldMarkerAddon = (AtkUnitBase*)mGameGui.GetAddonByName( "FieldMarker", 1 );
+				if( pFieldMarkerAddon != null && pFieldMarkerAddon->IsVisible && pFieldMarkerAddon->RootNode != null )
+				{
+					fieldMarkerAddonVisible = true;
+					dockedWindowPos.X = pFieldMarkerAddon->X + pFieldMarkerAddon->RootNode->Width * pFieldMarkerAddon->Scale;
+					dockedWindowPos.Y = pFieldMarkerAddon->Y;
+				}
+			}
+
+			if( mConfiguration.OpenAndCloseWithFieldMarkerAddon && FieldMarkerAddonWasOpen && !fieldMarkerAddonVisible )
+			{
+				MainWindowVisible = false;
+			}
+			else if( mConfiguration.OpenAndCloseWithFieldMarkerAddon && !FieldMarkerAddonWasOpen && fieldMarkerAddonVisible )
+			{
+				MainWindowVisible = true;
+			}
+			FieldMarkerAddonWasOpen = fieldMarkerAddonVisible;
+
 			if( !MainWindowVisible )
 			{
 				return;
 			}
 
 			//	Draw the window.
-			ImGui.SetNextWindowSize( new Vector2( 375, 340 ) * ImGui.GetIO().FontGlobalScale, ImGuiCond.FirstUseEver );
-			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 340 ) * ImGui.GetIO().FontGlobalScale, new Vector2( float.MaxValue, float.MaxValue ) );
+			if( mConfiguration.AttachLibraryToFieldMarkerAddon && fieldMarkerAddonVisible ) ImGui.SetNextWindowPos( dockedWindowPos );
+			ImGui.SetNextWindowSize( new Vector2( 375, 375 ) * ImGui.GetIO().FontGlobalScale, ImGuiCond.FirstUseEver );
+			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 375 ) * ImGui.GetIO().FontGlobalScale, new Vector2( float.MaxValue, float.MaxValue ) );
 			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
+				/*if( ImGui.Button( "A" ) )
+				{
+					mCommandManager.ProcessCommand( "/waymark a" );
+				}
+				ImGui.SameLine();
+				if( ImGui.Button( "B" ) )
+				{
+					mCommandManager.ProcessCommand( "/waymark b" );
+				}
+				ImGui.SameLine();
+				if( ImGui.Button( "C" ) )
+				{
+					mCommandManager.ProcessCommand( "/waymark c" );
+				}
+				ImGui.SameLine();
+				if( ImGui.Button( "D" ) )
+				{
+					mCommandManager.ProcessCommand( "/waymark d" );
+				}
+				ImGui.SameLine();
+				if( ImGui.Button( "1" ) )
+				{
+					mCommandManager.ProcessCommand( "/waymark 1" );
+				}
+				ImGui.SameLine();
+				if( ImGui.Button( "2" ) )
+				{
+					mCommandManager.ProcessCommand( "/waymark 2" );
+				}
+				ImGui.SameLine();
+				if( ImGui.Button( "3" ) )
+				{
+					mCommandManager.ProcessCommand( "/waymark 3" );
+				}
+				ImGui.SameLine();
+				if( ImGui.Button( "4" ) )
+				{
+					mCommandManager.ProcessCommand( "/waymark 4" );
+				}*/
+
 				bool previouslyFilteredOnZone = mConfiguration.FilterOnCurrentZone;
 				ImGui.Checkbox( "Filter on Current Zone", ref mConfiguration.mFilterOnCurrentZone );
 				if( mConfiguration.FilterOnCurrentZone != previouslyFilteredOnZone ) mConfiguration.Save();	//	I'd rather just save the state when the plugin is unloaded, but that's not been feasible in the past.
-				if( mConfiguration.AllowDirectPlacePreset )
+				if( MemoryHandler.FoundDirectSaveSigs() )
 				{
-					ImGui.SameLine( ImGui.GetWindowWidth() - 163 );  //*****TODO: The magic number is cheap and hacky; actually get the button width if we can.*****
+					ImGui.SameLine( ImGui.GetWindowWidth() - 163 * ImGui.GetIO().FontGlobalScale );  //*****TODO: The magic number is cheap and hacky; actually get the button width if we can.*****
 					if( ImGui.Button( "Save Current Waymarks" ) )
 					{
 						GamePreset currentWaymarks = new GamePreset();
@@ -377,6 +505,20 @@ namespace WaymarkPresetPlugin
 							}
 						}
 					}
+					try
+					{
+						ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
+						ImGui.PushFont( UiBuilder.IconFont );
+						ImGui.Text( "\uF0C1" );
+						ImGui.PopFont();
+						ImGui.PopStyleColor();
+						ImGui.SameLine();
+						ImGuiUtils.URLLink( "https://github.com/PunishedPineapple/WaymarkPresetPlugin/wiki/Preset-Resources", "Where to find importable presets", false, UiBuilder.IconFont );
+					}
+					catch( Exception e )
+					{
+						PluginLog.LogWarning( $"Unable to open the requested link:\r\n{e}" );
+					}
 					ImGui.EndGroup();
 				}
 				if( ImGui.CollapsingHeader( "Export/Backup Options" ) )
@@ -398,6 +540,11 @@ namespace WaymarkPresetPlugin
 							PluginLog.Log( $"Error while exporting all presets: {e}" );
 						}
 					}
+					if( ImGui.Button( "Backup Current Config" ) )
+					{
+						mConfiguration.BackupConfigFile();
+					}
+					ImGuiUtils.HelpMarker( "Copies the current config file to a backup folder in the Dalamud \"pluginConfigs\" directory." );
 					ImGui.EndGroup();
 				}
 
@@ -432,7 +579,7 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 250, 340 ) * ImGui.GetIO().FontGlobalScale);
+			ImGui.SetNextWindowSize( new Vector2( 250, 375 ) * ImGui.GetIO().FontGlobalScale);
 			ImGui.SetNextWindowPos( new Vector2( MainWindowPos.X + MainWindowSize.X, MainWindowPos.Y ) );	//Note that this does *not* need to be viewport-relative, since it is just an offset relative to the library window.
 			if( ImGui.Begin( "Preset Info", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar ) )
 			{
@@ -466,7 +613,7 @@ namespace WaymarkPresetPlugin
 					{
 						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[SelectedPreset], 5u );
 					}
-					if( mConfiguration.AllowDirectPlacePreset )
+					if( MemoryHandler.FoundDirectPlacementSigs() )
 					{
 						ImGui.SameLine();
 						if( ImGui.Button( "Place" ) )
@@ -483,9 +630,34 @@ namespace WaymarkPresetPlugin
 						MapWindowVisible = !MapWindowVisible;
 					}
 					mButtonMapViewWidth = ImGui.GetItemRectSize().X;
-					//ImGui.PushFont( UiBuilder.MonoFont );
-					ImGui.Text( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames ) );
-					//ImGui.PopFont();
+
+					if( ImGui.BeginTable( "###PresetInfoPaneWaymarkDataTable", 4 ) )
+					{
+						ImGui.TableSetupColumn( "Waymark", ImGuiTableColumnFlags.WidthFixed, 15 * ImGui.GetIO().FontGlobalScale );
+						ImGui.TableSetupColumn( "X", ImGuiTableColumnFlags.WidthStretch );
+						ImGui.TableSetupColumn( "Y", ImGuiTableColumnFlags.WidthStretch );
+						ImGui.TableSetupColumn( "Z", ImGuiTableColumnFlags.WidthStretch );
+						for( int i = 0; i < 8; ++i )
+						{
+							var waymark = mConfiguration.PresetLibrary.Presets[SelectedPreset][i];
+							ImGui.TableNextRow();
+							ImGui.TableSetColumnIndex( 0 );
+							ImGui.Text( $"{mConfiguration.PresetLibrary.Presets[SelectedPreset].GetNameForWaymarkIndex( i )}:" );
+							ImGui.TableSetColumnIndex( 1 );
+							ImGuiUtils.RightAlignTableText( waymark.Active ? waymark.X.ToString( "0.00" ) : "Unused" );
+							ImGui.TableSetColumnIndex( 2 );
+							ImGuiUtils.RightAlignTableText( waymark.Active ? waymark.Y.ToString( "0.00" ) : " " );
+							ImGui.TableSetColumnIndex( 3 );
+							ImGuiUtils.RightAlignTableText( waymark.Active ? waymark.Z.ToString( "0.00" ) : " " );
+						}
+						ImGui.EndTable();
+					}
+
+					string zoneStr = ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).DutyName;
+					zoneStr += mConfiguration.ShowIDNumberNextToZoneNames ? $" ({mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID})" : "";
+					ImGui.Text( $"Zone: {zoneStr}" );
+					ImGui.Text( $"Last Modified: {mConfiguration.PresetLibrary.Presets[SelectedPreset].Time.LocalDateTime}" );
+
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
@@ -683,29 +855,30 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 430, 340 ) * ImGui.GetIO().FontGlobalScale);
 			if( ImGui.Begin( "Waymark Settings", ref mSettingsWindowVisible,
-				ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
+				ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse ) )
 			{
 				ImGui.Checkbox( "Always show preset info pane.", ref mConfiguration.mAlwaysShowInfoPane );
 				ImGui.Checkbox( "Clicking the selected preset unselects it.", ref mConfiguration.mAllowUnselectPreset );
 				ImGui.Checkbox( "Categorize presets by zone.", ref mConfiguration.mSortPresetsByZone );
+				ImGui.Checkbox( "Open and close library with the game's waymark window.", ref mConfiguration.mOpenAndCloseWithFieldMarkerAddon );
+				ImGui.Checkbox( "Attach library window to the game's waymark window.", ref mConfiguration.mAttachLibraryToFieldMarkerAddon );
 				ImGui.Checkbox( "Show ID numbers next to zone names.", ref mConfiguration.mShowIDNumberNextToZoneNames );
-				ImGuiHelpMarker( "Shows the internal Content Finder ID of the zone/duty in some places.  Generally only used for debugging." );
+				ImGuiUtils.HelpMarker( "Shows the internal Content Finder ID of the zone/duty in some places.  Generally only used for debugging." );
 				ImGui.Checkbox( "Show the index of the preset within the library.", ref mConfiguration.mShowLibraryIndexInPresetList );
-				ImGuiHelpMarker( "The primary use of this is if you need to know the preset index to use within a text command.  You can always leave this disabled if you only use the GUI." );
-				ImGui.Checkbox( "Allow placement/saving of presets directly.", ref mConfiguration.mAllowDirectPlacePreset );
-				ImGuiHelpMarker( "Enables buttons to save and place presets to/from the library, bypassing the game's preset UI entirely.  Please read the plugin site's readme before enabling this." );
-				/*if( !mConfiguration.AllowDirectPlacePreset ) mConfiguration.AllowClientSidePlacementInOverworldZones = false;
-				ImGui.Indent();
-					ImGui.Checkbox( "Allow placement of waymarks client-side in overworld zones.", ref mConfiguration.mAllowClientSidePlacementInOverworldZones );
-					ImGuiHelpMarker( "Lets the plugin attempt to place waymarks in overworld zones that do not function with the game's preset interface.  These will only be visible client-side, and not to other party/alliance members.  This is out of specification behavior for the game, so please read this plugin's readme before enabling." );
-				ImGui.Unindent();*/
+				ImGuiUtils.HelpMarker( "The primary use of this is if you need to know the preset index to use within a text command.  You can always leave this disabled if you only use the GUI." );
+				/*ImGui.Checkbox( "Allow placement of waymarks client-side in overworld zones.", ref mConfiguration.mAllowClientSidePlacementInOverworldZones );
+				ImGuiUtils.HelpMarker( "Lets the plugin attempt to place waymarks in overworld zones that do not function with the game's preset interface.  These will only be visible client-side, and not to other party/alliance members.  This is out of specification behavior for the game, so please read this plugin's readme before enabling." );*/
 				ImGui.Checkbox( "Autoload presets from library.", ref mConfiguration.mAutoPopulatePresetsOnEnterInstance );
-				ImGuiHelpMarker( "Automatically loads the first five presets that exist in the library for a zone when you load into it.  THIS WILL OVERWRITE THE GAME'S SLOTS WITHOUT WARNING, so please do not turn this on until you are certain that you have saved any data that you want to keep.  Consider using this with the auto-import option below to reduce the risk of inadvertent preset loss." );
+				ImGuiUtils.HelpMarker( "Automatically loads the first five presets that exist in the library for a zone when you load into it.  THIS WILL OVERWRITE THE GAME'S SLOTS WITHOUT WARNING, so please do not turn this on until you are certain that you have saved any data that you want to keep.  Consider using this with the auto-import option below to reduce the risk of inadvertent preset loss." );
 				ImGui.Checkbox( "Autosave presets to library.", ref mConfiguration.mAutoSavePresetsOnInstanceLeave );
-				ImGuiHelpMarker( "Automatically copies any populated game preset slots into the library upon exiting an instance." );
+				ImGuiUtils.HelpMarker( "Automatically copies any populated game preset slots into the library upon exiting an instance." );
 				ImGui.Checkbox( "Suppress responses to text commands (besides \"help\").", ref mConfiguration.mSuppressCommandLineResponses );
+				if( ImGui.Button( "Clear All Map View Data" ) )
+				{
+					ClearAllMapViewStateData();
+				}
+				ImGuiUtils.HelpMarker( "This deletes all map view pan/zoom/submap state, resetting every map back to default." );
 				ImGui.Spacing();
 				if( ImGui.Button( "Save and Close" ) )
 				{
@@ -878,7 +1051,7 @@ namespace WaymarkPresetPlugin
 										}
 										Vector2 mapNormCoords = mapPixelCoords / mapWidgetSize_Px * ( mapUpperBounds - mapLowerBounds ) + mapLowerBounds;
 										Vector2 mapRealCoords = mapInfo[selectedSubMapIndex].GetMapCoordinates( mapNormCoords * 2048.0f );
-										cursorPosText = $"X: {mapRealCoords.X.ToString( "0.00" )}, Y: {mapRealCoords.Y.ToString( "0.00" )}";
+										cursorPosText = $"X: {mapRealCoords.X:0.00}, Y: {mapRealCoords.Y:0.00}";
 									}
 									for( int i = 0; i < 8; ++i )
 									{
@@ -912,6 +1085,15 @@ namespace WaymarkPresetPlugin
 									}
 									ImGui.EndChild();
 									ImGui.PopStyleVar();
+									ImGuiUtils.HelpMarker(
+											"A Note on Coordinate Systems: The game internally uses a right-handed 3D coordinate system, " +
+											"with X running West to East, Y running down to up, and Z running North to South.  The on-map " +
+											"coordinate system is a 2D projection of the XZ plane, with X running West to East, and Y running " +
+											"North to South.  Please note that the coordinates presented in chat links or on the map widgets " +
+											"in game are scaled to arbitrary values, and the Y and Z axes are swapped.  This plugin uses the " +
+											"game's internal coordinate systems.\r\n\r\ntl;dr: Y is up/down for 3D, and North/South for 2D.",
+											false );
+									ImGui.SameLine();
 									ImGui.Text( cursorPosText );
 								}
 
@@ -1065,20 +1247,6 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		protected void ImGuiHelpMarker( string description, bool sameLine = true, string marker = "(?)" )
-		{
-			if( sameLine ) ImGui.SameLine();
-			ImGui.TextDisabled( marker );
-			if( ImGui.IsItemHovered() )
-			{
-				ImGui.BeginTooltip();
-				ImGui.PushTextWrapPos( ImGui.GetFontSize() * 35.0f );
-				ImGui.TextUnformatted( description );
-				ImGui.PopTextWrapPos();
-				ImGui.EndTooltip();
-			}
-		}
-
 		protected float GetDefaultMapZoom( float mapScaleFactor )
 		{
 			//	Lookup Table
@@ -1106,9 +1274,29 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
+		protected void ClearAllMapViewStateData()
+		{
+			MapViewStateData.Clear();
+			string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"\\MapViewStateData_v1.json" );
+			if( File.Exists( viewStateDataFilePath ) )
+			{
+				File.Delete( viewStateDataFilePath );
+			}
+		}
+
+		public void ShowGimpedModeWarningWindow( bool force = false )
+		{
+			if( !HaveShownGimpedModeWarningMessage || force )
+			{
+				GimpedModeWarningWindowVisible = true;
+			}
+		}
+
 		protected Configuration mConfiguration;
 		protected DalamudPluginInterface mPluginInterface;
 		protected DataManager mDataManager;
+		protected CommandManager mCommandManager;
+		protected GameGui mGameGui;
 
 		//	Need a real backing field on the following properties for use with ImGui.
 		protected bool mMainWindowVisible = false;
@@ -1132,6 +1320,14 @@ namespace WaymarkPresetPlugin
 			set { mMapWindowVisible = value; }
 		}
 
+		protected bool mGimpedModeWarningWindowVisible = false;
+		public bool GimpedModeWarningWindowVisible
+		{
+			get { return mGimpedModeWarningWindowVisible; }
+			set { mGimpedModeWarningWindowVisible = value; }
+		}
+		protected bool HaveShownGimpedModeWarningMessage = false;
+
 		protected string mPresetImportString = "";
 		public string PresetImportString
 		{
@@ -1151,6 +1347,7 @@ namespace WaymarkPresetPlugin
 		protected ZoneSearcher EditWindowZoneSearcher { get; set; } = new ZoneSearcher();
 		protected string mEditWindowZoneFilterString = "";
 		protected bool EditWindowZoneComboWasOpen { get; set; } = false;
+		protected bool FieldMarkerAddonWasOpen { get; set; } = false;
 		
 		//	Padding and storing width to right-align buttons.  Initialization value probably doesn't much matter for the saved button widths, since they'll be updated after the first rendered frame.
 		private float mRightAlignPadding = 15;

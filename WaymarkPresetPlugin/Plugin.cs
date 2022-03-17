@@ -21,6 +21,7 @@ namespace WaymarkPresetPlugin
 			CommandManager commandManager,
 			Condition condition,
 			ChatGui chatGui,
+			GameGui gameGui,
 			DataManager dataManager,
 			SigScanner sigScanner )
 		{
@@ -30,6 +31,7 @@ namespace WaymarkPresetPlugin
 			mCommandManager		= commandManager;
 			mCondition			= condition;
 			mChatGui			= chatGui;
+			mGameGui			= gameGui;
 			mSigScanner			= sigScanner;
 			mDataManager		= dataManager;
 
@@ -46,7 +48,7 @@ namespace WaymarkPresetPlugin
 			} );
 
 			//	UI Initialization
-			mUI = new PluginUI( mConfiguration, mPluginInterface, mDataManager );
+			mUI = new PluginUI( mConfiguration, mPluginInterface, mDataManager, mCommandManager, mGameGui );
 			mPluginInterface.UiBuilder.Draw += DrawUI;
 			mPluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
 			mUI.SetCurrentTerritoryTypeID( mClientState.TerritoryType );
@@ -54,11 +56,18 @@ namespace WaymarkPresetPlugin
 
 			//	Event Subscription
 			mClientState.TerritoryChanged += OnTerritoryChanged;
+			mClientState.Login += OnLogin;
 
 			//	Tell the user if there's something out of the ordinary.
 			if( !MemoryHandler.FoundSavedPresetSigs() )
 			{
 				mChatGui.Print( "Error initializing WaymarkPresetPlugin: Cannot write to or read from game." );
+			}
+
+			if( mClientState.IsLoggedIn &&
+				( !MemoryHandler.FoundDirectPlacementSigs() || !MemoryHandler.FoundDirectSaveSigs() ) )
+			{
+				mUI.ShowGimpedModeWarningWindow();
 			}
 		}
 
@@ -67,6 +76,7 @@ namespace WaymarkPresetPlugin
 		{
 			MemoryHandler.Uninit();
 			mUI.Dispose();
+			mClientState.Login -= OnLogin;
 			mClientState.TerritoryChanged -= OnTerritoryChanged;
 			mPluginInterface.UiBuilder.Draw -= DrawUI;
 			mPluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;
@@ -147,7 +157,7 @@ namespace WaymarkPresetPlugin
 		{
 			if( args.ToLower() == "commands" )
 			{
-				return $"Valid commands are as follows: config, slotinfo, import, export, exportall{( mConfiguration.AllowDirectPlacePreset ? ", place" : "" )}.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
+				return $"Valid commands are as follows: config, slotinfo, import, export, exportall, and place.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
 			}
 			else if( args.ToLower() == "config" )
 			{
@@ -157,7 +167,7 @@ namespace WaymarkPresetPlugin
 			{
 				return "Prints the data saved in the game's slots to the chat window.  Usage \"/pwaymark slotinfo <slot>\".  The slot number can be any valid game slot.";
 			}
-			else if( mConfiguration.AllowDirectPlacePreset && args.ToLower() == "place" )
+			else if( args.ToLower() == "place" )
 			{
 				return "Places the preset with the specified name (if possible).  Quotes MUST be used around the name.  May also specify preset index without quotes instead.  Usage \"/pwaymark place \"<name>\"|<index>\".  Name must match exactly (besides case).  Index can be any valid libary preset number.";
 			}
@@ -213,7 +223,7 @@ namespace WaymarkPresetPlugin
 
 		protected string ProcessTextCommand_Place( string args )
 		{
-			if( mConfiguration.AllowDirectPlacePreset )
+			if( MemoryHandler.FoundDirectPlacementSigs() )
 			{
 				//	The index we will want to try to place once we find it.
 				int libraryIndex = -1;
@@ -255,7 +265,7 @@ namespace WaymarkPresetPlugin
 			}
 			else
 			{
-				return "Direct placement from the library is not currently allowed; see the plugin settings for more information.";
+				return "Unable to place preset; direct placement signatures were not found.  This probably means that the plugin needs to be updated for a new version of FFXIV.";
 			}
 		}
 
@@ -473,7 +483,6 @@ namespace WaymarkPresetPlugin
 			//	Auto-load presets on entering instance.
 			if( mConfiguration.AutoPopulatePresetsOnEnterInstance && ZoneInfoHandler.IsKnownContentFinderID( newTerritoryTypeInfo.ContentFinderConditionID ) )
 			{
-				//*****TODO: Eventually maybe have this check for a "preferred" flag on the presets and use that to help select which five to use, rather than just the first five from the zone.
 				var presetsToAutoLoad = mConfiguration.PresetLibrary.Presets.Where( x => x.MapID == newTerritoryTypeInfo.ContentFinderConditionID ).Take( MemoryHandler.MaxPresetSlotNum ).ToList();
 				for( int i = 0; i < MemoryHandler.MaxPresetSlotNum; ++i )
 				{
@@ -497,6 +506,15 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
+		protected void OnLogin( object sender, EventArgs e )
+		{
+			if( !MemoryHandler.FoundDirectPlacementSigs() ||
+				!MemoryHandler.FoundDirectSaveSigs() )
+			{
+				mUI.ShowGimpedModeWarningWindow();
+			}
+		}
+
 		public string Name => "WaymarkPresetPlugin";
 		protected const string mTextCommandName = "/pwaymark";
 
@@ -507,6 +525,7 @@ namespace WaymarkPresetPlugin
 		protected CommandManager mCommandManager;
 		protected Condition mCondition;
 		protected ChatGui mChatGui;
+		protected GameGui mGameGui;
 		protected SigScanner mSigScanner;
 		protected DataManager mDataManager;
 		protected Configuration mConfiguration;

@@ -2,6 +2,8 @@
 using Dalamud.Plugin;
 using Newtonsoft.Json;
 using System;
+using System.IO;
+using System.Globalization;
 
 namespace WaymarkPresetPlugin
 {
@@ -59,14 +61,6 @@ namespace WaymarkPresetPlugin
 			set { mShowLibraryIndexInPresetList = value; }
 		}
 
-		public bool mAllowDirectPlacePreset = false;
-		public bool AllowDirectPlacePreset
-		{
-			get { return mAllowDirectPlacePreset; }
-			set { mAllowDirectPlacePreset = value; }
-			//set { mAllowDirectPlacePreset = value; if( value == false ) mAllowClientSidePlacementInOverworldZones = false; }
-		}
-
 		/*public bool mAllowClientSidePlacementInOverworldZones = false;
 		public bool AllowClientSidePlacementInOverworldZones
 		{
@@ -95,6 +89,20 @@ namespace WaymarkPresetPlugin
 			set { mSuppressCommandLineResponses = value; }
 		}
 
+		public bool mOpenAndCloseWithFieldMarkerAddon = false;
+		public bool OpenAndCloseWithFieldMarkerAddon
+		{
+			get { return mOpenAndCloseWithFieldMarkerAddon; }
+			set { mOpenAndCloseWithFieldMarkerAddon = value; }
+		}
+
+		public bool mAttachLibraryToFieldMarkerAddon = false;
+		public bool AttachLibraryToFieldMarkerAddon
+		{
+			get { return mAttachLibraryToFieldMarkerAddon; }
+			set { mAttachLibraryToFieldMarkerAddon = value; }
+		}
+
 		public string GetZoneName( UInt16 ID )
 		{
 			return GetZoneNameDelegate( ID, ShowIDNumberNextToZoneNames );
@@ -119,6 +127,21 @@ namespace WaymarkPresetPlugin
 		public void Save()
 		{
 			mPluginInterface.SavePluginConfig( this );
+		}
+
+		public void BackupConfigFile()
+		{
+			string backupFolderPath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"\\Backups\\" );
+			Directory.CreateDirectory( backupFolderPath );
+			string backupFileBasePath = Path.Join( backupFolderPath, $"\\PluginConfig_{DateTimeOffset.UtcNow.ToString( "yyyy-MM-dd_HH.mm.ssZ" )}" );
+			string backupFilePath = backupFileBasePath + ".json";
+			int i = 2;
+			while( File.Exists( backupFilePath ) )
+			{
+				backupFilePath = backupFileBasePath + $"_{i}.json";
+				++i;
+			}
+			mPluginInterface.ConfigFile.CopyTo( backupFilePath );
 		}
 
 		[NonSerialized]
