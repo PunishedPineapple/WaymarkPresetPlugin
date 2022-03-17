@@ -21,13 +21,11 @@ Em-Six has a [collection of presets for current and older content on their wiki]
 
 ## Direct Placement
 
-Placing a preset directly from the plugin was added in version 1.0.0.0; however, this must be enabled in the plugin settings.  The reason for this is that placing from the plugin goes a little bit deeper into the game's chain of how waymark presets are placed, and while I've tried to be careful, and this feature has been tested and appears to work without issue, it is possible that something has been missed.  Copying presets from the library into a slot in the game's menu is quite clear-cut and simple.  Direct placement less so.
+The plugin provides a button and text commands to place a preset directly from the library as of v1.0.0.0, and a button to directly save current waymarks to the library as of v1.1.0.0
 
-Saving current waymarks directly is also supported as of version 1.1.0.0 with the same caveats.
+This feature performs most of the same checks that the game does, including verifying that you are in an instance type that allows waymarks to be saved, and checking that you are not in combat.  The only thing that it does not check is that the zone of the preset matches the zone that you are currently in.
 
-One more thing to note about this feature: it performs most of the checks that the game does, including checking that you are in an instance type that allows waymarks to be saved, and checking that you are not in combat.  The only thing that it does not check is that the zone of the preset matches the zone that you are currently in.
-
-I am sorry that this will not work outside of instances, but there appear to be additional checks further down the chain that prevent this.  If someone else wants to figure it out, go ahead, but I don't personally want to spend the time going deeper into figuring it all out.
+I am sorry that this will not work outside of instances, but there appear to be additional checks further down the chain that prevent this.  If someone else wants to pursue this, go ahead, but I don't personally want to spend the time going deeper into figuring it all out.  Getting around this by placing waymarks individually sequentially would probably not get accepted to the main Dalamud repo.
 
 ## Map View Notes
 
@@ -36,7 +34,7 @@ The map view has two major limitations:
 * Dragging waymarks on the map while editing in zones that have uneven ground will generally give undesirable results, in that the height of the waymark will not be constrained to the ground.  You may end up with waymarks that the game won't place, or even with waymarks below the ground or floating in the air.  This is not likely to be addressed due to the immense amount of work for very little payoff.
 
 ## IMPORTANT
-As is the case with all third-party programs and tools, this plugin *does not* operate through an official API; it digs into the game and operates on the best information available inferred from game behavior and structure.  Something could always go wrong, SE could find out and punish you, something unintended and bad could happen, etc.  Use of this plugin is very much at your own risk.  There are no guarantees, express or implied.  I've made my best effort to keep it as safe as I can, and that's it.
+As is the case with all third-party programs and tools, this plugin *does not* operate through an official API; it digs into the game and operates on the best information available inferred from game behavior and structure.  Something could always go wrong, SE could find out and punish you, something unintended and bad could happen, etc.  Use of this plugin is very much at your own risk.  There are no guarantees, express or implied.  I've made my best effort to keep it as safe as I can (I use this myself, after all), and that's it.
 
 ## License
 Code and executable are covered under the [MIT License](../LICENSE).  Final Fantasy XIV (and any associated data used by this plugin) is owned by and copyright Square Enix.
