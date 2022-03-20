@@ -19,6 +19,7 @@ namespace WaymarkPresetPlugin
 			ImGui.PopStyleColor();
 			if( ImGui.IsItemHovered() )
 			{
+				ImGui.SetMouseCursor( ImGuiMouseCursor.Hand );
 				if( ImGui.IsMouseClicked( ImGuiMouseButton.Left ) )
 				{
 					Process.Start( new ProcessStartInfo( URL ) { UseShellExecute = true } );
