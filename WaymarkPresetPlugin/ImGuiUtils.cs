@@ -24,7 +24,7 @@ namespace WaymarkPresetPlugin
 					Process.Start( new ProcessStartInfo( URL ) { UseShellExecute = true } );
 				}
 
-				AddUnderline( ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered] );
+				AddUnderline( ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered], 1.0f );
 
 				if( showTooltip )
 				{
@@ -42,16 +42,24 @@ namespace WaymarkPresetPlugin
 			}
 			else
 			{
-				AddUnderline( ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
+				AddUnderline( ImGui.GetStyle().Colors[(int)ImGuiCol.Button], 1.0f );
 			}
 		}
 
-		public static void AddUnderline( Vector4 color )
+		public static void AddUnderline( Vector4 color, float thickness )
 		{
 			Vector2 min = ImGui.GetItemRectMin();
 			Vector2 max = ImGui.GetItemRectMax();
 			min.Y = max.Y;
-			ImGui.GetWindowDrawList().AddLine( min, max, ColorVecToUInt( color ), 1.0f );
+			ImGui.GetWindowDrawList().AddLine( min, max, ColorVecToUInt( color ), thickness );
+		}
+
+		public static void AddOverline( Vector4 color, float thickness )
+		{
+			Vector2 min = ImGui.GetItemRectMin();
+			Vector2 max = ImGui.GetItemRectMax();
+			max.Y = min.Y;
+			ImGui.GetWindowDrawList().AddLine( min, max, ColorVecToUInt( color ), thickness );
 		}
 
 		public static void RightAlignTableText( string str )

@@ -287,43 +287,26 @@ namespace WaymarkPresetPlugin
 										{
 											unsafe
 											{
-												ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zone.Key}", ImGuiDragDropFlags.None );
+												ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zone.Key}", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
 												if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
 												{
-													indexToMove = Marshal.ReadInt32( payload.Data );
-													indexToMoveTo = indices[i];
+													if( payload.IsDelivery() )
+													{
+														indexToMove = Marshal.ReadInt32( payload.Data );
+														indexToMoveTo = indices[i];
+													}
+													else
+													{
+														ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+													}
 												}
 											}
 											ImGui.EndDragDropTarget();
 										}
-										/*if( !EditingPreset ) //&& mouse over the current item)
-										{
-											ImGui.PushFont( UiBuilder.IconFont );
-											if( i > 0 )
-											{
-												ImGui.SameLine();
-												if( ImGui.SmallButton( $"\uF139###UpArrowButton{i}" )//ImGui.ArrowButton( $"###UpArrowButton{i}", ImGuiDir.Up ) )
-												{
-													indexToMove = indices[i];
-													indexToMoveTo = indices[i - 1];
-												}
-											}
-											if( i < indices.Count - 1 )
-											{
-												ImGui.SameLine();
-												if( ImGui.SmallButton( $"\uF13A###DownArrowButton{i}" )//ImGui.ArrowButton( $"###DownArrowButton{i}", ImGuiDir.Down ) )
-												{
-													indexToMove = indices[i];
-													indexToMoveTo = indices[i + 1];
-													moveToAfter = true;
-												}
-											}
-											ImGui.PopFont();
-										}*/
 									}
 									unsafe
 									{
-										if( ImGui.GetDragDropPayload().NativePtr != null )
+										if( !EditingPreset && ImGui.GetDragDropPayload().NativePtr != null && ImGui.GetDragDropPayload().Data != IntPtr.Zero )
 										{
 											int draggedIndex = Marshal.ReadInt32( mpLibraryPresetDragAndDropData );
 											if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count && mConfiguration.PresetLibrary.Presets[draggedIndex].MapID == zone.Key )
@@ -331,12 +314,19 @@ namespace WaymarkPresetPlugin
 												ImGui.Selectable( "<Move To Bottom>" );
 												if( ImGui.BeginDragDropTarget() )
 												{
-													ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zone.Key}", ImGuiDragDropFlags.None );
+													ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zone.Key}", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
 													if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
 													{
-														indexToMove = Marshal.ReadInt32( payload.Data );
-														indexToMoveTo = indices.Last();
-														moveToAfter = true;
+														if( payload.IsDelivery() )
+														{
+															indexToMove = Marshal.ReadInt32( payload.Data );
+															indexToMoveTo = indices.Last();
+															moveToAfter = true;
+														}
+														else
+														{
+															ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+														}
 													}
 													ImGui.EndDragDropTarget();
 												}
@@ -383,37 +373,27 @@ namespace WaymarkPresetPlugin
 									{
 										unsafe
 										{
-											ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.None );
+											ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
 											if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
 											{
-												indexToMove = Marshal.ReadInt32( payload.Data );
-												indexToMoveTo = i;
-												//moveToAfter = i == indices.Count - 1;
+												if( payload.IsDelivery() )
+												{
+													indexToMove = Marshal.ReadInt32( payload.Data );
+													indexToMoveTo = i;
+												}
+												else
+												{
+													ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+												}
 											}
 										}
 										ImGui.EndDragDropTarget();
 									}
-									/*if( !EditingPreset ) //&& mouse over the current item)
-									{
-										ImGui.SameLine();
-										if( i > 0 && mConfiguration.PresetLibrary.Presets[i-1].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) && ImGui.ArrowButton( "###UpArrowButton", ImGuiDir.Up ) )
-										{
-											indexToMove = i;
-											indexToMoveTo = i - 1;
-										}
-										ImGui.SameLine();
-										if( i < mConfiguration.PresetLibrary.Presets.Count - 1 && mConfiguration.PresetLibrary.Presets[i+1] ).MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( CurrentTerritoryTypeID ) && ImGui.ArrowButton( "###DownArrowButton", ImGuiDir.Down ) )
-										{
-											indexToMove = i;
-											indexToMoveTo = i + 1;
-											moveToAfter = true;
-										}
-									}*/
 								}
 							}
 							unsafe
 							{
-								if( ImGui.GetDragDropPayload().NativePtr != null )
+								if( !EditingPreset && ImGui.GetDragDropPayload().NativePtr != null && ImGui.GetDragDropPayload().Data != IntPtr.Zero )
 								{
 									int draggedIndex = Marshal.ReadInt32( mpLibraryPresetDragAndDropData );
 									if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count )
@@ -421,11 +401,18 @@ namespace WaymarkPresetPlugin
 										ImGui.Selectable( "<Move To Bottom>" );
 										if( ImGui.BeginDragDropTarget() )
 										{
-											ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.None );
+											ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
 											if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
 											{
-												indexToMove = Marshal.ReadInt32( payload.Data );
-												indexToMoveTo = mConfiguration.PresetLibrary.Presets.Count;
+												if( payload.IsDelivery() )
+												{
+													indexToMove = Marshal.ReadInt32( payload.Data );
+													indexToMoveTo = mConfiguration.PresetLibrary.Presets.Count;
+												}
+												else
+												{
+													ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+												}
 											}
 											ImGui.EndDragDropTarget();
 										}
@@ -561,6 +548,7 @@ namespace WaymarkPresetPlugin
 						PluginLog.LogDebug( $"Moved preset {indexToMove} to index {SelectedPreset}." );
 						mConfiguration.Save();
 					}
+					Marshal.WriteInt32( mpLibraryPresetDragAndDropData, -1 );
 				}
 			}
 
