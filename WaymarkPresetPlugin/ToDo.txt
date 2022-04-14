@@ -1,6 +1,6 @@
 ﻿High Priority:
 
-- Nothing for now.
+- Replace gimped mode popup with just help markers in the locations of missing buttons.
 
 
 Low Priority:
