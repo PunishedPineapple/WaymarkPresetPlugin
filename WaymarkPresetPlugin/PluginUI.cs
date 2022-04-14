@@ -61,7 +61,7 @@ namespace WaymarkPresetPlugin
 			//	Try to save off the view state data.
 			try
 			{
-				string jsonStr = JsonConvert.SerializeObject( MapViewStateData );
+				string jsonStr = JsonConvert.SerializeObject( MapViewStateData, Formatting.Indented );
 				string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"\\MapViewStateData_v1.json" );
 				File.WriteAllText( viewStateDataFilePath, jsonStr );
 			}
