@@ -33,6 +33,7 @@ namespace WaymarkPresetPlugin
 			mDataManager = dataManager;
 			mCommandManager = commandManager;
 			mGameGui = gameGui;
+
 			mpLibraryPresetDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
 			mpEditWaymarkDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
 			if( mpLibraryPresetDragAndDropData == IntPtr.Zero ||
@@ -111,6 +112,7 @@ namespace WaymarkPresetPlugin
 			DrawMapWindow();
 			DrawEditorWindow();
 			DrawSettingsWindow();
+			DrawHelpWindow();
 			if( GimpedModeWarningWindowVisible ) DrawGimpedModeWarningWindow();
 		}
 
@@ -183,6 +185,8 @@ namespace WaymarkPresetPlugin
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 375 ) * ImGui.GetIO().FontGlobalScale, new Vector2( float.MaxValue, float.MaxValue ) );
 			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
+				ImGuiUtils.TitleBarHelpButton( () => { ShowHelpWindow( HelpWindowPage.Main ); }, UiBuilder.IconFont );
+
 				/*if( ImGui.Button( "A" ) )
 				{
 					mCommandManager.ProcessCommand( "/waymark a" );
@@ -225,10 +229,10 @@ namespace WaymarkPresetPlugin
 
 				bool previouslyFilteredOnZone = mConfiguration.FilterOnCurrentZone;
 				ImGui.Checkbox( "Filter on Current Zone", ref mConfiguration.mFilterOnCurrentZone );
-				if( mConfiguration.FilterOnCurrentZone != previouslyFilteredOnZone ) mConfiguration.Save();	//	I'd rather just save the state when the plugin is unloaded, but that's not been feasible in the past.
+				if( mConfiguration.FilterOnCurrentZone != previouslyFilteredOnZone ) mConfiguration.Save(); //	I'd rather just save the state when the plugin is unloaded, but that's not been feasible in the past.
+				ImGui.SameLine( ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize( "Save Current Waymarks" ).X );
 				if( MemoryHandler.FoundDirectSaveSigs() )
 				{
-					ImGui.SameLine( ImGui.GetWindowWidth() - 163 * ImGui.GetIO().FontGlobalScale );  //*****TODO: The magic number is cheap and hacky; actually get the button width if we can.*****
 					if( ImGui.Button( "Save Current Waymarks" ) )
 					{
 						GamePreset currentWaymarks = new GamePreset();
@@ -240,6 +244,20 @@ namespace WaymarkPresetPlugin
 							}
 						}
 					}
+				}
+				else
+				{
+					ImGui.PushStyleColor( ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] * 0.5f );
+					ImGui.PushStyleColor( ImGuiCol.ButtonHovered, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
+					ImGui.PushStyleColor( ImGuiCol.ButtonActive, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
+					ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled] );
+
+					ImGui.Button( "Save Current Waymarks" );
+
+					ImGui.PopStyleColor();
+					ImGui.PopStyleColor();
+					ImGui.PopStyleColor();
+					ImGui.PopStyleColor();
 				}
 				int indexToMove = -1;
 				int indexToMoveTo = -1;
@@ -568,7 +586,9 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSize( new Vector2( 250, 375 ) * ImGui.GetIO().FontGlobalScale);
+			DrawInfoWindowLayoutPass();
+
+			ImGui.SetNextWindowSize( mInfoWindowSize );
 			ImGui.SetNextWindowPos( new Vector2( MainWindowPos.X + MainWindowSize.X, MainWindowPos.Y ) );	//Note that this does *not* need to be viewport-relative, since it is just an offset relative to the library window.
 			if( ImGui.Begin( "Preset Info", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar ) )
 			{
@@ -602,18 +622,36 @@ namespace WaymarkPresetPlugin
 					{
 						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[SelectedPreset], 5u );
 					}
+					float rightAlignPos;
+					ImGui.SameLine();
 					if( MemoryHandler.FoundDirectPlacementSigs() )
 					{
-						ImGui.SameLine();
 						if( ImGui.Button( "Place" ) )
 						{
 							MemoryHandler.PlacePreset( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset() /*, mConfiguration.AllowClientSidePlacementInOverworldZones*/ );
 						}
 					}
+					else
+					{
+						ImGui.PushStyleColor( ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] * 0.5f );
+						ImGui.PushStyleColor( ImGuiCol.ButtonHovered, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
+						ImGui.PushStyleColor( ImGuiCol.ButtonActive, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
+						ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled] );
+						
+						ImGui.Button( "Place" );
+
+						ImGui.PopStyleColor();
+						ImGui.PopStyleColor();
+						ImGui.PopStyleColor();
+						ImGui.PopStyleColor();
+					}
+					mInfoWindowSize.X = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X;
+					rightAlignPos = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X - ImGui.GetWindowContentRegionMin().X;
+
 
 					ImGui.EndGroup();
 					ImGui.Text( "Preset Info:" );
-					ImGui.SameLine( ImGui.GetWindowWidth() - mButtonMapViewWidth - mRightAlignPadding );
+					ImGui.SameLine( rightAlignPos - ImGui.CalcTextSize( "Map View" ).X - ImGui.GetStyle().WindowPadding.X );
 					if( ImGui.Button( "Map View" ) )
 					{
 						MapWindowVisible = !MapWindowVisible;
@@ -671,6 +709,7 @@ namespace WaymarkPresetPlugin
 					{
 						WantToDeleteSelectedPreset = true;
 					}
+					mInfoWindowSize.X = Math.Max( mInfoWindowSize.X, ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X );
 					if( WantToDeleteSelectedPreset )
 					{
 						ImGui.Text( "Confirm delete: " );
@@ -692,6 +731,7 @@ namespace WaymarkPresetPlugin
 						ImGui.PopStyleColor();
 					}
 					ImGui.PopStyleColor();
+					mInfoWindowSize.Y = ImGui.GetItemRectMax().Y - ImGui.GetWindowPos().Y + ImGui.GetStyle().WindowPadding.Y;
 				}
 				else
 				{
@@ -700,6 +740,147 @@ namespace WaymarkPresetPlugin
 			}
 
 			ImGui.End();
+		}
+
+		protected void DrawInfoWindowLayoutPass()
+		{
+			//	Actually zero alpha culls the window.
+			ImGui.PushStyleVar( ImGuiStyleVar.Alpha, float.Epsilon );
+
+			ImGui.SetNextWindowSize( new( 100f ) );
+			ImGui.SetNextWindowPos( ImGuiHelpers.MainViewport.Pos + Vector2.One );
+			if( ImGui.Begin( "Preset Info (Layout Pass)", ImGuiUtils.LayoutWindowFlags ) )
+			{
+				ImGui.Text( "Copy to slot:" );
+				for( int i = 1; i <= MemoryHandler.MaxPresetSlotNum; ++i )
+				{
+					ImGui.SameLine();
+					ImGui.Button( $"{i}" );
+				}
+				ImGui.SameLine();
+				ImGui.Button( "Place" );
+				mInfoWindowSize.X = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X;
+				ImGui.Button( "My Width Doesn't Matter" );
+
+				if( ImGui.BeginTable( "Real Fake Tables", 1 ) )
+				{
+					ImGui.TableSetupColumn( "Hey I'm Fake", ImGuiTableColumnFlags.WidthFixed, 15 * ImGui.GetIO().FontGlobalScale );
+
+					for( int i = 0; i < 8; ++i )
+					{
+						ImGui.TableNextRow();
+						ImGui.TableSetColumnIndex( 0 );
+						ImGui.Text( $"Nothing to see here." );
+					}
+					ImGui.EndTable();
+				}
+
+				ImGui.Text( $"Who cares!" );
+				ImGui.Text( $"Not me!" );
+
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+				ImGui.Spacing();
+
+				ImGui.Button( "Export to Clipboard" );
+				ImGui.SameLine();
+				ImGui.Button( "Edit" );
+				ImGui.SameLine();
+				ImGui.Button( "Delete" );
+				mInfoWindowSize.X = Math.Max( mInfoWindowSize.X, ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X );
+				if( WantToDeleteSelectedPreset )
+				{
+					ImGui.Button( "Don't do it!" );
+				}
+				mInfoWindowSize.Y = ImGui.GetItemRectMax().Y - ImGui.GetWindowPos().Y + ImGui.GetStyle().WindowPadding.Y;
+			}
+
+			ImGui.PopStyleVar();
+
+			ImGui.End();
+		}
+
+		protected void DrawHelpWindow()
+		{
+			if( !HelpWindowVisible )
+			{
+				return;
+			}
+
+			ImGui.SetNextWindowSizeConstraints( new( 300f ), new( float.MaxValue ) );
+			ImGuiHelpers.SetNextWindowPosRelativeMainViewport( ImGuiHelpers.MainViewport.Size / 3f, ImGuiCond.FirstUseEver );
+			if( ImGui.Begin( "Waymark Help", ref mHelpWindowVisible ) )
+			{
+				var cachedCurrentHelpPage = mCurrentHelpPage;
+				for( int i = 0; i < Enum.GetValues( typeof( HelpWindowPage ) ).Length; ++i )
+				{
+					if( i > 0 ) ImGui.SameLine();
+					if( i == (int)cachedCurrentHelpPage )
+					{
+						ImGui.PushStyleColor( ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered] );
+					}
+					if( ImGui.Button( Enum.GetNames( typeof( HelpWindowPage ) )[i] ) )
+					{
+						mCurrentHelpPage = (HelpWindowPage)i;
+					}
+					if( i == (int)cachedCurrentHelpPage )
+					{
+						ImGui.PopStyleColor();
+					}
+				}
+
+				if( ImGui.BeginChild( "Help Text Pane" ) )
+				{
+					switch( mCurrentHelpPage )
+					{
+						case HelpWindowPage.Main: DrawHelpWindow_Main(); break;
+						case HelpWindowPage.Editing: DrawHelpWindow_Editing(); break;
+						case HelpWindowPage.Maps: DrawHelpWindow_Maps(); break;
+						case HelpWindowPage.Math: DrawHelpWindow_Math(); break;
+						case HelpWindowPage.CircleComputer: DrawHelpWindow_CircleComputer(); break;
+						default: DrawHelpWindow_Main(); break;
+					};
+
+					ImGui.EndChild();
+				}
+			}
+
+			ImGui.End();
+		}
+
+		protected void DrawHelpWindow_Main()
+		{
+		}
+
+		protected void DrawHelpWindow_Editing()
+		{
+		}
+
+		protected void DrawHelpWindow_Maps()
+		{
+		}
+
+		protected void DrawHelpWindow_Math()
+		{
+			ImGui.PushTextWrapPos( ImGui.GetWindowContentRegionWidth() );
+
+			ImGui.Text( "Coordinate Systems:\r\n" );
+			ImGui.Indent();
+			ImGui.Text( "The game internally uses a right-handed 3D coordinate system, " +
+						"with X running West to East, Y running down to up, and Z running North to South.  The on-map " +
+						"coordinate system is a 2D projection of the XZ plane, with X running West to East, and Y running " +
+						"North to South.  Please note that the coordinates presented in chat links or on the map widgets " +
+						"in game are scaled to arbitrary values, and the Y and Z axes are swapped.  This plugin uses the " +
+						"game's internal coordinate systems.\r\n\r\ntl;dr: Y is up/down for 3D, and North/South for 2D." );
+			ImGui.Unindent();
+
+			ImGui.PopTextWrapPos();
+		}
+
+		protected void DrawHelpWindow_CircleComputer()
+		{
 		}
 
 		protected void DrawEditorWindow()
@@ -711,6 +892,8 @@ namespace WaymarkPresetPlugin
 
 			if( ImGui.Begin( "Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize ) )
 			{
+				ImGuiUtils.TitleBarHelpButton( () => { ShowHelpWindow( HelpWindowPage.Editing ); }, UiBuilder.IconFont );
+
 				if( ScratchEditingPreset != null )
 				{
 					ImGui.Text( "Name: " );
@@ -901,6 +1084,9 @@ namespace WaymarkPresetPlugin
 			if( ImGui.Begin( $"Map View{(showingEditingView ? " - Editing" : "")}###MapViewWindow", ref mMapWindowVisible,
 				ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
+				//	Help button.
+				ImGuiUtils.TitleBarHelpButton( ()=> { ShowHelpWindow(HelpWindowPage.Maps); }, UiBuilder.IconFont );
+
 				//	Get TerritoryType ID of map to show, along with the (2D/XZ) zone coordinates of the waymarks.  Do this up front because we can be showing both normal presets or an editing scratch preset in the map view.
 				uint territoryTypeIDToShow = 0;
 				Vector2[] marker2dCoords = new Vector2[8];
@@ -1074,15 +1260,6 @@ namespace WaymarkPresetPlugin
 									}
 									ImGui.EndChild();
 									ImGui.PopStyleVar();
-									ImGuiUtils.HelpMarker(
-											"A Note on Coordinate Systems: The game internally uses a right-handed 3D coordinate system, " +
-											"with X running West to East, Y running down to up, and Z running North to South.  The on-map " +
-											"coordinate system is a 2D projection of the XZ plane, with X running West to East, and Y running " +
-											"North to South.  Please note that the coordinates presented in chat links or on the map widgets " +
-											"in game are scaled to arbitrary values, and the Y and Z axes are swapped.  This plugin uses the " +
-											"game's internal coordinate systems.\r\n\r\ntl;dr: Y is up/down for 3D, and North/South for 2D.",
-											false );
-									ImGui.SameLine();
 									ImGui.Text( cursorPosText );
 								}
 
@@ -1281,6 +1458,22 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
+		public void ShowHelpWindow( HelpWindowPage page )
+		{
+			HelpWindowVisible = true;
+		}
+
+		public enum HelpWindowPage : int
+		{
+			Main,
+			Editing,
+			Maps,
+			Math,
+			CircleComputer
+		}
+
+		protected HelpWindowPage mCurrentHelpPage = HelpWindowPage.Main;
+
 		protected Configuration mConfiguration;
 		protected DalamudPluginInterface mPluginInterface;
 		protected DataManager mDataManager;
@@ -1309,6 +1502,13 @@ namespace WaymarkPresetPlugin
 			set { mMapWindowVisible = value; }
 		}
 
+		protected bool mHelpWindowVisible = false;
+		public bool HelpWindowVisible
+		{
+			get { return mHelpWindowVisible; }
+			set { mHelpWindowVisible = value; }
+		}
+
 		protected bool mGimpedModeWarningWindowVisible = false;
 		public bool GimpedModeWarningWindowVisible
 		{
@@ -1326,6 +1526,7 @@ namespace WaymarkPresetPlugin
 
 		public Vector2 MainWindowPos { get; protected set; }
 		public Vector2 MainWindowSize { get; protected set; }
+		protected Vector2 mInfoWindowSize;
 
 		public int SelectedPreset { get; protected set; } = -1;
 		public bool WantToDeleteSelectedPreset { get; protected set; } = false;
