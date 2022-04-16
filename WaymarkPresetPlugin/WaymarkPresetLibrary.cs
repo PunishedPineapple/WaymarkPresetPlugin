@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Dalamud.Logging;
 
 namespace WaymarkPresetPlugin
 {
@@ -22,8 +23,9 @@ namespace WaymarkPresetPlugin
 				Presets.Add( importedPreset );
 				return Presets.Count - 1;
 			}
-			catch
+			catch( Exception e )
 			{
+				PluginLog.LogWarning( $"Error in WaymarkPresetLibrary.ImportPreset( GamePreset ):\r\n{e}" );
 				return -1;
 			}
 		}
@@ -40,11 +42,13 @@ namespace WaymarkPresetPlugin
 				}
 				else
 				{
+					PluginLog.LogWarning( $"Error in WaymarkPresetLibrary.ImportPreset( string ): Deserialized input resulted in a null!" );
 					return -1;
 				}
 			}
-			catch
+			catch( Exception e )
 			{
+				PluginLog.LogWarning( $"Error in WaymarkPresetLibrary.ImportPreset( string ):\r\n{e}" );
 				return -1;
 			}
 		}

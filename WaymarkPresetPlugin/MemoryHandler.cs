@@ -138,6 +138,7 @@ namespace WaymarkPresetPlugin
 			{
 				//	Don't catch exceptions here; better to have the caller do it probably.
 				lock( mPresetMemoryLockObject ) preset = (GamePreset)Marshal.PtrToStructure( pWaymarkData, typeof( GamePreset ) );
+				PluginLog.LogDebug( $"Read game preset in slot {slotNum} with data:\r\n{preset}" );
 			}
 			else
 			{
@@ -152,12 +153,15 @@ namespace WaymarkPresetPlugin
 			IntPtr pWaymarkData = GetGameWaymarkDataPointerForSlot( slotNum );
 			if( pWaymarkData != IntPtr.Zero )
 			{
+				PluginLog.LogDebug( $"Attempting to write slot {slotNum} with data:\r\n{preset}" );
+
 				//	Don't catch exceptions here; better to have the caller do it probably.
 				lock( mPresetMemoryLockObject ) Marshal.StructureToPtr( preset, pWaymarkData, false );
 				return true;
 			}
 			else
 			{
+				PluginLog.LogWarning( $"Error in MemoryHandler.WriteSlot: Unable to obtain pointer to slot {slotNum}!" );
 				return false;
 			}
 		}
@@ -210,6 +214,7 @@ namespace WaymarkPresetPlugin
 			if( IsSafeToDirectPlacePreset() )
 			{
 				GamePreset_Placement placementStruct = new GamePreset_Placement( preset );
+				PluginLog.LogDebug( $"Attempting to place waymark preset with data:\r\n{placementStruct}" );
 				unsafe
 				{
 					mdDirectPlacePreset.Invoke( mpWaymarksObj, new IntPtr( &placementStruct ) );
@@ -233,8 +238,21 @@ namespace WaymarkPresetPlugin
 					rPresetData = new GamePreset( rawWaymarkData );
 					rPresetData.ContentFinderConditionID = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType );	//*****TODO: How do we get this as a territory type for non-instanced zones? The return type might need to be changed, or pass in another ref paramter or something. *****
 					rPresetData.UnixTime = (Int32)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+					PluginLog.LogDebug( $"Obtained current waymarks with the following data:\r\n" +
+										$"Territory: {mClientState.TerritoryType}\r\n" +
+										$"ContentFinderCondition: {rPresetData.ContentFinderConditionID}\r\n" +
+										$"Waymark Struct:\r\n{rawWaymarkData}" );
 					return true;
 				}
+				else
+				{
+					PluginLog.LogWarning( $"Error in MemoryHandler.GetCurrentWaymarksAsPresetData: Disallowed ContentLinkType: {currentContentLinkType}" );
+				}
+			}
+			else
+			{
+				PluginLog.LogWarning( $"Error in MemoryHandler.GetCurrentWaymarksAsPresetData: Missing sigs or null ClientState." );
 			}
 
 			return false;

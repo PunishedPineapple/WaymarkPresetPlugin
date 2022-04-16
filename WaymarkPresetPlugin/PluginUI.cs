@@ -441,6 +441,7 @@ namespace WaymarkPresetPlugin
 					ImGui.SameLine();
 					if( ImGui.Button( "Import" ) )
 					{
+						PluginLog.LogInformation( $"Attempting to import preset string: \"{mPresetImportString}\"" );
 						if( mConfiguration.PresetLibrary.ImportPreset( PresetImportString ) >= 0 )
 						{
 							PresetImportString = "";
