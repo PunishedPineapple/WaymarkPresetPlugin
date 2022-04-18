@@ -106,20 +106,18 @@ namespace WaymarkPresetPlugin
 		public static void TitleBarHelpButton( Action callback, ImFontPtr? iconFont = null )
 		{
 			var storedCursorPos = ImGui.GetCursorPos();
-			var newClipRectMin = ImGui.GetWindowPos();
-			var newClipRectMax = ImGui.GetWindowPos() + ImGui.GetWindowSize();
-			float titlebarHeight;
-			ImGui.PushClipRect( newClipRectMin, newClipRectMax, false );
-
-			string buttonText = iconFont != null ? "\uF059" : "(?)";
 			if( iconFont != null ) ImGui.PushFont( iconFont.Value );
-
+			ImGui.PushClipRect( ImGui.GetWindowPos(), ImGui.GetWindowPos() + ImGui.GetWindowSize(), false );
+			
 			try
 			{
+				string buttonText = iconFont != null ? "\uF059" : "(?)";
+
 				var iconSize = ImGui.CalcTextSize( buttonText );
-				titlebarHeight = iconSize.Y + ImGui.GetStyle().FramePadding.Y * 2f;
-				
-				ImGui.SetCursorPos( new( ImGui.GetWindowSize().X - iconSize.X * 2f - ImGui.GetStyle().WindowPadding.X, Math.Max( 0, ( titlebarHeight - iconSize.Y ) / 2f - 1f ) ) );
+				float titlebarHeight = iconSize.Y + ImGui.GetStyle().FramePadding.Y * 2f;
+				Vector2 buttonPos = new( ImGui.GetWindowSize().X - iconSize.X * 2f - ImGui.GetStyle().WindowPadding.X, Math.Max( 0, ( titlebarHeight - iconSize.Y ) / 2f - 1f ) );
+
+				ImGui.SetCursorPos( buttonPos );
 				ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered] );
 				ImGui.Text( buttonText );
 				ImGui.PopStyleColor();
@@ -127,9 +125,10 @@ namespace WaymarkPresetPlugin
 				if( ImGui.IsItemHovered() )
 				{
 					//	Redraw the text in the hovered color
-					ImGui.SetCursorPos( new( ImGui.GetWindowSize().X - iconSize.X * 2f - ImGui.GetStyle().WindowPadding.X, Math.Max( 0, ( titlebarHeight - iconSize.Y ) / 2f - 1f ) ) );
+					ImGui.SetCursorPos( buttonPos );
 					ImGui.Text( buttonText );
 
+					//	Handle the click.
 					if( ImGui.IsMouseClicked( ImGuiMouseButton.Left ) )
 					{
 						callback.Invoke();
@@ -138,11 +137,11 @@ namespace WaymarkPresetPlugin
 			}
 			finally
 			{
+				ImGui.SetCursorPos( storedCursorPos );
 				if( iconFont != null ) ImGui.PopFont();
+				ImGui.PopClipRect();
 			}
 
-			ImGui.PopClipRect();
-			ImGui.SetCursorPos( storedCursorPos );
 		}
 
 		public const ImGuiWindowFlags OverlayWindowFlags =	ImGuiWindowFlags.NoDecoration |
