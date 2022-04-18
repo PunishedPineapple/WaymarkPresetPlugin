@@ -874,6 +874,7 @@ namespace WaymarkPresetPlugin
 						"North to South.  Please note that the coordinates presented in chat links or on the map widgets " +
 						"in game are scaled to arbitrary values, and the Y and Z axes are swapped.  This plugin uses the " +
 						"game's internal coordinate systems.\r\n\r\ntl;dr: Y is up/down for 3D, and North/South for 2D." );
+			//***** TODO: Show diagrams *****
 			ImGui.Unindent();
 
 			ImGui.PopTextWrapPos();
@@ -881,7 +882,91 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawHelpWindow_CircleComputer()
 		{
+			ImGui.InputFloat3( "Center", ref mCircleComputer_Center );
+			ImGui.InputFloat( "Radius (y)", ref mCircleComputer_Radius_Yalms );
+			ImGui.SliderInt( "Num Points", ref mCircleComputer_NumPoints, 1, 8 );
+			ImGui.InputFloat( "Angle Offset (deg)", ref mCircleComputer_AngleOffset_Deg );
+
+			var points = ComputeRadialPositions( mCircleComputer_Center, mCircleComputer_Radius_Yalms, mCircleComputer_NumPoints, mCircleComputer_AngleOffset_Deg );
+
+			//***** TODO: Maybe add drag and drop of these points into the editing window to overwrite a waymark? *****
+			for( int i = 0; i < 8; ++i )
+			{
+				if( i < points.Length )
+				{
+					ImGui.Text( $"X: {points[i].X:F3}, Y: {points[i].Y:F3}, Z: {points[i].Z:F3}" );
+				}
+				else
+				{
+					ImGui.Text( "---" );
+				}
+			}
+
+			//***** TODO: Maybe draw a diagram of these points. *****
+
+			if( ImGui.Button( "Create a new preset using these points" ) )
+			{
+				var newPreset = new WaymarkPreset();
+				newPreset.Name = "Imported from Circle Computer";
+				for( int i = 0; i < points.Length && i < 8; ++i )
+				{
+					newPreset[i].Active = true;
+					newPreset[i].SetCoords( points[i] );
+				}
+
+				int newPresetIndex = mConfiguration.PresetLibrary.ImportPreset( newPreset );
+				if( !EditingPreset && newPresetIndex >= 0 && newPresetIndex < mConfiguration.PresetLibrary.Presets.Count )
+				{
+					SelectedPreset = newPresetIndex;	//***** TODO: Make sure that this doesn't break if the zone filter is causing it to not be in the list. *****
+				}
+			}
+
+			/*if( EditingPreset && ImGui.Button( "Copy to currently editing preset" ) )
+			{
+				var newPreset = new WaymarkPreset();
+				newPreset.Name = "Imported from Circle Computer";
+				for( int i = 0; i < points.Length && i < 8; ++i )
+				{
+					newPreset[i].Active = true;
+					newPreset[i].SetCoords( points[i] );
+				}
+
+				int newPresetIndex = mConfiguration.PresetLibrary.ImportPreset( newPreset );
+				if( !EditingPreset && newPresetIndex >= 0 && newPresetIndex < mConfiguration.PresetLibrary.Presets.Count )
+				{
+					SelectedPreset = newPresetIndex;    //***** TODO: Make sure that this doesn't break if the zone filter is causing it to not be in the list. *****
+				}
+			}*/
 		}
+
+		protected Vector3[] ComputeRadialPositions( Vector3 center, float radius_Yalms, int numPoints, float angleOffset_Deg = 0f )
+		{
+			//	Can't have less than one point (even that doesn't make much sense, but it's technically allowable).
+			numPoints = Math.Max( 1, numPoints );
+			var computedPoints = new Vector3[numPoints];
+
+			//	Zero azimuth is facing North (90 degrees)
+			angleOffset_Deg -= 90f;
+			double stepAngle_Deg = 360.0 / numPoints;
+
+			//	Compute the coordinates on the circle about the center point.
+			for( int i = 0; i < numPoints; ++i )
+			{
+				//	Because of FFXIV's coordinate system, we need to go backward in angle.
+				double angle_Rad = ( i * stepAngle_Deg + angleOffset_Deg ) * Math.PI / 180.0;
+				computedPoints[i].X = (float)Math.Cos( angle_Rad );
+				computedPoints[i].Z = (float)Math.Sin( angle_Rad );
+				computedPoints[i] *= radius_Yalms;
+				computedPoints[i] += center;
+			}
+
+			return computedPoints;
+		}
+
+		protected Vector3 mCircleComputer_Center = Vector3.Zero;
+		protected float mCircleComputer_Radius_Yalms = 20f;
+		protected int mCircleComputer_NumPoints = 8;
+		protected float mCircleComputer_AngleOffset_Deg = 0f;
 
 		protected void DrawEditorWindow()
 		{
@@ -1460,6 +1545,7 @@ namespace WaymarkPresetPlugin
 
 		public void ShowHelpWindow( HelpWindowPage page )
 		{
+			mCurrentHelpPage = page;
 			HelpWindowVisible = true;
 		}
 

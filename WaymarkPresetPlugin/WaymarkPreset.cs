@@ -8,6 +8,14 @@ namespace WaymarkPresetPlugin
 	{
 		public WaymarkPreset()
 		{
+			A.ID = 0;
+			B.ID = 1;
+			C.ID = 2;
+			D.ID = 3;
+			One.ID = 4;
+			Two.ID = 5;
+			Three.ID = 6;
+			Four.ID = 7;
 		}
 
 		public WaymarkPreset( WaymarkPreset objToCopy )
