@@ -36,8 +36,10 @@ namespace WaymarkPresetPlugin
 
 			mpLibraryPresetDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
 			mpEditWaymarkDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
+			mpEditWaymarkCoordDragAndDropData = Marshal.AllocHGlobal( Marshal.SizeOf<Vector3>() );
 			if( mpLibraryPresetDragAndDropData == IntPtr.Zero ||
-				mpEditWaymarkDragAndDropData == IntPtr.Zero )
+				mpEditWaymarkDragAndDropData == IntPtr.Zero ||
+				mpEditWaymarkCoordDragAndDropData  == IntPtr.Zero )
 			{
 				throw new Exception( "Error in PluginUI constructor: Unable to allocate memory for drag and drop info." );
 			}
@@ -90,6 +92,7 @@ namespace WaymarkPresetPlugin
 			//	Free the drag and drop data.
 			Marshal.FreeHGlobal( mpLibraryPresetDragAndDropData );
 			Marshal.FreeHGlobal( mpEditWaymarkDragAndDropData );
+			Marshal.FreeHGlobal( mpEditWaymarkCoordDragAndDropData );
 		}
 
 		public void Initialize()
@@ -185,7 +188,7 @@ namespace WaymarkPresetPlugin
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 375 ) * ImGui.GetIO().FontGlobalScale, new Vector2( float.MaxValue, float.MaxValue ) );
 			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
-				ImGuiUtils.TitleBarHelpButton( () => { ShowHelpWindow( HelpWindowPage.Main ); }, UiBuilder.IconFont );
+				ImGuiUtils.TitleBarHelpButton( () => { ShowHelpWindow( HelpWindowPage.General ); }, UiBuilder.IconFont );
 
 				/*if( ImGui.Button( "A" ) )
 				{
@@ -833,16 +836,17 @@ namespace WaymarkPresetPlugin
 
 				if( ImGui.BeginChild( "Help Text Pane" ) )
 				{
+					ImGui.PushTextWrapPos( ImGui.GetWindowContentRegionWidth() );
 					switch( mCurrentHelpPage )
 					{
-						case HelpWindowPage.Main: DrawHelpWindow_Main(); break;
+						case HelpWindowPage.General: DrawHelpWindow_General(); break;
 						case HelpWindowPage.Editing: DrawHelpWindow_Editing(); break;
 						case HelpWindowPage.Maps: DrawHelpWindow_Maps(); break;
-						case HelpWindowPage.Math: DrawHelpWindow_Math(); break;
+						case HelpWindowPage.Coordinates: DrawHelpWindow_Coordinates(); break;
 						case HelpWindowPage.CircleComputer: DrawHelpWindow_CircleComputer(); break;
-						default: DrawHelpWindow_Main(); break;
+						default: DrawHelpWindow_General(); break;
 					};
-
+					ImGui.PopTextWrapPos();
 					ImGui.EndChild();
 				}
 			}
@@ -850,22 +854,34 @@ namespace WaymarkPresetPlugin
 			ImGui.End();
 		}
 
-		protected void DrawHelpWindow_Main()
+		protected void DrawHelpWindow_General()
 		{
+			ImGui.Text( "" );
 		}
 
 		protected void DrawHelpWindow_Editing()
 		{
+			ImGui.Text( "Clicking the \"Edit\" button in the preset info pane will bring up a window that allows you to " +
+						"edit a preset.  You can adjust any of the available parameters, and you can drag waymarks on to " +
+						"other waymarks to swap their positions.  You can also drag points from the circle calculator tab " +
+						"in this help window on to a waymark in the editor window to replace its coordinates with the ones from that calculator." );
+
+			/*ImGui.Text( "Clicking the \"Edit\" button in the preset info pane will bring up a window that allows you to " +
+						"edit a preset.  You can adjust any of the available parameters, and you can drag waymarks on to " +
+						"other waymarks to swap their positions.  You can also drag points from the" );
+			//ImGui.SameLine();
+			ImGuiUtils.TextLink( () => { ShowHelpWindow( HelpWindowPage.CircleComputer ); }, "circle calculator tab" );
+			//ImGui.SameLine();
+			ImGui.Text( "on to a waymark in the editor window to replace its coordinates with the ones from that calculator." );*/
 		}
 
 		protected void DrawHelpWindow_Maps()
 		{
+			ImGui.Text( "" );
 		}
 
-		protected void DrawHelpWindow_Math()
+		protected void DrawHelpWindow_Coordinates()
 		{
-			ImGui.PushTextWrapPos( ImGui.GetWindowContentRegionWidth() );
-
 			ImGui.Text( "Coordinate Systems:\r\n" );
 			ImGui.Indent();
 			ImGui.Text( "The game internally uses a right-handed 3D coordinate system, " +
@@ -876,25 +892,45 @@ namespace WaymarkPresetPlugin
 						"game's internal coordinate systems.\r\n\r\ntl;dr: Y is up/down for 3D, and North/South for 2D." );
 			//***** TODO: Show diagrams *****
 			ImGui.Unindent();
-
-			ImGui.PopTextWrapPos();
 		}
 
 		protected void DrawHelpWindow_CircleComputer()
 		{
+			ImGui.Text( "This calculator will compute radially symmetric points (\"clock spots\") with the information that you " +
+						"give it.  You can then drag these into the preset editor to replace any waymarks with the calculated points, " +
+						"or you can use the buttons at the bottom of this pane." );
+			
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+
 			ImGui.InputFloat3( "Center", ref mCircleComputer_Center );
 			ImGui.InputFloat( "Radius (y)", ref mCircleComputer_Radius_Yalms );
 			ImGui.SliderInt( "Num Points", ref mCircleComputer_NumPoints, 1, 8 );
 			ImGui.InputFloat( "Angle Offset (deg)", ref mCircleComputer_AngleOffset_Deg );
 
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+
 			var points = ComputeRadialPositions( mCircleComputer_Center, mCircleComputer_Radius_Yalms, mCircleComputer_NumPoints, mCircleComputer_AngleOffset_Deg );
 
-			//***** TODO: Maybe add drag and drop of these points into the editing window to overwrite a waymark? *****
 			for( int i = 0; i < 8; ++i )
 			{
 				if( i < points.Length )
 				{
-					ImGui.Text( $"X: {points[i].X:F3}, Y: {points[i].Y:F3}, Z: {points[i].Z:F3}" );
+					ImGui.Selectable( $"{i + 1}: {points[i].X:F3}, {points[i].Y:F3}, {points[i].Z:F3}" );
+					if( ImGui.BeginDragDropSource( ImGuiDragDropFlags.None ) )
+					{
+						ImGui.SetDragDropPayload( $"EditPresetCoords", mpEditWaymarkCoordDragAndDropData, (uint)Marshal.SizeOf<Vector3>() );
+						Marshal.StructureToPtr( points[i], mpEditWaymarkCoordDragAndDropData, true );
+						ImGui.Text( $"Copy coordinates to..." );
+						ImGui.EndDragDropSource();
+					}
 				}
 				else
 				{
@@ -902,7 +938,37 @@ namespace WaymarkPresetPlugin
 				}
 			}
 
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
 			//***** TODO: Maybe draw a diagram of these points. *****
+
+			if( EditingPreset )
+			{
+				if( ImGui.Button( "Copy these points into the editor" ) )
+				{
+					for( int i = 0; i < points.Length && i < 8; ++i )
+					{
+						ScratchEditingPreset.SetWaymark( i, true, points[i] );
+					}
+				}
+			}
+			else
+			{
+				ImGui.PushStyleColor( ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] * 0.5f );
+				ImGui.PushStyleColor( ImGuiCol.ButtonHovered, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
+				ImGui.PushStyleColor( ImGuiCol.ButtonActive, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
+				ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled] );
+
+				ImGui.Button( "Copy these points into the editor" );
+
+				ImGui.PopStyleColor();
+				ImGui.PopStyleColor();
+				ImGui.PopStyleColor();
+				ImGui.PopStyleColor();
+			}
 
 			if( ImGui.Button( "Create a new preset using these points" ) )
 			{
@@ -920,23 +986,6 @@ namespace WaymarkPresetPlugin
 					SelectedPreset = newPresetIndex;	//***** TODO: Make sure that this doesn't break if the zone filter is causing it to not be in the list. *****
 				}
 			}
-
-			/*if( EditingPreset && ImGui.Button( "Copy to currently editing preset" ) )
-			{
-				var newPreset = new WaymarkPreset();
-				newPreset.Name = "Imported from Circle Computer";
-				for( int i = 0; i < points.Length && i < 8; ++i )
-				{
-					newPreset[i].Active = true;
-					newPreset[i].SetCoords( points[i] );
-				}
-
-				int newPresetIndex = mConfiguration.PresetLibrary.ImportPreset( newPreset );
-				if( !EditingPreset && newPresetIndex >= 0 && newPresetIndex < mConfiguration.PresetLibrary.Presets.Count )
-				{
-					SelectedPreset = newPresetIndex;    //***** TODO: Make sure that this doesn't break if the zone filter is causing it to not be in the list. *****
-				}
-			}*/
 		}
 
 		protected Vector3[] ComputeRadialPositions( Vector3 center, float radius_Yalms, int numPoints, float angleOffset_Deg = 0f )
@@ -1000,7 +1049,7 @@ namespace WaymarkPresetPlugin
 						{
 							ImGui.TableNextRow();
 							ImGui.TableSetColumnIndex( 0 );
-							ImGui.Checkbox( $"{waymark.Label}             ###{waymark.Label}", ref waymark.Active );
+							ImGui.Checkbox( $"{waymark.Label}             ###{waymark.Label}", ref waymark.Active );	//Padded text to make more area to grab the waymark for drag and drop.
 							if( ImGui.BeginDragDropSource( ImGuiDragDropFlags.None ) )
 							{
 								ImGui.SetDragDropPayload( $"EditPresetWaymark", mpEditWaymarkDragAndDropData, sizeof( int ) );
@@ -1016,6 +1065,11 @@ namespace WaymarkPresetPlugin
 									if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
 									{
 										ScratchEditingPreset.SwapWaymarks( waymark.ID, Marshal.ReadInt32( payload.Data ) );
+									}
+									payload = ImGui.AcceptDragDropPayload( $"EditPresetCoords", ImGuiDragDropFlags.None );
+									if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
+									{
+										ScratchEditingPreset.SetWaymark( waymark.ID, true, *(Vector3*)payload.Data );
 									}
 								}
 								ImGui.EndDragDropTarget();
@@ -1551,14 +1605,14 @@ namespace WaymarkPresetPlugin
 
 		public enum HelpWindowPage : int
 		{
-			Main,
+			General,
 			Editing,
 			Maps,
-			Math,
+			Coordinates,
 			CircleComputer
 		}
 
-		protected HelpWindowPage mCurrentHelpPage = HelpWindowPage.Main;
+		protected HelpWindowPage mCurrentHelpPage = HelpWindowPage.General;
 
 		protected Configuration mConfiguration;
 		protected DalamudPluginInterface mPluginInterface;
@@ -1639,6 +1693,7 @@ namespace WaymarkPresetPlugin
 
 		protected readonly IntPtr mpLibraryPresetDragAndDropData;
 		protected readonly IntPtr mpEditWaymarkDragAndDropData;
+		protected readonly IntPtr mpEditWaymarkCoordDragAndDropData;
 
 		protected Dictionary<uint, MapViewState> MapViewStateData { get; set; } = new Dictionary<uint, MapViewState>();
 	}
@@ -1674,6 +1729,17 @@ namespace WaymarkPresetPlugin
 			public int ID;
 			public bool Active;
 			public string Label;
+		}
+
+		public void SetWaymark( int index, bool active, Vector3 coords )
+		{
+			if( index >= 0 && index < Waymarks.Count )
+			{
+				Waymarks[index].Active = active;
+				Waymarks[index].X = coords.X;
+				Waymarks[index].Y = coords.Y;
+				Waymarks[index].Z = coords.Z;
+			}
 		}
 
 		public void SwapWaymarks( int index1, int index2 )

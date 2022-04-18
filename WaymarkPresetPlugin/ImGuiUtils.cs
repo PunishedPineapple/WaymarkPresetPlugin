@@ -47,6 +47,27 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
+		public static void TextLink( Action callback, string textToShow = "" )
+		{
+			ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered] );
+			ImGui.Text( textToShow );
+			ImGui.PopStyleColor();
+			if( ImGui.IsItemHovered() )
+			{
+				ImGui.SetMouseCursor( ImGuiMouseCursor.Hand );
+				if( ImGui.IsMouseClicked( ImGuiMouseButton.Left ) )
+				{
+					callback.Invoke();
+				}
+
+				AddUnderline( ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered], 1.0f );
+			}
+			else
+			{
+				AddUnderline( ImGui.GetStyle().Colors[(int)ImGuiCol.Button], 1.0f );
+			}
+		}
+
 		public static void AddUnderline( Vector4 color, float thickness )
 		{
 			Vector2 min = ImGui.GetItemRectMin();
