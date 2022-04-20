@@ -792,12 +792,12 @@ namespace WaymarkPresetPlugin
 				ImGui.Button( "Edit" );
 				ImGui.SameLine();
 				ImGui.Button( "Delete" );
-				mInfoWindowSize.X = Math.Max( mInfoWindowSize.X, ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X );
+				mInfoWindowSize.X = Math.Max( mInfoWindowSize.X, ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X + ImGui.GetStyle().ItemSpacing.X );
 				if( WantToDeleteSelectedPreset )
 				{
 					ImGui.Button( "Don't do it!" );
 				}
-				mInfoWindowSize.Y = ImGui.GetItemRectMax().Y - ImGui.GetWindowPos().Y + ImGui.GetStyle().WindowPadding.Y;
+				mInfoWindowSize.Y = ImGui.GetItemRectMax().Y - ImGui.GetWindowPos().Y + ImGui.GetStyle().WindowPadding.Y + ImGui.GetStyle().ItemSpacing.Y;
 			}
 
 			ImGui.PopStyleVar();
