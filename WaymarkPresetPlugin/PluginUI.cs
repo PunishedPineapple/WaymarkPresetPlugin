@@ -200,7 +200,7 @@ namespace WaymarkPresetPlugin
 				bool previouslyFilteredOnZone = mConfiguration.FilterOnCurrentZone;
 				ImGui.Checkbox( "Filter on Current Zone", ref mConfiguration.mFilterOnCurrentZone );
 				if( mConfiguration.FilterOnCurrentZone != previouslyFilteredOnZone ) mConfiguration.Save(); //	I'd rather just save the state when the plugin is unloaded, but that's not been feasible in the past.
-				ImGui.SameLine( ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize( "Save Current Waymarks" ).X );
+				ImGui.SameLine( ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize( "Save Current Waymarks" ).X - ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().WindowPadding.X );
 				if( MemoryHandler.FoundDirectSaveSigs() )
 				{
 					if( ImGui.Button( "Save Current Waymarks" ) )
@@ -616,12 +616,12 @@ namespace WaymarkPresetPlugin
 						ImGui.PopStyleColor();
 					}
 					mInfoWindowSize.X = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X;
-					rightAlignPos = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X - ImGui.GetWindowContentRegionMin().X;
+					rightAlignPos = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X;
 
 
 					ImGui.EndGroup();
 					ImGui.Text( "Preset Info:" );
-					ImGui.SameLine( rightAlignPos - ImGui.CalcTextSize( "Map View" ).X - ImGui.GetStyle().WindowPadding.X );
+					ImGui.SameLine( rightAlignPos - ImGui.CalcTextSize( "Map View" ).X - ImGui.GetStyle().WindowPadding.X - ImGui.GetStyle().FramePadding.X * 2 );
 					if( ImGui.Button( "Map View" ) )
 					{
 						MapWindowVisible = !MapWindowVisible;
@@ -759,12 +759,12 @@ namespace WaymarkPresetPlugin
 				ImGui.Button( "Edit" );
 				ImGui.SameLine();
 				ImGui.Button( "Delete" );
-				mInfoWindowSize.X = Math.Max( mInfoWindowSize.X, ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X + ImGui.GetStyle().ItemSpacing.X );
+				mInfoWindowSize.X = Math.Max( mInfoWindowSize.X, ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X );
 				if( WantToDeleteSelectedPreset )
 				{
 					ImGui.Button( "Don't do it!" );
 				}
-				mInfoWindowSize.Y = ImGui.GetItemRectMax().Y - ImGui.GetWindowPos().Y + ImGui.GetStyle().WindowPadding.Y + ImGui.GetStyle().ItemSpacing.Y;
+				mInfoWindowSize.Y = ImGui.GetItemRectMax().Y - ImGui.GetWindowPos().Y + ImGui.GetStyle().WindowPadding.Y;
 			}
 
 			ImGui.PopStyleVar();
