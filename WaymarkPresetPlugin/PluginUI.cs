@@ -116,39 +116,6 @@ namespace WaymarkPresetPlugin
 			DrawEditorWindow();
 			DrawSettingsWindow();
 			DrawHelpWindow();
-			if( GimpedModeWarningWindowVisible ) DrawGimpedModeWarningWindow();
-		}
-
-		protected void DrawGimpedModeWarningWindow()
-		{
-			ImGuiHelpers.ForceNextWindowMainViewport();
-			ImGuiHelpers.SetNextWindowPosRelativeMainViewport( ImGuiHelpers.MainViewport.Size / 2f - ImGuiHelpers.MainViewport.Size / 10f, ImGuiCond.Appearing );
-			ImGui.SetNextWindowSize( ImGuiHelpers.MainViewport.Size / 5f );
-			if( ImGui.Begin( "WARNING###WarningMissingSignaturesGimpedMode", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize ) )
-			{
-				ImGui.PushTextWrapPos( ImGuiHelpers.MainViewport.Size.X / 5.1f );
-				ImGui.Text( "One or more function signatures used by WaymarkPresetPlugin could not be found.  " +
-							"This probably means that FFXIV has been updated in a way that partially breaks this plugin.  " +
-							"If FFXIV has not recently been patched, please file a bug report on Github for this plugin.  " +
-							"You should be able to continue using the plugin to import presets from, and export them to " +
-							"the game's waymark preset window (you will have to close and reopen the window to see any " +
-							"exports)." );
-				ImGui.PopTextWrapPos();
-
-				ImGui.Spacing();
-				ImGui.Spacing();
-				ImGui.Spacing();
-				ImGui.Spacing();
-				ImGui.Spacing();
-
-				if( ImGui.Button( "Ok" ) )
-				{
-					GimpedModeWarningWindowVisible = false;
-					HaveShownGimpedModeWarningMessage = true;
-				}
-			}
-
-			ImGui.End();
 		}
 
 		protected void DrawMainWindow()
@@ -843,7 +810,7 @@ namespace WaymarkPresetPlugin
 						case HelpWindowPage.Editing: DrawHelpWindow_Editing(); break;
 						case HelpWindowPage.Maps: DrawHelpWindow_Maps(); break;
 						case HelpWindowPage.Coordinates: DrawHelpWindow_Coordinates(); break;
-						case HelpWindowPage.CircleComputer: DrawHelpWindow_CircleComputer(); break;
+						case HelpWindowPage.CircleCalculator: DrawHelpWindow_CircleCalculator(); break;
 						default: DrawHelpWindow_General(); break;
 					};
 					ImGui.PopTextWrapPos();
@@ -856,7 +823,39 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawHelpWindow_General()
 		{
-			ImGui.Text( "" );
+			ImGui.Text( "All presets in this plugin's list are fully separate from the game's presets.  This allows you to store an effectively " +
+						"unlimited number of presets, as well as to easily back up and share them, or import presets that others have shared with you." );
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Text( "Selecting a preset in the library will show a window to the side with information about that preset, such as where the waymarks " +
+						"are placed, as well as actions that you can take with that preset." );
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Text( "If you want to copy a preset in the " +
+						"library to a game slot, select that preset in the list, and then press the button with the number of the slot to " +
+						"which you want to copy it.  If you want to import a preset from the game's list into the library, scroll down to " +
+						"\"Import Options\" and press the button of the slot that you wish to import from the game.  This is also where you " +
+						"can paste presets to import them from outside of the game." );
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Text( "If you wish to share a preset with someone else, you can select the preset in the library, and " +
+						"click the \"Export to Clipboard\" button." );
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Text( "The plugin also allows you to place and save waymarks directly to/from the field.  These are what the \"Place\" and " +
+						"\"Save Current Waymarks\" buttons do.  Please note that saving and placing presets is only supported in areas that " +
+						"the game allows with its built in system.  Saving presets outside of those duties will result in a preset that shows an " +
+						"unknown zone.  Trying to place presets outside of those duties will simply fail to do anything." );
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Text( "Presets can be reordered in the library by dragging and dropping them at the desired spot.  The sorting of duties in " +
+						"the library cannot currently be changed; the order is the same as they are sorted in the game's files, and is approximately " +
+						"the order in which the duties were added to the game." );
 		}
 
 		protected void DrawHelpWindow_Editing()
@@ -865,6 +864,10 @@ namespace WaymarkPresetPlugin
 						"edit a preset.  You can adjust any of the available parameters, and you can drag waymarks on to " +
 						"other waymarks to swap their positions.  You can also drag points from the circle calculator tab " +
 						"in this help window on to a waymark in the editor window to replace its coordinates with the ones from that calculator." );
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Text( "Changes made in the editor window will not be applied until the \"Save\" button is clicked." );
 
 			/*ImGui.Text( "Clicking the \"Edit\" button in the preset info pane will bring up a window that allows you to " +
 						"edit a preset.  You can adjust any of the available parameters, and you can drag waymarks on to " +
@@ -877,24 +880,44 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawHelpWindow_Maps()
 		{
-			ImGui.Text( "" );
+			ImGui.Text( "The \"Map View\" window displays a copy of the applicable map(s) for the selected preset's duty.  Any placed " +
+						"waymarks are overlain on the map.  If a zone has multiple submaps, you can switch between submaps using the dropdown " +
+						"in the lower right corner of the window.  The world cordinates corresponding to your cursor position on the map are " +
+						"shown at the bottom right of the window.  Please read the \"Coordinates\" tab of this help window if you wish to understand " +
+						"the game's internal coordinate systems, and their relationship to what is presented in-game to the player." );
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Text( "When editing a preset, you can drag waymark icons on the map to adjust their positions.  While you are doing this, the " +
+						"coordinate readout reflects the position of the marker, and not the position of your mouse.  Please note that editing " +
+						"waymarks in this manner is not advised in areas that have uneven ground, as it is not possible to automatically adjust " +
+						"the Y coordinate to match the terrain." );
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Text( "Please also note that the plugin cannot currently determine which waymarks are present on which submaps, so all waymarks " +
+						"are shown at their positions on all submaps (provided that they are within the map's bounds)." );
 		}
 
 		protected void DrawHelpWindow_Coordinates()
 		{
 			ImGui.Text( "Coordinate Systems:\r\n" );
+			ImGui.Spacing();
 			ImGui.Indent();
 			ImGui.Text( "The game internally uses a right-handed 3D coordinate system, " +
 						"with X running West to East, Y running down to up, and Z running North to South.  The on-map " +
 						"coordinate system is a 2D projection of the XZ plane, with X running West to East, and Y running " +
 						"North to South.  Please note that the coordinates presented in chat links or on the map widgets " +
 						"in game are scaled to arbitrary values, and the Y and Z axes are swapped.  This plugin uses the " +
-						"game's internal coordinate systems.\r\n\r\ntl;dr: Y is up/down for 3D, and North/South for 2D." );
-			//***** TODO: Show diagrams *****
+						"game's internal coordinate systems as shown below:" );
 			ImGui.Unindent();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			ImGui.Spacing();
+			//***** TODO: Show diagrams *****
 		}
 
-		protected void DrawHelpWindow_CircleComputer()
+		protected void DrawHelpWindow_CircleCalculator()
 		{
 			ImGui.Text( "This calculator will compute radially symmetric points (\"clock spots\") with the information that you " +
 						"give it.  You can then drag these into the preset editor to replace any waymarks with the calculated points, " +
@@ -1589,14 +1612,6 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public void ShowGimpedModeWarningWindow( bool force = false )
-		{
-			if( !HaveShownGimpedModeWarningMessage || force )
-			{
-				GimpedModeWarningWindowVisible = true;
-			}
-		}
-
 		public void ShowHelpWindow( HelpWindowPage page )
 		{
 			mCurrentHelpPage = page;
@@ -1609,7 +1624,7 @@ namespace WaymarkPresetPlugin
 			Editing,
 			Maps,
 			Coordinates,
-			CircleComputer
+			CircleCalculator
 		}
 
 		protected HelpWindowPage mCurrentHelpPage = HelpWindowPage.General;
@@ -1648,14 +1663,6 @@ namespace WaymarkPresetPlugin
 			get { return mHelpWindowVisible; }
 			set { mHelpWindowVisible = value; }
 		}
-
-		protected bool mGimpedModeWarningWindowVisible = false;
-		public bool GimpedModeWarningWindowVisible
-		{
-			get { return mGimpedModeWarningWindowVisible; }
-			set { mGimpedModeWarningWindowVisible = value; }
-		}
-		protected bool HaveShownGimpedModeWarningMessage = false;
 
 		protected string mPresetImportString = "";
 		public string PresetImportString

@@ -56,18 +56,11 @@ namespace WaymarkPresetPlugin
 
 			//	Event Subscription
 			mClientState.TerritoryChanged += OnTerritoryChanged;
-			mClientState.Login += OnLogin;
 
 			//	Tell the user if there's something out of the ordinary.
 			if( !MemoryHandler.FoundSavedPresetSigs() )
 			{
 				mChatGui.Print( "Error initializing WaymarkPresetPlugin: Cannot write to or read from game." );
-			}
-
-			if( mClientState.IsLoggedIn &&
-				( !MemoryHandler.FoundDirectPlacementSigs() || !MemoryHandler.FoundDirectSaveSigs() ) )
-			{
-				mUI.ShowGimpedModeWarningWindow();
 			}
 		}
 
@@ -76,7 +69,6 @@ namespace WaymarkPresetPlugin
 		{
 			MemoryHandler.Uninit();
 			mUI.Dispose();
-			mClientState.Login -= OnLogin;
 			mClientState.TerritoryChanged -= OnTerritoryChanged;
 			mPluginInterface.UiBuilder.Draw -= DrawUI;
 			mPluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;
@@ -503,15 +495,6 @@ namespace WaymarkPresetPlugin
 						PluginLog.Log( $"Error while auto copying preset data to game slot {i}: {e}" );
 					}
 				}
-			}
-		}
-
-		protected void OnLogin( object sender, EventArgs e )
-		{
-			if( !MemoryHandler.FoundDirectPlacementSigs() ||
-				!MemoryHandler.FoundDirectSaveSigs() )
-			{
-				mUI.ShowGimpedModeWarningWindow();
 			}
 		}
 
