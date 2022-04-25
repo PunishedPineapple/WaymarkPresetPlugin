@@ -138,7 +138,7 @@ namespace WaymarkPresetPlugin
 			{
 				//	Don't catch exceptions here; better to have the caller do it probably.
 				lock( mPresetMemoryLockObject ) preset = (GamePreset)Marshal.PtrToStructure( pWaymarkData, typeof( GamePreset ) );
-				PluginLog.LogDebug( $"Read game preset in slot {slotNum} with data:\r\n{preset}" );
+				PluginLog.LogDebug( $"Read game preset in slot {slotNum} at address 0x{pWaymarkData:X} with data:\r\n{preset}" );
 			}
 			else
 			{
