@@ -124,7 +124,7 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public static void TitleBarHelpButton( Action callback, ImFontPtr? iconFont = null )
+		public static void TitleBarHelpButton( Action callback, uint idxFromRight = 1, ImFontPtr? iconFont = null )
 		{
 			var storedCursorPos = ImGui.GetCursorPos();
 			if( iconFont != null ) ImGui.PushFont( iconFont.Value );
@@ -136,10 +136,10 @@ namespace WaymarkPresetPlugin
 
 				var iconSize = ImGui.CalcTextSize( buttonText );
 				float titlebarHeight = iconSize.Y + ImGui.GetStyle().FramePadding.Y * 2f;
-				Vector2 buttonPos = new( ImGui.GetWindowSize().X - iconSize.X * 2f - ImGui.GetStyle().WindowPadding.X, Math.Max( 0, ( titlebarHeight - iconSize.Y ) / 2f - 1f ) );
+				Vector2 buttonPos = new( ImGui.GetWindowSize().X - ( iconSize.X + ImGui.GetStyle().FramePadding.X ) * ( idxFromRight + 1 ) - ImGui.GetStyle().WindowPadding.X, Math.Max( 0, ( titlebarHeight - iconSize.Y ) / 2f - 1f ) );
 
 				ImGui.SetCursorPos( buttonPos );
-				ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered] );
+				ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled] );
 				ImGui.Text( buttonText );
 				ImGui.PopStyleColor();
 

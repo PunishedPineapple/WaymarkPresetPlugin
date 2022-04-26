@@ -89,6 +89,13 @@ namespace WaymarkPresetPlugin
 			mMapTextureDictMutex.ReleaseMutex();
 			mMapTextureDictMutex.Dispose();
 
+			//	Clean up any other textures.
+			mCoordinateSystemsDiagram?.Dispose();
+			for( int i = 0; i < mWaymarkIconTextures.Length; ++i )
+			{
+				mWaymarkIconTextures[i]?.Dispose();
+			}
+
 			//	Free the drag and drop data.
 			Marshal.FreeHGlobal( mpLibraryPresetDragAndDropData );
 			Marshal.FreeHGlobal( mpEditWaymarkDragAndDropData );
@@ -97,6 +104,7 @@ namespace WaymarkPresetPlugin
 
 		public void Initialize()
 		{
+			mCoordinateSystemsDiagram = mPluginInterface.UiBuilder.LoadImage( Path.Join( mPluginInterface.AssemblyLocation.DirectoryName, "Resources\\CoordinateSystemDiagrams.png" ) );
 			mWaymarkIconTextures[0] ??= mDataManager.GetImGuiTextureIcon( 61241 );	//A
 			mWaymarkIconTextures[1] ??= mDataManager.GetImGuiTextureIcon( 61242 );	//B
 			mWaymarkIconTextures[2] ??= mDataManager.GetImGuiTextureIcon( 61243 );	//C
@@ -155,7 +163,7 @@ namespace WaymarkPresetPlugin
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 375 ) * ImGui.GetIO().FontGlobalScale, new Vector2( float.MaxValue, float.MaxValue ) );
 			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
-				ImGuiUtils.TitleBarHelpButton( () => { ShowHelpWindow( HelpWindowPage.General ); }, UiBuilder.IconFont );
+				ImGuiUtils.TitleBarHelpButton( () => { ShowHelpWindow( HelpWindowPage.General ); }, 1, UiBuilder.IconFont );
 
 				/*if( ImGui.Button( "A" ) )
 				{
@@ -626,7 +634,6 @@ namespace WaymarkPresetPlugin
 					{
 						MapWindowVisible = !MapWindowVisible;
 					}
-					mButtonMapViewWidth = ImGui.GetItemRectSize().X;
 
 					if( ImGui.BeginTable( "###PresetInfoPaneWaymarkDataTable", 4 ) )
 					{
@@ -779,7 +786,7 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			ImGui.SetNextWindowSizeConstraints( new( 300f ), new( float.MaxValue ) );
+			ImGui.SetNextWindowSizeConstraints( new( Math.Max( 200f, mHelpWindowMinWidth ), 300f ), new( float.MaxValue ) );
 			ImGuiHelpers.SetNextWindowPosRelativeMainViewport( ImGuiHelpers.MainViewport.Size / 3f, ImGuiCond.FirstUseEver );
 			if( ImGui.Begin( "Waymark Help", ref mHelpWindowVisible ) )
 			{
@@ -800,6 +807,7 @@ namespace WaymarkPresetPlugin
 						ImGui.PopStyleColor();
 					}
 				}
+				mHelpWindowMinWidth = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X;
 
 				if( ImGui.BeginChild( "Help Text Pane" ) )
 				{
@@ -914,6 +922,16 @@ namespace WaymarkPresetPlugin
 			ImGui.Spacing();
 			ImGui.Spacing();
 			ImGui.Spacing();
+			if( mCoordinateSystemsDiagram != null )
+			{
+				const float imgWidthScale = 0.75f;
+				const float imguiPaddingScale = 1.0f - imgWidthScale;
+				ImGui.Indent( ImGui.GetWindowContentRegionWidth() * imguiPaddingScale / 2f );
+				var size = new Vector2( mCoordinateSystemsDiagram.Width, mCoordinateSystemsDiagram.Height );
+				size *= ImGui.GetWindowContentRegionWidth() / mCoordinateSystemsDiagram.Width * imgWidthScale;
+				ImGui.Image( mCoordinateSystemsDiagram.ImGuiHandle, size );
+				ImGui.Unindent();
+			}
 			//***** TODO: Show diagrams *****
 		}
 
@@ -1049,7 +1067,7 @@ namespace WaymarkPresetPlugin
 
 			if( ImGui.Begin( "Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize ) )
 			{
-				ImGuiUtils.TitleBarHelpButton( () => { ShowHelpWindow( HelpWindowPage.Editing ); }, UiBuilder.IconFont );
+				ImGuiUtils.TitleBarHelpButton( () => { ShowHelpWindow( HelpWindowPage.Editing ); }, 0, UiBuilder.IconFont );
 
 				if( ScratchEditingPreset != null )
 				{
@@ -1062,10 +1080,11 @@ namespace WaymarkPresetPlugin
 					ImGui.BeginGroup();
 					if( ImGui.BeginTable( "###PresetEditorWaymarkTable", 4 ) )
 					{
-						ImGui.TableSetupColumn( "Active", ImGuiTableColumnFlags.WidthStretch );
-						ImGui.TableSetupColumn( "X", ImGuiTableColumnFlags.WidthStretch );
-						ImGui.TableSetupColumn( "Y", ImGuiTableColumnFlags.WidthStretch );
-						ImGui.TableSetupColumn( "Z", ImGuiTableColumnFlags.WidthStretch );
+						float numberWidth = ImGui.CalcTextSize( "-0000.000" ).X;
+						ImGui.TableSetupColumn( "Active", ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize( "Active         " ).X + ImGui.GetStyle().CellPadding.X * 2 );
+						ImGui.TableSetupColumn( "X", ImGuiTableColumnFlags.WidthFixed, numberWidth + ImGui.GetStyle().CellPadding.X * 2 + ImGui.GetStyle().FramePadding.X * 4 );
+						ImGui.TableSetupColumn( "Y", ImGuiTableColumnFlags.WidthFixed, numberWidth + ImGui.GetStyle().CellPadding.X * 2 + ImGui.GetStyle().FramePadding.X * 4 );
+						ImGui.TableSetupColumn( "Z", ImGuiTableColumnFlags.WidthFixed, numberWidth + ImGui.GetStyle().CellPadding.X * 2 + ImGui.GetStyle().FramePadding.X * 4 );
 						ImGui.TableHeadersRow();
 						
 						foreach( var waymark in ScratchEditingPreset.Waymarks )
@@ -1098,10 +1117,13 @@ namespace WaymarkPresetPlugin
 								ImGui.EndDragDropTarget();
 							}
 							ImGui.TableSetColumnIndex( 1 );
+							ImGui.SetNextItemWidth( numberWidth + ImGui.GetStyle().FramePadding.X * 2 );
 							ImGui.InputFloat( $"##{waymark.Label}-X", ref waymark.X );
 							ImGui.TableSetColumnIndex( 2 );
+							ImGui.SetNextItemWidth( numberWidth + ImGui.GetStyle().FramePadding.X * 2 );
 							ImGui.InputFloat( $"##{waymark.Label}-Y", ref waymark.Y );
 							ImGui.TableSetColumnIndex( 3 );
+							ImGui.SetNextItemWidth( numberWidth + ImGui.GetStyle().FramePadding.X * 2 );
 							ImGui.InputFloat( $"##{waymark.Label}-Z", ref waymark.Z );
 						}
 
@@ -1173,7 +1195,7 @@ namespace WaymarkPresetPlugin
 					EditingPresetIndex = -1;
 					ScratchEditingPreset = null;
 				}
-				ImGui.SameLine( ImGui.GetWindowWidth() - mButtonMapViewWidth - mRightAlignPadding );
+				ImGui.SameLine( ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize( "Map View" ).X - ImGui.GetStyle().FramePadding.X * 2 );
 				if( ImGui.Button( "Map View" ) )
 				{
 					MapWindowVisible = !MapWindowVisible;
@@ -1220,12 +1242,11 @@ namespace WaymarkPresetPlugin
 					SettingsWindowVisible = false;
 				}
 
-				ImGui.SameLine( ImGui.GetWindowWidth() - mButtonLibraryWidth - mRightAlignPadding );
+				ImGui.SameLine( ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize( "Show Library" ).X - ImGui.GetStyle().FramePadding.X * 2 );
 				if( ImGui.Button( "Show Library" ) )
 				{
 					MainWindowVisible = true;
 				}
-				mButtonLibraryWidth = ImGui.GetItemRectSize().X;
 			}
 			ImGui.End();
 		}
@@ -1247,7 +1268,7 @@ namespace WaymarkPresetPlugin
 				ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
 				//	Help button.
-				ImGuiUtils.TitleBarHelpButton( ()=> { ShowHelpWindow(HelpWindowPage.Maps); }, UiBuilder.IconFont );
+				ImGuiUtils.TitleBarHelpButton( ()=> { ShowHelpWindow(HelpWindowPage.Maps); }, 1, UiBuilder.IconFont );
 
 				//	Get TerritoryType ID of map to show, along with the (2D/XZ) zone coordinates of the waymarks.  Do this up front because we can be showing both normal presets or an editing scratch preset in the map view.
 				uint territoryTypeIDToShow = 0;
@@ -1674,6 +1695,7 @@ namespace WaymarkPresetPlugin
 		public Vector2 MainWindowPos { get; protected set; }
 		public Vector2 MainWindowSize { get; protected set; }
 		protected Vector2 mInfoWindowSize;
+		protected float mHelpWindowMinWidth;
 
 		public int SelectedPreset { get; protected set; } = -1;
 		public bool WantToDeleteSelectedPreset { get; protected set; } = false;
@@ -1685,11 +1707,8 @@ namespace WaymarkPresetPlugin
 		protected string mEditWindowZoneFilterString = "";
 		protected bool EditWindowZoneComboWasOpen { get; set; } = false;
 		protected bool FieldMarkerAddonWasOpen { get; set; } = false;
-		
-		//	Padding and storing width to right-align buttons.  Initialization value probably doesn't much matter for the saved button widths, since they'll be updated after the first rendered frame.
-		private float mRightAlignPadding = 15;
-		private float mButtonMapViewWidth = 79;
-		private float mButtonLibraryWidth = 90;
+
+		protected TextureWrap mCoordinateSystemsDiagram;
 
 		protected Dictionary<UInt16, List<TextureWrap>> MapTextureDict { get; set; } = new Dictionary<UInt16, List<TextureWrap>>();
 		protected Mutex mMapTextureDictMutex = new Mutex();
