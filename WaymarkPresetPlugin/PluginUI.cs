@@ -215,7 +215,7 @@ namespace WaymarkPresetPlugin
 				{
 					if( ImGui.Button( saveCurrentWaymarksButtonText + "###Save Current Waymarks Button" ) )
 					{
-						GamePreset currentWaymarks = new GamePreset();
+						GamePreset currentWaymarks = new();
 						if( MemoryHandler.GetCurrentWaymarksAsPresetData( ref currentWaymarks ) )
 						{
 							if( mConfiguration.PresetLibrary.ImportPreset( currentWaymarks ) >= 0 )
@@ -858,7 +858,7 @@ namespace WaymarkPresetPlugin
 			ImGui.Spacing();
 			ImGui.Text( Loc.Localize( "Help Window Text: General 4",
 						"If you wish to share a preset with someone else, you can select the preset in the library, and " +
-						"click the \"Export to Clipboard\" button." );
+						"click the \"Export to Clipboard\" button." ) );
 			ImGui.Spacing();
 			ImGui.Spacing();
 			ImGui.Spacing();
@@ -933,7 +933,7 @@ namespace WaymarkPresetPlugin
 						"coordinate system is a 2D projection of the XZ plane, with X running West to East, and Y running " +
 						"North to South.  Please note that the coordinates presented in chat links or on the map widgets " +
 						"in game are scaled to arbitrary values, and the Y and Z axes are swapped.  This plugin uses the " +
-						"game's internal coordinate systems as shown below:" );
+						"game's internal coordinate systems as shown below:" ) );
 			ImGui.Unindent();
 			ImGui.Spacing();
 			ImGui.Spacing();
@@ -1030,7 +1030,7 @@ namespace WaymarkPresetPlugin
 
 			if( ImGui.Button( Loc.Localize( "Button: Create Preset from Circle Computer", "Create a new preset using these points" ) + "###Create a new preset using these points" ) )
 			{
-				var newPreset = new WaymarkPreset();
+				WaymarkPreset newPreset = new();
 				newPreset.Name = Loc.Localize( "Default Preset Name - Circle Computer", "Imported from Circle Computer" );
 				for( int i = 0; i < points.Length && i < 8; ++i )
 				{
@@ -1366,8 +1366,8 @@ namespace WaymarkPresetPlugin
 
 									ImGui.PushStyleVar( ImGuiStyleVar.WindowPadding, new Vector2( 0 ) );
 									ImGui.BeginChild( "##MapImageContainer", new Vector2( mapWidgetSize_Px ), false, ImGuiWindowFlags.NoDecoration );
-									Vector2 mapLowerBounds = new Vector2( Math.Min( 1.0f, Math.Max( 0.0f, mapPan.X - mapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mapPan.Y - mapZoom * 0.5f ) ) );
-									Vector2 mapUpperBounds = new Vector2( Math.Min( 1.0f, Math.Max( 0.0f, mapPan.X + mapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mapPan.Y + mapZoom * 0.5f ) ) );
+									Vector2 mapLowerBounds = new( Math.Min( 1.0f, Math.Max( 0.0f, mapPan.X - mapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mapPan.Y - mapZoom * 0.5f ) ) );
+									Vector2 mapUpperBounds = new( Math.Min( 1.0f, Math.Max( 0.0f, mapPan.X + mapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mapPan.Y + mapZoom * 0.5f ) ) );
 									ImGui.ImageButton( mapList[selectedSubMapIndex].ImGuiHandle, new Vector2( mapWidgetSize_Px ), mapLowerBounds, mapUpperBounds, 0, new Vector4( 0, 0, 0, 1 ), new Vector4( 1, 1, 1, 1 ) );
 									Vector2 mapWidgetScreenPos = ImGui.GetItemRectMin();
 									if( ImGui.IsItemHovered() && CapturedWaymarkIndex < 0 )
@@ -1472,7 +1472,7 @@ namespace WaymarkPresetPlugin
 								else
 								{
 									float subMapComboWidth = 0.0f;
-									List<string> subMaps = new List<string>();
+									List<string> subMaps = new();
 									for( int i = 0; i < mapInfo.Length; ++i )
 									{
 										string subMapName = mapInfo[i].PlaceNameSub.Trim().Length < 1 ? String.Format( Loc.Localize( "Map Window Text: Unnamed Submap Placeholder", "Unnamed Sub-map {0}" ), i + 1 ) : mapInfo[i].PlaceNameSub;
@@ -1515,7 +1515,7 @@ namespace WaymarkPresetPlugin
 			Vector2 newScreenCoords = mapTextureCoords_Px;
 			newScreenCoords /= 2048.0f;
 			newScreenCoords = ( newScreenCoords - mapVisibleLowerBounds_Norm ) / ( mapVisibleUpperBounds_Norm - mapVisibleLowerBounds_Norm ) * mapViewportSize_Px;
-			newScreenCoords = newScreenCoords + mapViewportScreenPos_Px;
+			newScreenCoords += mapViewportScreenPos_Px;
 
 			return newScreenCoords;
 		}
@@ -1576,7 +1576,7 @@ namespace WaymarkPresetPlugin
 								var parchmentTexFile = mDataManager.GetFile<Lumina.Data.Files.TexFile>( map.GetMapParchmentImageFilePath() );
 								if( texFile != null )
 								{
-									byte[] texData = MapTextureBlend( texFile.GetRgbaImageData(), parchmentTexFile == null ? null : parchmentTexFile.GetRgbaImageData() );
+									byte[] texData = MapTextureBlend( texFile.GetRgbaImageData(), parchmentTexFile?.GetRgbaImageData() );
 
 									var tex = mPluginInterface.UiBuilder.LoadImageRaw( texData, texFile.Header.Width, texFile.Header.Height, 4 );
 									if( tex != null && tex.ImGuiHandle != IntPtr.Zero )
@@ -1627,7 +1627,7 @@ namespace WaymarkPresetPlugin
 			{
 				return yValues[0];
 			}
-			else if( mapScaleFactor > xValues[xValues.Length - 1] )
+			else if( mapScaleFactor > xValues[^1] )
 			{
 				return yValues[xValues.Length - 1];
 			}
@@ -1730,18 +1730,18 @@ namespace WaymarkPresetPlugin
 
 		protected TextureWrap mCoordinateSystemsDiagram;
 
-		protected Dictionary<UInt16, List<TextureWrap>> MapTextureDict { get; set; } = new Dictionary<UInt16, List<TextureWrap>>();
-		protected Mutex mMapTextureDictMutex = new Mutex();
+		protected Dictionary<UInt16, List<TextureWrap>> MapTextureDict { get; set; } = new();
+		protected Mutex mMapTextureDictMutex = new();
 		protected readonly TextureWrap[] mWaymarkIconTextures = new TextureWrap[8];
 		protected int CapturedWaymarkIndex { get; set; } = -1;
-		protected Vector2 CapturedWaymarkOffset { get; set; } = new Vector2( 0, 0 );
-		protected static readonly Vector2 mWaymarkMapIconHalfSize_Px = new Vector2( 15, 15 );
+		protected Vector2 CapturedWaymarkOffset { get; set; } = new( 0, 0 );
+		protected static readonly Vector2 mWaymarkMapIconHalfSize_Px = new( 15, 15 );
 
 		protected readonly IntPtr mpLibraryPresetDragAndDropData;
 		protected readonly IntPtr mpEditWaymarkDragAndDropData;
 		protected readonly IntPtr mpEditWaymarkCoordDragAndDropData;
 
-		protected Dictionary<uint, MapViewState> MapViewStateData { get; set; } = new Dictionary<uint, MapViewState>();
+		protected Dictionary<uint, MapViewState> MapViewStateData { get; set; } = new();
 	}
 
 	//	Helper class to store data on how each zones map is being viewed.  Using plain fields instead of properties so that we can easily hold short-term refs to them for aliasing.
@@ -1817,7 +1817,7 @@ namespace WaymarkPresetPlugin
 		{
 			Name = preset.Name;
 			MapID = preset.MapID;
-			Waymarks = new List<ScratchWaymark>();
+			Waymarks = new();
 
 			Waymarks.Add( new ScratchWaymark() );
 			Waymarks.Last().X = preset.A.X;
@@ -1886,7 +1886,7 @@ namespace WaymarkPresetPlugin
 
 		public WaymarkPreset GetPreset()
 		{
-			WaymarkPreset newPreset = new WaymarkPreset();
+			WaymarkPreset newPreset = new();
 
 			newPreset.Name = Name;
 			newPreset.MapID = MapID;

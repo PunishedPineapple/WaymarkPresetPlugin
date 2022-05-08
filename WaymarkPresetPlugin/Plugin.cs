@@ -212,9 +212,8 @@ namespace WaymarkPresetPlugin
 
 		protected string ProcessTextCommand_SlotInfo( string args )
 		{
-			uint gameSlotToCopy;
 			if( args.Length == 1 &&
-				uint.TryParse( args, out gameSlotToCopy ) &&
+				uint.TryParse( args, out uint gameSlotToCopy ) &&
 				gameSlotToCopy >= 1 &&
 				gameSlotToCopy <= MemoryHandler.MaxPresetSlotNum )
 			{
@@ -297,9 +296,8 @@ namespace WaymarkPresetPlugin
 
 		protected string ProcessTextCommand_Import( string args )
 		{
-			uint gameSlotToCopy;
 			if( args.Length == 1 &&
-				uint.TryParse( args, out gameSlotToCopy ) &&
+				uint.TryParse( args, out uint gameSlotToCopy ) &&
 				gameSlotToCopy >= 1 &&
 				gameSlotToCopy <= MemoryHandler.MaxPresetSlotNum )
 			{
@@ -335,8 +333,7 @@ namespace WaymarkPresetPlugin
 			var parameters = args.Split();
 			bool includeTimestamp = parameters.Contains( SubCommandArg_Export_IncludeTime );
 			bool useGameSlot = parameters.Contains( SubCommandArg_Export_IsGameSlot );
-			int scratchVal;
-			var slotIndexNumbers = parameters.Where( x => int.TryParse( x, out scratchVal ) ).ToList();
+			var slotIndexNumbers = parameters.Where( x => int.TryParse( x, out int scratchVal ) ).ToList();
 			WaymarkPreset presetToExport = null;
 
 			try
@@ -520,7 +517,7 @@ namespace WaymarkPresetPlugin
 				var presetsToAutoLoad = mConfiguration.PresetLibrary.Presets.Where( x => x.MapID == newTerritoryTypeInfo.ContentFinderConditionID ).Take( MemoryHandler.MaxPresetSlotNum ).ToList();
 				for( int i = 0; i < MemoryHandler.MaxPresetSlotNum; ++i )
 				{
-					GamePreset gamePresetData = new GamePreset();
+					GamePreset gamePresetData = new();
 
 					if( i < presetsToAutoLoad.Count )
 					{
@@ -540,7 +537,7 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public static string Name => "WaymarkPresetPlugin";
+		public string Name => "WaymarkPresetPlugin";
 		internal static string TextCommandName => "/pwaymark";
 		internal static string SubcommandName_Config => "config";
 		internal static string SubcommandName_SlotInfo => "slotinfo";

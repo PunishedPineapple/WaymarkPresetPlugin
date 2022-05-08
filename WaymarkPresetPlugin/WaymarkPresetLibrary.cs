@@ -10,7 +10,7 @@ namespace WaymarkPresetPlugin
 	{
 		public int ImportPreset( WaymarkPreset preset )
 		{
-			WaymarkPreset importedPreset = new WaymarkPreset( preset );
+			WaymarkPreset importedPreset = new( preset );
 			Presets.Add( importedPreset );
 			return Presets.Count - 1;
 		}
@@ -106,7 +106,7 @@ namespace WaymarkPresetPlugin
 
 		public SortedDictionary<UInt16, List<int>> GetSortedIndices()
 		{
-			SortedDictionary<UInt16, List<int>> sortedIndices = new SortedDictionary<ushort, List<int>>();
+			SortedDictionary<UInt16, List<int>> sortedIndices = new();
 
 			for( int i = 0; i < Presets.Count; ++i )
 			{

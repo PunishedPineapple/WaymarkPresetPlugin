@@ -40,7 +40,7 @@ namespace WaymarkPresetPlugin
 
 		public static WaymarkPreset Parse( GamePreset gamePreset )
 		{
-			WaymarkPreset newPreset = new WaymarkPreset();
+			WaymarkPreset newPreset = new();
 
 			newPreset.A.X = gamePreset.A.X / 1000.0f;
 			newPreset.A.Y = gamePreset.A.Y / 1000.0f;

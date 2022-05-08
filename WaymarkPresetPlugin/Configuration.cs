@@ -133,7 +133,7 @@ namespace WaymarkPresetPlugin
 		{
 			string backupFolderPath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"\\Backups\\" );
 			Directory.CreateDirectory( backupFolderPath );
-			string backupFileBasePath = Path.Join( backupFolderPath, $"\\PluginConfig_{DateTimeOffset.UtcNow.ToString( "yyyy-MM-dd_HH.mm.ssZ" )}" );
+			string backupFileBasePath = Path.Join( backupFolderPath, $"\\PluginConfig_{DateTimeOffset.UtcNow:yyyy-MM-dd_HH.mm.ssZ}" );
 			string backupFilePath = backupFileBasePath + ".json";
 			int i = 2;
 			while( File.Exists( backupFilePath ) )

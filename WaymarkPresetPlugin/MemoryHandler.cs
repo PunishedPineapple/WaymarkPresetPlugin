@@ -133,7 +133,7 @@ namespace WaymarkPresetPlugin
 		public static GamePreset ReadSlot( uint slotNum )
 		{
 			IntPtr pWaymarkData = GetGameWaymarkDataPointerForSlot( slotNum );
-			GamePreset preset = new GamePreset();
+			GamePreset preset = new();
 			if( pWaymarkData != IntPtr.Zero )
 			{
 				//	Don't catch exceptions here; better to have the caller do it probably.
@@ -213,7 +213,7 @@ namespace WaymarkPresetPlugin
 		{
 			if( IsSafeToDirectPlacePreset() )
 			{
-				GamePreset_Placement placementStruct = new GamePreset_Placement( preset );
+				GamePreset_Placement placementStruct = new( preset );
 				PluginLog.LogDebug( $"Attempting to place waymark preset with data:\r\n{placementStruct}" );
 				unsafe
 				{
@@ -229,13 +229,13 @@ namespace WaymarkPresetPlugin
 				byte currentContentLinkType = mdGetCurrentContentFinderLinkType.Invoke();
 				if( currentContentLinkType >= 0 && currentContentLinkType < 4 )	//	Same as the game check, but let it do overworld maps too.
 				{
-					GamePreset_Placement rawWaymarkData = new GamePreset_Placement();
+					GamePreset_Placement rawWaymarkData = new();
 					unsafe
 					{
 						mdGetCurrentWaymarkData.Invoke( mpWaymarksObj, new IntPtr( &rawWaymarkData ) );
 					}
 
-					rPresetData = new GamePreset( rawWaymarkData );
+					rPresetData = new( rawWaymarkData );
 					rPresetData.ContentFinderConditionID = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType );	//*****TODO: How do we get this as a territory type for non-instanced zones? The return type might need to be changed, or pass in another ref paramter or something. *****
 					rPresetData.UnixTime = (Int32)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
@@ -284,7 +284,7 @@ namespace WaymarkPresetPlugin
 			if( !IsSafeToClientPlace() ) return;
 
 			//	Find where we will be overwriting the waymarks.
-			IntPtr pClientSideWaymarks = new IntPtr( mpWaymarksObj.ToInt64() + mClientSideWaymarksOffset.ToInt64() );
+			IntPtr pClientSideWaymarks = new( mpWaymarksObj.ToInt64() + mClientSideWaymarksOffset.ToInt64() );
 
 			//*****TODO: Should we instead read in the extant data and only overwrite the floats?
 			//GameWaymarks waymarkData = (GameWaymarks)Marshal.PtrToStructure( pClientSideWaymarks, typeof( GameWaymarks ) );
@@ -298,7 +298,7 @@ namespace WaymarkPresetPlugin
 		//	Magic Numbers
 		public static readonly int MaxPresetSlotNum = 5;
 		private static readonly byte mFMARKERDATIndex = 0x11;
-		private static IntPtr mClientSideWaymarksOffset = new IntPtr( 0x1B0 );  //*****TODO: Feels bad initializing this with a magic number.  Not sure best thing to do.*****
+		private static IntPtr mClientSideWaymarksOffset = new( 0x1B0 );  //*****TODO: Feels bad initializing this with a magic number.  Not sure best thing to do.*****
 
 		//	Misc.
 		private static ClientState mClientState;
@@ -318,6 +318,6 @@ namespace WaymarkPresetPlugin
 		private static DirectPlacePresetDelegate mdDirectPlacePreset;
 		private static GetCurrentWaymarkDataDelegate mdGetCurrentWaymarkData;
 
-		private static readonly object mPresetMemoryLockObject = new object();
+		private static readonly object mPresetMemoryLockObject = new();
 	}
 }
