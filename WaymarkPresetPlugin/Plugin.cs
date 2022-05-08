@@ -38,14 +38,14 @@ namespace WaymarkPresetPlugin
 			mSigScanner			= sigScanner;
 			mDataManager		= dataManager;
 
+			//	Localization and Command Initialization
+			OnLanguageChanged( mPluginInterface.UiLanguage );
+
 			//	Configuration
 			mConfiguration = mPluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 			mConfiguration.Initialize( mPluginInterface );
 			MemoryHandler.Init( mSigScanner, mClientState, mCondition );
 			ZoneInfoHandler.Init( mDataManager );
-
-			//	Localization and Command Initialization
-			OnLanguageChanged( mPluginInterface.UiLanguage );
 
 			//	UI Initialization
 			mUI = new PluginUI( mConfiguration, mPluginInterface, mDataManager, mCommandManager, mGameGui );
@@ -253,7 +253,7 @@ namespace WaymarkPresetPlugin
 				//	If argument is in quotes, search for the preset by name.
 				if( args.Trim().First() == '"' && args.Trim().Last() == '"' )
 				{
-					string presetName = args.Trim().Substring( 1, args.Trim().Length - 2 );
+					string presetName = args.Trim()[ 1..^1];
 					libraryIndex = mConfiguration.PresetLibrary.Presets.FindIndex( ( WaymarkPreset p ) => { return p.Name.Equals( presetName, StringComparison.OrdinalIgnoreCase ); } );
 					if( libraryIndex < 0 || libraryIndex >= mConfiguration.PresetLibrary.Presets.Count )
 					{
@@ -540,18 +540,18 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public string Name => "WaymarkPresetPlugin";
-		protected string TextCommandName => "/pwaymark";
-		protected string SubcommandName_Config => "config";
-		protected string SubcommandName_SlotInfo => "slotinfo";
-		protected string SubcommandName_Place => "place";
-		protected string SubcommandName_Import => "import";
-		protected string SubcommandName_Export => "export";
-		protected string SubcommandName_ExportAll => "exportall";
-		protected string SubcommandName_Help => "help";
-		protected string SubCommandName_Help_Commands => "commands";
-		protected string SubCommandArg_Export_IncludeTime => "-t";
-		protected string SubCommandArg_Export_IsGameSlot => "-g";
+		public static string Name => "WaymarkPresetPlugin";
+		internal static string TextCommandName => "/pwaymark";
+		internal static string SubcommandName_Config => "config";
+		internal static string SubcommandName_SlotInfo => "slotinfo";
+		internal static string SubcommandName_Place => "place";
+		internal static string SubcommandName_Import => "import";
+		internal static string SubcommandName_Export => "export";
+		internal static string SubcommandName_ExportAll => "exportall";
+		internal static string SubcommandName_Help => "help";
+		internal static string SubCommandName_Help_Commands => "commands";
+		internal static string SubCommandArg_Export_IncludeTime => "-t";
+		internal static string SubCommandArg_Export_IsGameSlot => "-g";
 
 		public UInt16 CurrentTerritoryTypeID { get; protected set; }
 

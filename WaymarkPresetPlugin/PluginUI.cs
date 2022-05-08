@@ -18,6 +18,7 @@ using Newtonsoft.Json;
 using System.IO;
 using Dalamud.Game.Gui;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using CheapLoc;
 
 namespace WaymarkPresetPlugin
 {
@@ -161,7 +162,7 @@ namespace WaymarkPresetPlugin
 			if( mConfiguration.AttachLibraryToFieldMarkerAddon && fieldMarkerAddonVisible ) ImGui.SetNextWindowPos( dockedWindowPos );
 			ImGui.SetNextWindowSize( new Vector2( 375, 375 ) * ImGui.GetIO().FontGlobalScale, ImGuiCond.FirstUseEver );
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 375 ) * ImGui.GetIO().FontGlobalScale, new Vector2( float.MaxValue, float.MaxValue ) );
-			if( ImGui.Begin( "Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
+			if( ImGui.Begin( Loc.Localize( "Window Title: Waymark Library", "Waymark Library" ) + "###Waymark Library", ref mMainWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
 				ImGuiUtils.TitleBarHelpButton( () => { ShowHelpWindow( HelpWindowPage.General ); }, 1, UiBuilder.IconFont );
 
@@ -206,12 +207,13 @@ namespace WaymarkPresetPlugin
 				}*/
 
 				bool previouslyFilteredOnZone = mConfiguration.FilterOnCurrentZone;
-				ImGui.Checkbox( "Filter on Current Zone", ref mConfiguration.mFilterOnCurrentZone );
+				ImGui.Checkbox( Loc.Localize( "Config Option: Filter on Current Zone", "Filter on Current Zone" ) + "###Filter on Current Zone Checkbox", ref mConfiguration.mFilterOnCurrentZone );
 				if( mConfiguration.FilterOnCurrentZone != previouslyFilteredOnZone ) mConfiguration.Save(); //	I'd rather just save the state when the plugin is unloaded, but that's not been feasible in the past.
-				ImGui.SameLine( ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize( "Save Current Waymarks" ).X - ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().WindowPadding.X );
+				string saveCurrentWaymarksButtonText = Loc.Localize( "Button: Save Current Waymarks", "Save Current Waymarks" );
+				ImGui.SameLine( ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize( saveCurrentWaymarksButtonText ).X - ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().WindowPadding.X );
 				if( MemoryHandler.FoundDirectSaveSigs() )
 				{
-					if( ImGui.Button( "Save Current Waymarks" ) )
+					if( ImGui.Button( saveCurrentWaymarksButtonText + "###Save Current Waymarks Button" ) )
 					{
 						GamePreset currentWaymarks = new GamePreset();
 						if( MemoryHandler.GetCurrentWaymarksAsPresetData( ref currentWaymarks ) )
@@ -230,7 +232,7 @@ namespace WaymarkPresetPlugin
 					ImGui.PushStyleColor( ImGuiCol.ButtonActive, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
 					ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled] );
 
-					ImGui.Button( "Save Current Waymarks" );
+					ImGui.Button( saveCurrentWaymarksButtonText + "###Save Current Waymarks Button" );
 
 					ImGui.PopStyleColor();
 					ImGui.PopStyleColor();
@@ -276,7 +278,7 @@ namespace WaymarkPresetPlugin
 										{
 											ImGui.SetDragDropPayload( $"PresetIdxZ{zone.Key}", mpLibraryPresetDragAndDropData, sizeof( int ) );
 											Marshal.WriteInt32( mpLibraryPresetDragAndDropData, indices[i] );
-											ImGui.Text( $"Moving: {mConfiguration.PresetLibrary.Presets[indices[i]].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + indices[i].ToString() + ")" : "" )}" );
+											ImGui.Text( Loc.Localize( "Drag and Drop Preview: Moving Preset", "Moving: " ) + $"{mConfiguration.PresetLibrary.Presets[indices[i]].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + indices[i].ToString() + ")" : "" )}" );
 											ImGui.EndDragDropSource();
 										}
 										if( !EditingPreset && ImGui.BeginDragDropTarget() )
@@ -307,7 +309,7 @@ namespace WaymarkPresetPlugin
 											int draggedIndex = Marshal.ReadInt32( mpLibraryPresetDragAndDropData );
 											if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count && mConfiguration.PresetLibrary.Presets[draggedIndex].MapID == zone.Key )
 											{
-												ImGui.Selectable( "<Move To Bottom>" );
+												ImGui.Selectable( Loc.Localize( "Drag and Drop Preview: Move to Bottom", "<Move To Bottom>" ) + "###<Move To Bottom>" );
 												if( ImGui.BeginDragDropTarget() )
 												{
 													ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zone.Key}", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
@@ -335,7 +337,7 @@ namespace WaymarkPresetPlugin
 					}
 					else
 					{
-						if( ImGui.CollapsingHeader( "Presets" ) )
+						if( ImGui.CollapsingHeader( Loc.Localize( "Header: Presets", "Presets" ) + "###Presets" ) )
 						{
 							for( int i = 0; i < mConfiguration.PresetLibrary.Presets.Count; ++i )
 							{
@@ -362,7 +364,7 @@ namespace WaymarkPresetPlugin
 									{
 										ImGui.SetDragDropPayload( $"PresetIdxAnyZone", mpLibraryPresetDragAndDropData, sizeof( int ) );
 										Marshal.WriteInt32( mpLibraryPresetDragAndDropData, i );
-										ImGui.Text( $"Moving: {mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}" );
+										ImGui.Text( Loc.Localize( "Drag and Drop Preview: Moving Preset", "Moving: " ) + $"{mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}" );
 										ImGui.EndDragDropSource();
 									}
 									if( !EditingPreset && ImGui.BeginDragDropTarget() )
@@ -394,7 +396,7 @@ namespace WaymarkPresetPlugin
 									int draggedIndex = Marshal.ReadInt32( mpLibraryPresetDragAndDropData );
 									if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count )
 									{
-										ImGui.Selectable( "<Move To Bottom>" );
+										ImGui.Selectable( Loc.Localize( "Drag and Drop Preview: Move to Bottom", "<Move To Bottom>" ) + "###<Move To Bottom>" );
 										if( ImGui.BeginDragDropTarget() )
 										{
 											ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
@@ -420,7 +422,7 @@ namespace WaymarkPresetPlugin
 				}
 				else
 				{
-					ImGui.Text( "Preset library empty!" );
+					ImGui.Text( Loc.Localize( "Main Window Text: Library Empty", "Preset library empty!" ) );
 				}
 				ImGui.EndGroup();
 
@@ -430,12 +432,12 @@ namespace WaymarkPresetPlugin
 				ImGui.Spacing();
 				ImGui.Spacing();
 				ImGui.Spacing();
-				if( ImGui.CollapsingHeader( "Import Options" ) )
+				if( ImGui.CollapsingHeader( Loc.Localize( "Header: Import Options", "Import Options" ) + "###Import Options" ) )
 				{
 					ImGui.BeginGroup(); //Buttons don't seem to work under a header without being in a group.
 					ImGui.InputTextWithHint( "##JSONImportTextBox", "Paste a preset here and click \"Import\".", ref mPresetImportString, 1024 );	//Most exports max out around 500 characters with all waymarks, so this leaves heaps of room for a long name.
 					ImGui.SameLine();
-					if( ImGui.Button( "Import" ) )
+					if( ImGui.Button( Loc.Localize( "Button: Import", "Import" ) + "###Import Button" ) )
 					{
 						PluginLog.LogInformation( $"Attempting to import preset string: \"{mPresetImportString}\"" );
 						if( mConfiguration.PresetLibrary.ImportPreset( PresetImportString ) >= 0 )
@@ -447,7 +449,7 @@ namespace WaymarkPresetPlugin
 					if( MemoryHandler.FoundSavedPresetSigs() )
 					{
 						//ImGui.SameLine();
-						ImGui.Text( "Or import from game slot: " );
+						ImGui.Text( Loc.Localize( "Main Window Text: Import from Game Slot Label", "Or import from game slot: " ) );
 						ImGui.SameLine();
 						if( ImGui.Button( "1" ) )
 						{
@@ -497,7 +499,7 @@ namespace WaymarkPresetPlugin
 						ImGui.PopFont();
 						ImGui.PopStyleColor();
 						ImGui.SameLine();
-						ImGuiUtils.URLLink( "https://github.com/PunishedPineapple/WaymarkPresetPlugin/wiki/Preset-Resources", "Where to find importable presets", false, UiBuilder.IconFont );
+						ImGuiUtils.URLLink( "https://github.com/PunishedPineapple/WaymarkPresetPlugin/wiki/Preset-Resources", Loc.Localize( "Main Window Text: Preset Resources Link", "Where to find importable presets" ), false, UiBuilder.IconFont );
 					}
 					catch( Exception e )
 					{
@@ -505,10 +507,10 @@ namespace WaymarkPresetPlugin
 					}
 					ImGui.EndGroup();
 				}
-				if( ImGui.CollapsingHeader( "Export/Backup Options" ) )
+				if( ImGui.CollapsingHeader( Loc.Localize( "Header: Export and Backup Options", "Export/Backup Options" ) + "###Export/Backup Options" ) )
 				{
 					ImGui.BeginGroup(); //Buttons don't seem to work under a header without being in a group.
-					if( ImGui.Button( "Export All Presets to Clipboard" ) )
+					if( ImGui.Button( Loc.Localize( "Button: Export All Presets to Clipboard", "Export All Presets to Clipboard" ) + "###Export All Presets to Clipboard Button" ) )
 					{
 						try
 						{
@@ -524,11 +526,11 @@ namespace WaymarkPresetPlugin
 							PluginLog.Log( $"Error while exporting all presets: {e}" );
 						}
 					}
-					if( ImGui.Button( "Backup Current Config" ) )
+					if( ImGui.Button( Loc.Localize( "Button: Backup Current Config", "Backup Current Config" ) + "###Backup Current Config Button" ) )
 					{
 						mConfiguration.BackupConfigFile();
 					}
-					ImGuiUtils.HelpMarker( "Copies the current config file to a backup folder in the Dalamud \"pluginConfigs\" directory." );
+					ImGuiUtils.HelpMarker( Loc.Localize( "Help: Backup Current Config", "Copies the current config file to a backup folder in the Dalamud \"pluginConfigs\" directory." ) );
 					ImGui.EndGroup();
 				}
 
@@ -568,12 +570,12 @@ namespace WaymarkPresetPlugin
 
 			ImGui.SetNextWindowSize( mInfoWindowSize );
 			ImGui.SetNextWindowPos( new Vector2( MainWindowPos.X + MainWindowSize.X, MainWindowPos.Y ) );	//Note that this does *not* need to be viewport-relative, since it is just an offset relative to the library window.
-			if( ImGui.Begin( "Preset Info", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar ) )
+			if( ImGui.Begin( Loc.Localize( "Window Title: Preset Info", "Preset Info" ) + "###Preset Info", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar ) )
 			{
 				if( SelectedPreset >= 0 && SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
 				{
 					ImGui.BeginGroup();
-					ImGui.Text( "Copy to slot:" );
+					ImGui.Text( Loc.Localize( "Info Pane Text: Copy to Slot Label", "Copy to slot:" ) );
 					ImGui.SameLine();
 					ImGui.BeginGroup();
 					if( ImGui.Button( "1" ) )
@@ -601,10 +603,11 @@ namespace WaymarkPresetPlugin
 						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[SelectedPreset], 5u );
 					}
 					float rightAlignPos;
+					string placeButtonText = Loc.Localize( "Button: Place", "Place" );
 					ImGui.SameLine();
 					if( MemoryHandler.FoundDirectPlacementSigs() )
 					{
-						if( ImGui.Button( "Place" ) )
+						if( ImGui.Button( placeButtonText + "###Place" ) )
 						{
 							MemoryHandler.PlacePreset( mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset() /*, mConfiguration.AllowClientSidePlacementInOverworldZones*/ );
 						}
@@ -616,7 +619,7 @@ namespace WaymarkPresetPlugin
 						ImGui.PushStyleColor( ImGuiCol.ButtonActive, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
 						ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled] );
 						
-						ImGui.Button( "Place" );
+						ImGui.Button( placeButtonText + "###Place" );
 
 						ImGui.PopStyleColor();
 						ImGui.PopStyleColor();
@@ -628,16 +631,17 @@ namespace WaymarkPresetPlugin
 
 
 					ImGui.EndGroup();
-					ImGui.Text( "Preset Info:" );
-					ImGui.SameLine( rightAlignPos - ImGui.CalcTextSize( "Map View" ).X - ImGui.GetStyle().WindowPadding.X - ImGui.GetStyle().FramePadding.X * 2 );
-					if( ImGui.Button( "Map View" ) )
+					ImGui.Text( Loc.Localize( "Info Pane Text: Preset Info Label", "Preset Info:" ) );
+					string mapViewButtonText = Loc.Localize( "Button: Map View", "Map View" );
+					ImGui.SameLine( rightAlignPos - ImGui.CalcTextSize( "mapViewButtonText" ).X - ImGui.GetStyle().WindowPadding.X - ImGui.GetStyle().FramePadding.X * 2 );
+					if( ImGui.Button( mapViewButtonText + "###Map View Button" ) )
 					{
 						MapWindowVisible = !MapWindowVisible;
 					}
 
 					if( ImGui.BeginTable( "###PresetInfoPaneWaymarkDataTable", 4 ) )
 					{
-						ImGui.TableSetupColumn( "Waymark", ImGuiTableColumnFlags.WidthFixed, 15 * ImGui.GetIO().FontGlobalScale );
+						ImGui.TableSetupColumn( Loc.Localize( "Info Pane Text: Waymark Column Header", "Waymark" ) + "###Waymark", ImGuiTableColumnFlags.WidthFixed, 15 * ImGui.GetIO().FontGlobalScale );
 						ImGui.TableSetupColumn( "X", ImGuiTableColumnFlags.WidthStretch );
 						ImGui.TableSetupColumn( "Y", ImGuiTableColumnFlags.WidthStretch );
 						ImGui.TableSetupColumn( "Z", ImGuiTableColumnFlags.WidthStretch );
@@ -648,7 +652,7 @@ namespace WaymarkPresetPlugin
 							ImGui.TableSetColumnIndex( 0 );
 							ImGui.Text( $"{mConfiguration.PresetLibrary.Presets[SelectedPreset].GetNameForWaymarkIndex( i )}:" );
 							ImGui.TableSetColumnIndex( 1 );
-							ImGuiUtils.RightAlignTableText( waymark.Active ? waymark.X.ToString( "0.00" ) : "Unused" );
+							ImGuiUtils.RightAlignTableText( waymark.Active ? waymark.X.ToString( "0.00" ) : Loc.Localize( "Info Pane Text: Unused Waymark", "Unused" ) );
 							ImGui.TableSetColumnIndex( 2 );
 							ImGuiUtils.RightAlignTableText( waymark.Active ? waymark.Y.ToString( "0.00" ) : " " );
 							ImGui.TableSetColumnIndex( 3 );
@@ -659,15 +663,15 @@ namespace WaymarkPresetPlugin
 
 					string zoneStr = ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).DutyName;
 					zoneStr += mConfiguration.ShowIDNumberNextToZoneNames ? $" ({mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID})" : "";
-					ImGui.Text( $"Zone: {zoneStr}" );
-					ImGui.Text( $"Last Modified: {mConfiguration.PresetLibrary.Presets[SelectedPreset].Time.LocalDateTime}" );
+					ImGui.Text( String.Format( Loc.Localize( "Info Pane Text: Zone Label", "Zone: {}"), zoneStr ) );
+					ImGui.Text( String.Format( Loc.Localize( "Info Pane Text: Last Modified Label", "Last Modified: {0}"), mConfiguration.PresetLibrary.Presets[SelectedPreset].Time.LocalDateTime ) );
 
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
-					if( ImGui.Button( "Export to Clipboard" ) )
+					if( ImGui.Button( Loc.Localize( "Button: Export to Clipboard", "Export to Clipboard" ) + "###Export to Clipboard" ) )
 					{
 						if( SelectedPreset >= 0 && SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
 						{
@@ -675,23 +679,23 @@ namespace WaymarkPresetPlugin
 						}
 					}
 					ImGui.SameLine();
-					if( ImGui.Button( "Edit" ) && EditingPresetIndex == -1 )  //Don't want to let people start editing while the edit window is already open.
+					if( ImGui.Button( Loc.Localize( "Button: Edit", "Edit" ) + "###Edit" ) && EditingPresetIndex == -1 )  //Don't want to let people start editing while the edit window is already open.
 					{
 						EditingPresetIndex = SelectedPreset;
 						ScratchEditingPreset = new ScratchPreset( mConfiguration.PresetLibrary.Presets[EditingPresetIndex] );
 					}
 					ImGui.SameLine();
 					ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
-					if( ImGui.Button( "Delete" ) && EditingPresetIndex == -1 )
+					if( ImGui.Button( Loc.Localize( "Button: Delete", "Delete" ) + "###Delete" ) && EditingPresetIndex == -1 )
 					{
 						WantToDeleteSelectedPreset = true;
 					}
 					mInfoWindowSize.X = Math.Max( mInfoWindowSize.X, ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X );
 					if( WantToDeleteSelectedPreset )
 					{
-						ImGui.Text( "Confirm delete: " );
+						ImGui.Text( Loc.Localize( "Info Pane Text: Confirm Delete Label", "Confirm delete: " ) );
 						ImGui.SameLine();
-						if( ImGui.Button( "Yes" ) )
+						if( ImGui.Button( Loc.Localize( "Button: Yes", "Yes" ) + "###Yes Button" ) )
 						{
 							mConfiguration.PresetLibrary.DeletePreset( SelectedPreset );
 							WantToDeleteSelectedPreset = false;
@@ -701,7 +705,7 @@ namespace WaymarkPresetPlugin
 						}
 						ImGui.PushStyleColor( ImGuiCol.Text, 0xffffffff );
 						ImGui.SameLine();
-						if( ImGui.Button( "No" ) )
+						if( ImGui.Button( Loc.Localize( "Button: No", "No" ) + "###No Button" ) )
 						{
 							WantToDeleteSelectedPreset = false;
 						}
@@ -712,7 +716,7 @@ namespace WaymarkPresetPlugin
 				}
 				else
 				{
-					ImGui.Text( "No preset selected." );
+					ImGui.Text( Loc.Localize( "Info Pane Text: No Preset Selected", "No preset selected." ) );
 				}
 			}
 
@@ -728,14 +732,14 @@ namespace WaymarkPresetPlugin
 			ImGui.SetNextWindowPos( ImGuiHelpers.MainViewport.Pos + Vector2.One );
 			if( ImGui.Begin( "Preset Info (Layout Pass)", ImGuiUtils.LayoutWindowFlags ) )
 			{
-				ImGui.Text( "Copy to slot:" );
+				ImGui.Text( Loc.Localize( "Info Pane Text: Copy to Slot Label", "Copy to slot:" ) );
 				for( int i = 1; i <= MemoryHandler.MaxPresetSlotNum; ++i )
 				{
 					ImGui.SameLine();
 					ImGui.Button( $"{i}" );
 				}
 				ImGui.SameLine();
-				ImGui.Button( "Place" );
+				ImGui.Button( Loc.Localize( "Button: Place", "Place" ) + "###Place" );
 				mInfoWindowSize.X = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X;
 				ImGui.Button( "My Width Doesn't Matter" );
 
@@ -761,11 +765,11 @@ namespace WaymarkPresetPlugin
 				ImGui.Spacing();
 				ImGui.Spacing();
 
-				ImGui.Button( "Export to Clipboard" );
+				ImGui.Button( Loc.Localize( "Button: Export to Clipboard", "Export to Clipboard" ) + "###Export to Clipboard" );
 				ImGui.SameLine();
-				ImGui.Button( "Edit" );
+				ImGui.Button( Loc.Localize( "Button: Edit", "Edit" ) + "###Edit" );
 				ImGui.SameLine();
-				ImGui.Button( "Delete" );
+				ImGui.Button( Loc.Localize( "Button: Delete", "Delete" ) + "###Delete" );
 				mInfoWindowSize.X = Math.Max( mInfoWindowSize.X, ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X );
 				if( WantToDeleteSelectedPreset )
 				{
@@ -788,7 +792,7 @@ namespace WaymarkPresetPlugin
 
 			ImGui.SetNextWindowSizeConstraints( new( Math.Max( 200f, mHelpWindowMinWidth ), 300f ), new( float.MaxValue ) );
 			ImGuiHelpers.SetNextWindowPosRelativeMainViewport( ImGuiHelpers.MainViewport.Size / 3f, ImGuiCond.FirstUseEver );
-			if( ImGui.Begin( "Waymark Help", ref mHelpWindowVisible ) )
+			if( ImGui.Begin( Loc.Localize( "Window Title: Waymark Help", "Waymark Help" ) + "###Waymark Help", ref mHelpWindowVisible ) )
 			{
 				var cachedCurrentHelpPage = mCurrentHelpPage;
 				for( int i = 0; i < Enum.GetValues( typeof( HelpWindowPage ) ).Length; ++i )
@@ -809,7 +813,7 @@ namespace WaymarkPresetPlugin
 				}
 				mHelpWindowMinWidth = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X;
 
-				if( ImGui.BeginChild( "Help Text Pane" ) )
+				if( ImGui.BeginChild( "###Help Text Pane" ) )
 				{
 					ImGui.PushTextWrapPos( ImGui.GetWindowContentRegionWidth() );
 					switch( mCurrentHelpPage )
@@ -831,51 +835,59 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawHelpWindow_General()
 		{
-			ImGui.Text( "All presets in this plugin's list are fully separate from the game's presets.  This allows you to store an effectively " +
-						"unlimited number of presets, as well as to easily back up and share them, or import presets that others have shared with you." );
+			ImGui.Text( Loc.Localize( "Help Window Text: General 1",
+						"All presets in this plugin's list are fully separate from the game's presets.  This allows you to store an effectively " +
+						"unlimited number of presets, as well as to easily back up and share them, or import presets that others have shared with you." ) );
 			ImGui.Spacing();
 			ImGui.Spacing();
 			ImGui.Spacing();
-			ImGui.Text( "Selecting a preset in the library will show a window to the side with information about that preset, such as where the waymarks " +
-						"are placed, as well as actions that you can take with that preset." );
+			ImGui.Text( Loc.Localize( "Help Window Text: General 2",
+						"Selecting a preset in the library will show a window to the side with information about that preset, such as where the waymarks " +
+						"are placed, as well as actions that you can take with that preset." ) );
 			ImGui.Spacing();
 			ImGui.Spacing();
 			ImGui.Spacing();
-			ImGui.Text( "If you want to copy a preset in the " +
+			ImGui.Text( Loc.Localize( "Help Window Text: General 3",
+						"If you want to copy a preset in the " +
 						"library to a game slot, select that preset in the list, and then press the button with the number of the slot to " +
 						"which you want to copy it.  If you want to import a preset from the game's list into the library, scroll down to " +
 						"\"Import Options\" and press the button of the slot that you wish to import from the game.  This is also where you " +
-						"can paste presets to import them from outside of the game." );
+						"can paste presets to import them from outside of the game." ) );
 			ImGui.Spacing();
 			ImGui.Spacing();
 			ImGui.Spacing();
-			ImGui.Text( "If you wish to share a preset with someone else, you can select the preset in the library, and " +
+			ImGui.Text( Loc.Localize( "Help Window Text: General 4",
+						"If you wish to share a preset with someone else, you can select the preset in the library, and " +
 						"click the \"Export to Clipboard\" button." );
 			ImGui.Spacing();
 			ImGui.Spacing();
 			ImGui.Spacing();
-			ImGui.Text( "The plugin also allows you to place and save waymarks directly to/from the field.  These are what the \"Place\" and " +
+			ImGui.Text( Loc.Localize( "Help Window Text: General 5",
+						"The plugin also allows you to place and save waymarks directly to/from the field.  These are what the \"Place\" and " +
 						"\"Save Current Waymarks\" buttons do.  Please note that saving and placing presets is only supported in areas that " +
 						"the game allows with its built in system.  Saving presets outside of those duties will result in a preset that shows an " +
-						"unknown zone.  Trying to place presets outside of those duties will simply fail to do anything." );
+						"unknown zone.  Trying to place presets outside of those duties will simply fail to do anything." ) );
 			ImGui.Spacing();
 			ImGui.Spacing();
 			ImGui.Spacing();
-			ImGui.Text( "Presets can be reordered in the library by dragging and dropping them at the desired spot.  The sorting of duties in " +
+			ImGui.Text( Loc.Localize( "Help Window Text: General 6",
+						"Presets can be reordered in the library by dragging and dropping them at the desired spot.  The sorting of duties in " +
 						"the library cannot currently be changed; the order is the same as they are sorted in the game's files, and is approximately " +
-						"the order in which the duties were added to the game." );
+						"the order in which the duties were added to the game." ) );
 		}
 
 		protected void DrawHelpWindow_Editing()
 		{
-			ImGui.Text( "Clicking the \"Edit\" button in the preset info pane will bring up a window that allows you to " +
+			ImGui.Text( Loc.Localize( "Help Window Text: Editing 1",
+						"Clicking the \"Edit\" button in the preset info pane will bring up a window that allows you to " +
 						"edit a preset.  You can adjust any of the available parameters, and you can drag waymarks on to " +
 						"other waymarks to swap their positions.  You can also drag points from the circle calculator tab " +
-						"in this help window on to a waymark in the editor window to replace its coordinates with the ones from that calculator." );
+						"in this help window on to a waymark in the editor window to replace its coordinates with the ones from that calculator." ) );
 			ImGui.Spacing();
 			ImGui.Spacing();
 			ImGui.Spacing();
-			ImGui.Text( "Changes made in the editor window will not be applied until the \"Save\" button is clicked." );
+			ImGui.Text( Loc.Localize( "Help Window Text: Editing 2",
+						"Changes made in the editor window will not be applied until the \"Save\" button is clicked." ) );
 
 			/*ImGui.Text( "Clicking the \"Edit\" button in the preset info pane will bring up a window that allows you to " +
 						"edit a preset.  You can adjust any of the available parameters, and you can drag waymarks on to " +
@@ -888,31 +900,35 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawHelpWindow_Maps()
 		{
-			ImGui.Text( "The \"Map View\" window displays a copy of the applicable map(s) for the selected preset's duty.  Any placed " +
+			ImGui.Text( Loc.Localize( "Help Window Text: Maps 1",
+						"The \"Map View\" window displays a copy of the applicable map(s) for the selected preset's duty.  Any placed " +
 						"waymarks are overlain on the map.  If a zone has multiple submaps, you can switch between submaps using the dropdown " +
 						"in the lower right corner of the window.  The world cordinates corresponding to your cursor position on the map are " +
 						"shown at the bottom right of the window.  Please read the \"Coordinates\" tab of this help window if you wish to understand " +
-						"the game's internal coordinate systems, and their relationship to what is presented in-game to the player." );
+						"the game's internal coordinate systems, and their relationship to what is presented in-game to the player." ) );
 			ImGui.Spacing();
 			ImGui.Spacing();
 			ImGui.Spacing();
-			ImGui.Text( "When editing a preset, you can drag waymark icons on the map to adjust their positions.  While you are doing this, the " +
+			ImGui.Text( Loc.Localize( "Help Window Text: Maps 2",
+						"When editing a preset, you can drag waymark icons on the map to adjust their positions.  While you are doing this, the " +
 						"coordinate readout reflects the position of the marker, and not the position of your mouse.  Please note that editing " +
 						"waymarks in this manner is not advised in areas that have uneven ground, as it is not possible to automatically adjust " +
-						"the Y coordinate to match the terrain." );
+						"the Y coordinate to match the terrain." ) );
 			ImGui.Spacing();
 			ImGui.Spacing();
 			ImGui.Spacing();
-			ImGui.Text( "Please also note that the plugin cannot currently determine which waymarks are present on which submaps, so all waymarks " +
-						"are shown at their positions on all submaps (provided that they are within the map's bounds)." );
+			ImGui.Text( Loc.Localize( "Help Window Text: Maps 3",
+						"Please also note that the plugin cannot currently determine which waymarks are present on which submaps, so all waymarks " +
+						"are shown at their positions on all submaps (provided that they are within the map's bounds)." ) );
 		}
 
 		protected void DrawHelpWindow_Coordinates()
 		{
-			ImGui.Text( "Coordinate Systems:\r\n" );
+			ImGui.Text( Loc.Localize( "Help Window Text: Coordinates 1", "Coordinate Systems:" ) + "\r\n" );
 			ImGui.Spacing();
 			ImGui.Indent();
-			ImGui.Text( "The game internally uses a right-handed 3D coordinate system, " +
+			ImGui.Text( Loc.Localize( "Help Window Text: Coordinates 2",
+						"The game internally uses a right-handed 3D coordinate system, " +
 						"with X running West to East, Y running down to up, and Z running North to South.  The on-map " +
 						"coordinate system is a 2D projection of the XZ plane, with X running West to East, and Y running " +
 						"North to South.  Please note that the coordinates presented in chat links or on the map widgets " +
@@ -932,14 +948,14 @@ namespace WaymarkPresetPlugin
 				ImGui.Image( mCoordinateSystemsDiagram.ImGuiHandle, size );
 				ImGui.Unindent();
 			}
-			//***** TODO: Show diagrams *****
 		}
 
 		protected void DrawHelpWindow_CircleCalculator()
 		{
-			ImGui.Text( "This calculator will compute radially symmetric points (\"clock spots\") with the information that you " +
+			ImGui.Text( Loc.Localize( "Circle Computer Text: Instructions 1",
+						"This calculator will compute radially symmetric points (\"clock spots\") with the information that you " +
 						"give it.  You can then drag these into the preset editor to replace any waymarks with the calculated points, " +
-						"or you can use the buttons at the bottom of this pane." );
+						"or you can use the buttons at the bottom of this pane." ) );
 			
 			ImGui.Spacing();
 			ImGui.Spacing();
@@ -947,10 +963,10 @@ namespace WaymarkPresetPlugin
 			ImGui.Spacing();
 			ImGui.Spacing();
 
-			ImGui.InputFloat3( "Center", ref mCircleComputer_Center );
-			ImGui.InputFloat( "Radius (y)", ref mCircleComputer_Radius_Yalms );
-			ImGui.SliderInt( "Num Points", ref mCircleComputer_NumPoints, 1, 8 );
-			ImGui.InputFloat( "Angle Offset (deg)", ref mCircleComputer_AngleOffset_Deg );
+			ImGui.InputFloat3( Loc.Localize( "Circle Computer Text: Center Position", "Center Position" ) + "###Center Position", ref mCircleComputer_Center );
+			ImGui.InputFloat( Loc.Localize( "Circle Computer Text: Radius", "Radius (y)" ) + "###Radius (y)", ref mCircleComputer_Radius_Yalms );
+			ImGui.SliderInt( Loc.Localize( "Circle Computer Text: Number of Points", "Number of Points" ) + "##Number of Points", ref mCircleComputer_NumPoints, 1, 8 );
+			ImGui.InputFloat( Loc.Localize( "Circle Computer Text: Angle Offset", "Angle Offset (deg)" ) + "###Angle Offset (deg)", ref mCircleComputer_AngleOffset_Deg );
 
 			ImGui.Spacing();
 			ImGui.Spacing();
@@ -969,7 +985,7 @@ namespace WaymarkPresetPlugin
 					{
 						ImGui.SetDragDropPayload( $"EditPresetCoords", mpEditWaymarkCoordDragAndDropData, (uint)Marshal.SizeOf<Vector3>() );
 						Marshal.StructureToPtr( points[i], mpEditWaymarkCoordDragAndDropData, true );
-						ImGui.Text( $"Copy coordinates to..." );
+						ImGui.Text( Loc.Localize( "Drag and Drop Preview: Edit Swap Waymark", "Copy coordinates to..." ) );
 						ImGui.EndDragDropSource();
 					}
 				}
@@ -986,9 +1002,10 @@ namespace WaymarkPresetPlugin
 			ImGui.Spacing();
 			//***** TODO: Maybe draw a diagram of these points. *****
 
+			string copyIntoEditorButtonText = Loc.Localize( "Button: Copy Points from Circle Computer", "Copy these points into the editor" );
 			if( EditingPreset )
 			{
-				if( ImGui.Button( "Copy these points into the editor" ) )
+				if( ImGui.Button( copyIntoEditorButtonText + "###Copy these points into the editor button" ) )
 				{
 					for( int i = 0; i < points.Length && i < 8; ++i )
 					{
@@ -1003,7 +1020,7 @@ namespace WaymarkPresetPlugin
 				ImGui.PushStyleColor( ImGuiCol.ButtonActive, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
 				ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled] );
 
-				ImGui.Button( "Copy these points into the editor" );
+				ImGui.Button( copyIntoEditorButtonText + "###Copy these points into the editor button" );
 
 				ImGui.PopStyleColor();
 				ImGui.PopStyleColor();
@@ -1011,10 +1028,10 @@ namespace WaymarkPresetPlugin
 				ImGui.PopStyleColor();
 			}
 
-			if( ImGui.Button( "Create a new preset using these points" ) )
+			if( ImGui.Button( Loc.Localize( "Button: Create Preset from Circle Computer", "Create a new preset using these points" ) + "###Create a new preset using these points" ) )
 			{
 				var newPreset = new WaymarkPreset();
-				newPreset.Name = "Imported from Circle Computer";
+				newPreset.Name = Loc.Localize( "Default Preset Name - Circle Computer", "Imported from Circle Computer" );
 				for( int i = 0; i < points.Length && i < 8; ++i )
 				{
 					newPreset[i].Active = true;
@@ -1065,13 +1082,13 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			if( ImGui.Begin( "Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize ) )
+			if( ImGui.Begin( Loc.Localize( "Window Title: Preset Editor", "Preset Editor" ) + "###Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize ) )
 			{
 				ImGuiUtils.TitleBarHelpButton( () => { ShowHelpWindow( HelpWindowPage.Editing ); }, 0, UiBuilder.IconFont );
 
 				if( ScratchEditingPreset != null )
 				{
-					ImGui.Text( "Name: " );
+					ImGui.Text( Loc.Localize( "Edit Window Text: Name", "Name: " ) );
 					ImGui.SameLine();
 					ImGui.InputText( "##PresetName", ref ScratchEditingPreset.Name, 128 );
 					ImGui.Spacing();
@@ -1081,7 +1098,8 @@ namespace WaymarkPresetPlugin
 					if( ImGui.BeginTable( "###PresetEditorWaymarkTable", 4 ) )
 					{
 						float numberWidth = ImGui.CalcTextSize( "-0000.000" ).X;
-						ImGui.TableSetupColumn( "Active", ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize( "Active         " ).X + ImGui.GetStyle().CellPadding.X * 2 );
+						string activeColumnHeaderText = Loc.Localize( "Edit Window Text: Active Column Header", "Active" );
+						ImGui.TableSetupColumn( activeColumnHeaderText, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize( activeColumnHeaderText + "         " ).X + ImGui.GetStyle().CellPadding.X * 2 );
 						ImGui.TableSetupColumn( "X", ImGuiTableColumnFlags.WidthFixed, numberWidth + ImGui.GetStyle().CellPadding.X * 2 + ImGui.GetStyle().FramePadding.X * 4 );
 						ImGui.TableSetupColumn( "Y", ImGuiTableColumnFlags.WidthFixed, numberWidth + ImGui.GetStyle().CellPadding.X * 2 + ImGui.GetStyle().FramePadding.X * 4 );
 						ImGui.TableSetupColumn( "Z", ImGuiTableColumnFlags.WidthFixed, numberWidth + ImGui.GetStyle().CellPadding.X * 2 + ImGui.GetStyle().FramePadding.X * 4 );
@@ -1096,7 +1114,7 @@ namespace WaymarkPresetPlugin
 							{
 								ImGui.SetDragDropPayload( $"EditPresetWaymark", mpEditWaymarkDragAndDropData, sizeof( int ) );
 								Marshal.WriteInt32( mpEditWaymarkDragAndDropData, waymark.ID );
-								ImGui.Text( $"Swap Waymark {waymark.Label} with..." );
+								ImGui.Text( String.Format( Loc.Localize( "Drag and Drop Preview: Edit Swap Waymark", "Swap Waymark {0} with..." ), waymark.Label ) );
 								ImGui.EndDragDropSource();
 							}
 							if( ImGui.BeginDragDropTarget() )
@@ -1170,7 +1188,7 @@ namespace WaymarkPresetPlugin
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
-					if( ImGui.Button( "Save" ) )
+					if( ImGui.Button( Loc.Localize( "Button: Save", "Save" ) + "###Save Button" ) )
 					{
 						//*****TODO: Look into why this was even put in a try/catch block.  It doesn't seem like it needs it anymore, if it ever did.*****
 						try
@@ -1190,13 +1208,13 @@ namespace WaymarkPresetPlugin
 				{
 					ImGui.Text( "Invalid editing data; something went very wrong.  Please press \"Cancel\" and try again." );
 				}
-				if( ImGui.Button( "Cancel" ) )
+				if( ImGui.Button( Loc.Localize( "Button: Cancel", "Cancel" ) + "###Cancel Button" ) )
 				{
 					EditingPresetIndex = -1;
 					ScratchEditingPreset = null;
 				}
 				ImGui.SameLine( ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize( "Map View" ).X - ImGui.GetStyle().FramePadding.X * 2 );
-				if( ImGui.Button( "Map View" ) )
+				if( ImGui.Button( Loc.Localize( "Button: Map View", "Map View" ) + "###Map View Button" ) )
 				{
 					MapWindowVisible = !MapWindowVisible;
 				}
@@ -1211,39 +1229,40 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
-			if( ImGui.Begin( "Waymark Settings", ref mSettingsWindowVisible,
+			if( ImGui.Begin( Loc.Localize( "Window Title: Config", "Waymark Settings" ) + "###Waymark Settings", ref mSettingsWindowVisible,
 				ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse ) )
 			{
-				ImGui.Checkbox( "Always show preset info pane.", ref mConfiguration.mAlwaysShowInfoPane );
-				ImGui.Checkbox( "Clicking the selected preset unselects it.", ref mConfiguration.mAllowUnselectPreset );
-				ImGui.Checkbox( "Categorize presets by zone.", ref mConfiguration.mSortPresetsByZone );
-				ImGui.Checkbox( "Open and close library with the game's waymark window.", ref mConfiguration.mOpenAndCloseWithFieldMarkerAddon );
-				ImGui.Checkbox( "Attach library window to the game's waymark window.", ref mConfiguration.mAttachLibraryToFieldMarkerAddon );
-				ImGui.Checkbox( "Show ID numbers next to zone names.", ref mConfiguration.mShowIDNumberNextToZoneNames );
-				ImGuiUtils.HelpMarker( "Shows the internal Content Finder ID of the zone/duty in some places.  Generally only used for debugging." );
-				ImGui.Checkbox( "Show the index of the preset within the library.", ref mConfiguration.mShowLibraryIndexInPresetList );
-				ImGuiUtils.HelpMarker( "The primary use of this is if you need to know the preset index to use within a text command.  You can always leave this disabled if you only use the GUI." );
+				ImGui.Checkbox( Loc.Localize( "Config Option: Always Show Info Pane", "Always show preset info pane." ) + "###Always show preset info pane checkbox", ref mConfiguration.mAlwaysShowInfoPane );
+				ImGui.Checkbox( Loc.Localize( "Config Option: Clicking Preset Unselects", "Clicking the selected preset unselects it." ) + "###Clicking the selected preset unselects it checkbox", ref mConfiguration.mAllowUnselectPreset );
+				ImGui.Checkbox( Loc.Localize( "Config Option: Categorize Presets by Zone", "Categorize presets by zone." ) + "###Categorize Presets By Zone Checkbox", ref mConfiguration.mSortPresetsByZone );
+				ImGui.Checkbox( Loc.Localize( "Config Option: Open and Close with Game Window", "Open and close library with the game's waymark window." ) + "###Open and Close With Game Window checkbox", ref mConfiguration.mOpenAndCloseWithFieldMarkerAddon );
+				ImGui.Checkbox( Loc.Localize( "Config Option: Attach to Game Window", "Attach library window to the game's waymark window." ) + "###Attach library window to the game's waymark window checkbox.", ref mConfiguration.mAttachLibraryToFieldMarkerAddon );
+				ImGui.Checkbox( Loc.Localize( "Config Option: Show ID in Zone Names", "Show ID numbers next to zone names." ) + "###Show ID numbers next to zone names checkbox.", ref mConfiguration.mShowIDNumberNextToZoneNames );
+				ImGuiUtils.HelpMarker( Loc.Localize( "Help: Show ID in Zone Names", "Shows the internal Content Finder ID of the zone/duty in some places.  Generally only used for debugging." ) );
+				ImGui.Checkbox( Loc.Localize( "Config Option: Show Preset Indices", "Show the index of the preset within the library." ) + "###Show the index of the preset within the library checkbox", ref mConfiguration.mShowLibraryIndexInPresetList );
+				ImGuiUtils.HelpMarker( Loc.Localize( "Help: Show Preset Indices", "The primary use of this is if you need to know the preset index to use within a text command.  You can always leave this disabled if you only use the GUI." ) );
 				/*ImGui.Checkbox( "Allow placement of waymarks client-side in overworld zones.", ref mConfiguration.mAllowClientSidePlacementInOverworldZones );
 				ImGuiUtils.HelpMarker( "Lets the plugin attempt to place waymarks in overworld zones that do not function with the game's preset interface.  These will only be visible client-side, and not to other party/alliance members.  This is out of specification behavior for the game, so please read this plugin's readme before enabling." );*/
-				ImGui.Checkbox( "Autoload presets from library.", ref mConfiguration.mAutoPopulatePresetsOnEnterInstance );
-				ImGuiUtils.HelpMarker( "Automatically loads the first five presets that exist in the library for a zone when you load into it.  THIS WILL OVERWRITE THE GAME'S SLOTS WITHOUT WARNING, so please do not turn this on until you are certain that you have saved any data that you want to keep.  Consider using this with the auto-import option below to reduce the risk of inadvertent preset loss." );
-				ImGui.Checkbox( "Autosave presets to library.", ref mConfiguration.mAutoSavePresetsOnInstanceLeave );
-				ImGuiUtils.HelpMarker( "Automatically copies any populated game preset slots into the library upon exiting an instance." );
-				ImGui.Checkbox( "Suppress responses to text commands (besides \"help\").", ref mConfiguration.mSuppressCommandLineResponses );
-				if( ImGui.Button( "Clear All Map View Data" ) )
+				ImGui.Checkbox( Loc.Localize( "Config Option: Autoload Presets from Libarary", "Autoload presets from library." ) + "###Autoload presets from library checkbox", ref mConfiguration.mAutoPopulatePresetsOnEnterInstance );
+				ImGuiUtils.HelpMarker( Loc.Localize( "Help: Autoload presets from Library", "Automatically loads the first five presets that exist in the library for a zone when you load into it.  THIS WILL OVERWRITE THE GAME'S SLOTS WITHOUT WARNING, so please do not turn this on until you are certain that you have saved any data that you want to keep.  Consider using this with the auto-import option below to reduce the risk of inadvertent preset loss." ) );
+				ImGui.Checkbox( Loc.Localize( "Config Option: Autosave Presets to Library", "Autosave presets to library." ) + "###Autosave Presets to Library Checkbox", ref mConfiguration.mAutoSavePresetsOnInstanceLeave );
+				ImGuiUtils.HelpMarker( Loc.Localize( "Help: Autosave Presets to Library", "Automatically copies any populated game preset slots into the library upon exiting an instance." ) );
+				ImGui.Checkbox( String.Format( Loc.Localize( "Config Option: Suppress Text Command Responses", "Suppress responses to text commands (besides \"{0}\")." ), Plugin.SubcommandName_Help ) + "###Suppress Command Responses Checkbox", ref mConfiguration.mSuppressCommandLineResponses );
+				if( ImGui.Button( Loc.Localize( "Button: Clear All Map View Data", "Clear All Map View Data" ) + "###Clear All Map View Data Button" ) )
 				{
 					ClearAllMapViewStateData();
 				}
-				ImGuiUtils.HelpMarker( "This deletes all map view pan/zoom/submap state, resetting every map back to default." );
+				ImGuiUtils.HelpMarker( Loc.Localize( "Help: Clear All Map View Data", "This deletes all map view pan/zoom/submap state, resetting every map back to default." ) );
 				ImGui.Spacing();
-				if( ImGui.Button( "Save and Close" ) )
+				if( ImGui.Button( Loc.Localize( "Button: Save and Close", "Save and Close" ) + "###Save and Close Button" ) )
 				{
 					mConfiguration.Save();
 					SettingsWindowVisible = false;
 				}
 
-				ImGui.SameLine( ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize( "Show Library" ).X - ImGui.GetStyle().FramePadding.X * 2 );
-				if( ImGui.Button( "Show Library" ) )
+				string showLibraryButtonString = Loc.Localize( "Button: Show Library", "Show Library" );
+				ImGui.SameLine( ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize( showLibraryButtonString ).X - ImGui.GetStyle().FramePadding.X * 2 );
+				if( ImGui.Button( showLibraryButtonString + "###Show Library Button" ) )
 				{
 					MainWindowVisible = true;
 				}
@@ -1264,7 +1283,7 @@ namespace WaymarkPresetPlugin
 				CapturedWaymarkIndex = -1;	//	Shouldn't be necessary, but better to be safe than potentially muck up a preset.
 			}
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 350, 380 ) * ImGui.GetIO().FontGlobalScale, new Vector2( int.MaxValue, int.MaxValue ) );
-			if( ImGui.Begin( $"Map View{(showingEditingView ? " - Editing" : "")}###MapViewWindow", ref mMapWindowVisible,
+			if( ImGui.Begin( ( showingEditingView ? Loc.Localize( "Window Title: Map View (Editing)", "Map View - Editing" ) : Loc.Localize( "Window Title: Map View", "Map View" ) ) + "###MapViewWindow", ref mMapWindowVisible,
 				ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
 				//	Help button.
@@ -1315,7 +1334,7 @@ namespace WaymarkPresetPlugin
 						{
 							if( MapTextureDict[(UInt16)territoryTypeIDToShow].Count < 1 )
 							{
-								ImGui.Text( "No maps available for this zone." );
+								ImGui.Text( Loc.Localize( "Map Window Text: No Maps Available", "No maps available for this zone." ) );
 							}
 							else
 							{
@@ -1456,7 +1475,7 @@ namespace WaymarkPresetPlugin
 									List<string> subMaps = new List<string>();
 									for( int i = 0; i < mapInfo.Length; ++i )
 									{
-										string subMapName = mapInfo[i].PlaceNameSub.Trim().Length < 1 ? $"Unnamed Sub-map {i + 1}" : mapInfo[i].PlaceNameSub;
+										string subMapName = mapInfo[i].PlaceNameSub.Trim().Length < 1 ? String.Format( Loc.Localize( "Map Window Text: Unnamed Submap Placeholder", "Unnamed Sub-map {0}" ), i + 1 ) : mapInfo[i].PlaceNameSub;
 										subMaps.Add( subMapName );
 										subMapComboWidth = Math.Max( subMapComboWidth, ImGui.CalcTextSize( subMapName ).X );
 									}
@@ -1464,13 +1483,13 @@ namespace WaymarkPresetPlugin
 
 									ImGui.SameLine( Math.Max( mapWidgetSize_Px /*- ImGui.CalcTextSize( cursorPosText ).X*/ - subMapComboWidth + 8, 0 ) );
 									ImGui.SetNextItemWidth( subMapComboWidth );
-									ImGui.Combo( "", ref selectedSubMapIndex, subMaps.ToArray(), mapList.Count );
+									ImGui.Combo( "###SubmapDropdown", ref selectedSubMapIndex, subMaps.ToArray(), mapList.Count );
 								}
 							}
 						}
 						else
 						{
-							ImGui.Text( "Loading zone map(s)." );
+							ImGui.Text( Loc.Localize( "Map Window Text: Loading Maps", "Loading zone map(s)." ) );
 							LoadMapTextures( (UInt16)territoryTypeIDToShow );
 						}
 
@@ -1478,12 +1497,13 @@ namespace WaymarkPresetPlugin
 					}
 					else
 					{
-						ImGui.Text( "Loading zone map(s)." );
+						ImGui.Text( Loc.Localize( "Map Window Text: Loading Maps", "Loading zone map(s)." ) );
 					}
 				}
 				else
 				{
-					ImGui.Text( "No Preset Selected" );
+					//***** TODO: The "else" message for this is a bit misleading; change this to be invalid zone selected, and make a separate one for actually no preset selected.
+					ImGui.Text( Loc.Localize( "Map Window Text: No Preset Selected", "No Preset Selected" ) );
 				}
 			}
 
@@ -1521,7 +1541,7 @@ namespace WaymarkPresetPlugin
 				}
 				catch( Exception e )
 				{
-					PluginLog.Log( $"Error while copying preset data to game slot: {e}" );
+					PluginLog.Log( $"Error while copying preset data to game slot:\r\n{e}" );
 				}
 			}
 		}

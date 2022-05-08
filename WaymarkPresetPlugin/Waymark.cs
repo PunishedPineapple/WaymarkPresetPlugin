@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Numerics;
 
+using CheapLoc;
+
 namespace WaymarkPresetPlugin
 {
 	public class Waymark : IEquatable<Waymark>
@@ -20,9 +22,10 @@ namespace WaymarkPresetPlugin
 				Active = objToCopy.Active;
 			}
 		}
+
 		public string GetWaymarkDataString()
 		{
-			return Active ? ( X.ToString( "0.00" ).PadLeft( 7 ) + ", " + Y.ToString( "0.00" ).PadLeft( 7 ) + ", " + Z.ToString( "0.00" ).PadLeft( 7 ) ) : "Unused";
+			return Active ? ( X.ToString( "0.00" ).PadLeft( 7 ) + ", " + Y.ToString( "0.00" ).PadLeft( 7 ) + ", " + Z.ToString( "0.00" ).PadLeft( 7 ) ) : Loc.Localize( "Waymark Status: Unused", "Unused" );
 		}
 
 		public void SetCoords( Vector3 pos )

@@ -1,5 +1,6 @@
 ﻿using System;
 using Newtonsoft.Json;
+using CheapLoc;
 
 namespace WaymarkPresetPlugin
 {
@@ -8,6 +9,7 @@ namespace WaymarkPresetPlugin
 	{
 		public WaymarkPreset()
 		{
+			Name = DefaultPresetName;
 			A.ID = 0;
 			B.ID = 1;
 			C.ID = 2;
@@ -90,6 +92,7 @@ namespace WaymarkPresetPlugin
 
 			newPreset.MapID = gamePreset.ContentFinderConditionID;
 			newPreset.Time = DateTimeOffset.FromUnixTimeSeconds( gamePreset.UnixTime );
+			newPreset.Name = DefaultPresetName;
 
 			return newPreset;
 		}
@@ -156,7 +159,7 @@ namespace WaymarkPresetPlugin
 				}
 				catch
 				{
-					zoneName = "Error retrieving zone name!";
+					zoneName = Loc.Localize( "Preset Info Error: Zone Name 1", "Error retrieving zone name!" );
 				}
 			}
 
@@ -170,8 +173,8 @@ namespace WaymarkPresetPlugin
 			str += "2: " + Two.GetWaymarkDataString() + "\r\n";
 			str += "3: " + Three.GetWaymarkDataString() + "\r\n";
 			str += "4: " + Four.GetWaymarkDataString() + "\r\n";
-			str += "Zone: " + zoneName + "\r\n";
-			str += "Last Modified: " + Time.LocalDateTime.ToString();
+			str += Loc.Localize( "Preset Info Label: Zone", "Zone: " ) + zoneName + "\r\n";
+			str += Loc.Localize( "Preset Info Label: Last Modified", "Last Modified: " ) + Time.LocalDateTime.ToString();
 			return str;
 		}
 
@@ -179,6 +182,8 @@ namespace WaymarkPresetPlugin
 
 		//	This looks gross, but it's easier to be compatible with PP presets if we have each waymark be a named member instead of in a collection :(
 		public string Name { get; set; } = "Unknown";
+
+		protected static string DefaultPresetName => Loc.Localize( "Default Preset Name", "New Preset" );
 
 		//	Don't serialize in order to read older configs properly.
 		[NonSerialized] protected UInt16 mMapID;

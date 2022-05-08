@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Dalamud.Logging;
+using CheapLoc;
 
 namespace WaymarkPresetPlugin
 {
@@ -19,7 +20,7 @@ namespace WaymarkPresetPlugin
 			try
 			{
 				WaymarkPreset importedPreset = WaymarkPreset.Parse( gamePresetData );
-				importedPreset.Name = "Imported";
+				importedPreset.Name = Loc.Localize( "Default Preset Name (Imported)", "Imported" );
 				Presets.Add( importedPreset );
 				return Presets.Count - 1;
 			}
@@ -61,7 +62,7 @@ namespace WaymarkPresetPlugin
 			}
 			else
 			{
-				return "Invalid index requested for preset export.  No preset exists at index " + index.ToString() + ".";
+				return String.Format( Loc.Localize( "Export Preset Fallback Error", "Invalid index requested for preset export.  No preset exists at index {0}." ), index );
 			}
 		}
 
