@@ -130,6 +130,10 @@ namespace WaymarkPresetPlugin
 			{
 				mUI.SettingsWindowVisible = !mUI.SettingsWindowVisible;
 			}
+			else if( subCommand.ToLower() == "debug" )
+			{
+				mUI.DebugWindowVisible = !mUI.DebugWindowVisible;
+			}
 			else if( subCommand.ToLower() == SubcommandName_SlotInfo )
 			{
 				commandResponse = ProcessTextCommand_SlotInfo( subCommandArgs );
@@ -185,17 +189,17 @@ namespace WaymarkPresetPlugin
 			}
 			else if( args.ToLower() == SubcommandName_Place )
 			{
-				return String.Format(	Loc.Localize( "Text Command Response: Help - Place", "Places the preset with the specified name (if possible).  Quotes MUST be used around the name.  May also specify preset index without quotes instead.  Usage \"{0} \"<name>\"|<index>\".  Name must match exactly (besides case).  Index can be any valid libary preset number." ),
+				return String.Format(	Loc.Localize( "Text Command Response: Help - Place", "Places the preset with the specified name (if possible).  Quotes MUST be used around the name.  May also specify preset index without quotes instead.  Usage: \"{0} <name>|<index>\".  Name must match exactly (besides case).  Index can be any valid libary preset number." ),
 										TextCommandName + " " + SubcommandName_Place );
 			}
 			else if( args.ToLower() == SubcommandName_Import )
 			{
-				return String.Format(	Loc.Localize( "Text Command Response: Help - Import", "Copies one of the game's five preset slots to the library.  Usage \"{0} <slot>\".  The slot number can be any valid game slot.  Command-line import of a formatted preset string is not supported due to length restrictions in the game's chat box." ),
+				return String.Format(	Loc.Localize( "Text Command Response: Help - Import", "Copies one of the game's five preset slots to the library.  Usage: \"{0} <slot>\".  The slot number can be any valid game slot.  Command-line import of a formatted preset string is not supported due to length restrictions in the game's chat box." ),
 										TextCommandName + " " + SubcommandName_Import );
 			}
 			else if( args.ToLower() == SubcommandName_Export )
 			{
-				return String.Format(	Loc.Localize( "Text Command Response: Help - Export", "Copies a preset from the library to the specified game slot *or* copies a preset to the clipboard, depending on flags and parameters.  Usage \"{0} [{1}] [{2}] <slot|index> [slot]\".  The slot number can be any valid game slot, and index can be any valid library preset number.  Use of the {3} flag specifies that the first number is a game slot, not a library index.  Use of the {4} flag includes the last-modified time in the clipboard export." ),
+				return String.Format(	Loc.Localize( "Text Command Response: Help - Export", "Copies a preset from the library to the specified game slot *or* copies a preset to the clipboard, depending on flags and parameters.  Usage: \"{0} [{1}] [{2}] <slot|index> [slot]\".  The slot number can be any valid game slot, and index can be any valid library preset number.  Use of the {3} flag specifies that the first number is a game slot, not a library index.  Use of the {4} flag includes the last-modified time in the clipboard export." ),
 										TextCommandName + " " + SubcommandName_Export, SubCommandArg_Export_IncludeTime, SubCommandArg_Export_IsGameSlot, SubCommandArg_Export_IsGameSlot, SubCommandArg_Export_IncludeTime );
 			}
 			else if( args.ToLower() == SubcommandName_ExportAll )
@@ -436,7 +440,7 @@ namespace WaymarkPresetPlugin
 			catch( Exception e )
 			{
 				PluginLog.Log( $"Unknown error occured while export the preset:\r\n{e}" );
-				return Loc.Localize( "Text Command Response: Export - Error 7", "An unknown error occured while trying to export the preset." );
+				return Loc.Localize( "Text Command Response: Export - Error 8", "An unknown error occured while trying to export the preset." );
 			}
 		}
 

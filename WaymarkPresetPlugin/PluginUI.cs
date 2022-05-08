@@ -125,6 +125,7 @@ namespace WaymarkPresetPlugin
 			DrawEditorWindow();
 			DrawSettingsWindow();
 			DrawHelpWindow();
+			DrawDebugWindow();
 		}
 
 		protected void DrawMainWindow()
@@ -633,7 +634,7 @@ namespace WaymarkPresetPlugin
 					ImGui.EndGroup();
 					ImGui.Text( Loc.Localize( "Info Pane Text: Preset Info Label", "Preset Info:" ) );
 					string mapViewButtonText = Loc.Localize( "Button: Map View", "Map View" );
-					ImGui.SameLine( rightAlignPos - ImGui.CalcTextSize( "mapViewButtonText" ).X - ImGui.GetStyle().WindowPadding.X - ImGui.GetStyle().FramePadding.X * 2 );
+					ImGui.SameLine( rightAlignPos - ImGui.CalcTextSize( mapViewButtonText ).X - ImGui.GetStyle().WindowPadding.X - ImGui.GetStyle().FramePadding.X * 2 );
 					if( ImGui.Button( mapViewButtonText + "###Map View Button" ) )
 					{
 						MapWindowVisible = !MapWindowVisible;
@@ -663,7 +664,7 @@ namespace WaymarkPresetPlugin
 
 					string zoneStr = ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID ).DutyName;
 					zoneStr += mConfiguration.ShowIDNumberNextToZoneNames ? $" ({mConfiguration.PresetLibrary.Presets[SelectedPreset].MapID})" : "";
-					ImGui.Text( String.Format( Loc.Localize( "Info Pane Text: Zone Label", "Zone: {}"), zoneStr ) );
+					ImGui.Text( String.Format( Loc.Localize( "Info Pane Text: Zone Label", "Zone: {0}"), zoneStr ) );
 					ImGui.Text( String.Format( Loc.Localize( "Info Pane Text: Last Modified Label", "Last Modified: {0}"), mConfiguration.PresetLibrary.Presets[SelectedPreset].Time.LocalDateTime ) );
 
 					ImGui.Spacing();
@@ -985,7 +986,7 @@ namespace WaymarkPresetPlugin
 					{
 						ImGui.SetDragDropPayload( $"EditPresetCoords", mpEditWaymarkCoordDragAndDropData, (uint)Marshal.SizeOf<Vector3>() );
 						Marshal.StructureToPtr( points[i], mpEditWaymarkCoordDragAndDropData, true );
-						ImGui.Text( Loc.Localize( "Drag and Drop Preview: Edit Swap Waymark", "Copy coordinates to..." ) );
+						ImGui.Text( Loc.Localize( "Drag and Drop Preview: Circle Computer Waymark", "Copy coordinates to..." ) );
 						ImGui.EndDragDropSource();
 					}
 				}
@@ -1267,6 +1268,31 @@ namespace WaymarkPresetPlugin
 					MainWindowVisible = true;
 				}
 			}
+			ImGui.End();
+		}
+
+		protected void DrawDebugWindow()
+		{
+			if( !DebugWindowVisible )
+			{
+				return;
+			}
+
+			//	Draw the window.
+			ImGui.SetNextWindowSize( new Vector2( 1340, 568 ) * ImGui.GetIO().FontGlobalScale, ImGuiCond.FirstUseEver );
+			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 340 ) * ImGui.GetIO().FontGlobalScale, new Vector2( float.MaxValue, float.MaxValue ) );
+			if( ImGui.Begin( Loc.Localize( "Window Title: Debug Tools", "Debug Tools" ) + "###Debug Tools", ref mDebugWindowVisible ) )
+			{
+				if( ImGui.Button( "Export Localizable Strings" ) )
+				{
+					string pwd = Directory.GetCurrentDirectory();
+					Directory.SetCurrentDirectory( mPluginInterface.AssemblyLocation.DirectoryName );
+					Loc.ExportLocalizable();
+					Directory.SetCurrentDirectory( pwd );
+				}
+			}
+
+			//	We're done.
 			ImGui.End();
 		}
 
@@ -1703,6 +1729,13 @@ namespace WaymarkPresetPlugin
 		{
 			get { return mHelpWindowVisible; }
 			set { mHelpWindowVisible = value; }
+		}
+
+		protected bool mDebugWindowVisible = false;
+		public bool DebugWindowVisible
+		{
+			get { return mDebugWindowVisible; }
+			set { mDebugWindowVisible = value; }
 		}
 
 		protected string mPresetImportString = "";
