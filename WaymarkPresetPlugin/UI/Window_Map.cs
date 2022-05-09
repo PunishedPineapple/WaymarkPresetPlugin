@@ -60,7 +60,6 @@ namespace WaymarkPresetPlugin
 				PluginLog.LogWarning( $"Unable to save map view state data: {e}" );
 			}
 
-
 			//	Try to do this nicely for a moment, but then just brute force it to clean up as much as we can.
 			mMapTextureDictMutex.WaitOne( 500 );
 
@@ -99,11 +98,13 @@ namespace WaymarkPresetPlugin
 
 				//	Get TerritoryType ID of map to show, along with the (2D/XZ) zone coordinates of the waymarks.  Do this up front because we can be showing both normal presets or an editing scratch preset in the map view.
 				uint territoryTypeIDToShow = 0;
+				bool territoryTypeIDToShowIsValid = false;
 				Vector2[] marker2dCoords = new Vector2[8];
 				bool[] markerActiveFlags = new bool[8];
 				if( showingEditingView )
 				{
 					territoryTypeIDToShow = ZoneInfoHandler.GetZoneInfoFromContentFinderID( mUI.EditorWindow.ScratchEditingPreset.MapID ).TerritoryTypeID;
+					territoryTypeIDToShowIsValid = true;
 					for( int i = 0; i < marker2dCoords.Length; ++i )
 					{
 						marker2dCoords[i] = new Vector2( mUI.EditorWindow.ScratchEditingPreset.Waymarks[i].X, mUI.EditorWindow.ScratchEditingPreset.Waymarks[i].Z );
@@ -112,6 +113,7 @@ namespace WaymarkPresetPlugin
 				}
 				else if( mUI.LibraryWindow.SelectedPreset > -1 && mUI.LibraryWindow.SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
 				{
+					territoryTypeIDToShowIsValid = true;
 					territoryTypeIDToShow = ZoneInfoHandler.GetZoneInfoFromContentFinderID( mConfiguration.PresetLibrary.Presets[mUI.LibraryWindow.SelectedPreset].MapID ).TerritoryTypeID;
 					marker2dCoords[0] = new Vector2( mConfiguration.PresetLibrary.Presets[mUI.LibraryWindow.SelectedPreset].A.X, mConfiguration.PresetLibrary.Presets[mUI.LibraryWindow.SelectedPreset].A.Z );
 					marker2dCoords[1] = new Vector2( mConfiguration.PresetLibrary.Presets[mUI.LibraryWindow.SelectedPreset].B.X, mConfiguration.PresetLibrary.Presets[mUI.LibraryWindow.SelectedPreset].B.Z );
@@ -133,184 +135,190 @@ namespace WaymarkPresetPlugin
 				}
 
 				//	Try to draw the maps if we have a valid zone to show.
-				if( territoryTypeIDToShow > 0 )
+				if( territoryTypeIDToShowIsValid )
 				{
-					//	Try to show the map(s); otherwise, show a message that they're still loading.
-					if( mMapTextureDictMutex.WaitOne( 0 ) )
+					if( territoryTypeIDToShow > 0 )
 					{
-						if( mMapTextureDict.ContainsKey( (UInt16)territoryTypeIDToShow ) )
+						//	Try to show the map(s); otherwise, show a message that they're still loading.
+						if( mMapTextureDictMutex.WaitOne( 0 ) )
 						{
-							if( mMapTextureDict[(UInt16)territoryTypeIDToShow].Count < 1 )
+							if( mMapTextureDict.ContainsKey( (UInt16)territoryTypeIDToShow ) )
 							{
-								ImGui.Text( Loc.Localize( "Map Window Text: No Maps Available", "No maps available for this zone." ) );
-							}
-							else
-							{
-								//	Some things that we'll need as we (attempt to) draw the map.
-								var mapList = mMapTextureDict[(UInt16)territoryTypeIDToShow];
-								var mapInfo = ZoneInfoHandler.GetMapInfoFromTerritoryTypeID( territoryTypeIDToShow );
-								string cursorPosText = "X: ---, Y: ---";
-								Vector2 windowSize = ImGui.GetWindowSize();
-								float mapWidgetSize_Px = Math.Min( windowSize.X - 15 * ImGui.GetIO().FontGlobalScale, windowSize.Y - 63 * ImGui.GetIO().FontGlobalScale );
-
-								//	Ensure that the submap/zoom/pan for this map exists.
-								if( !MapViewStateData.ContainsKey( territoryTypeIDToShow ) )
+								if( mMapTextureDict[(UInt16)territoryTypeIDToShow].Count < 1 )
 								{
-									MapViewStateData.Add( territoryTypeIDToShow, new MapViewState() );
+									ImGui.Text( Loc.Localize( "Map Window Text: No Maps Available", "No maps available for this zone." ) );
 								}
-								for( int i = MapViewStateData[territoryTypeIDToShow].SubMapViewData.Count; i < mapInfo.Length; ++i )
+								else
 								{
-									MapViewStateData[territoryTypeIDToShow].SubMapViewData.Add( new MapViewState.SubMapViewState( GetDefaultMapZoom( (float)mapInfo[i].SizeFactor ), new Vector2( 0.5f ) ) );
-								}
+									//	Some things that we'll need as we (attempt to) draw the map.
+									var mapList = mMapTextureDict[(UInt16)territoryTypeIDToShow];
+									var mapInfo = ZoneInfoHandler.GetMapInfoFromTerritoryTypeID( territoryTypeIDToShow );
+									string cursorPosText = "X: ---, Y: ---";
+									Vector2 windowSize = ImGui.GetWindowSize();
+									float mapWidgetSize_Px = Math.Min( windowSize.X - 15 * ImGui.GetIO().FontGlobalScale, windowSize.Y - 63 * ImGui.GetIO().FontGlobalScale );
 
-								//	Aliases
-								ref int selectedSubMapIndex = ref MapViewStateData[territoryTypeIDToShow].SelectedSubMapIndex;
-
-								if( selectedSubMapIndex < mapList.Count )
-								{
-									//	Aliases
-									ref float mapZoom = ref MapViewStateData[territoryTypeIDToShow].SubMapViewData[selectedSubMapIndex].Zoom;
-									ref Vector2 mapPan = ref MapViewStateData[territoryTypeIDToShow].SubMapViewData[selectedSubMapIndex].Pan;
-
-									ImGui.PushStyleVar( ImGuiStyleVar.WindowPadding, new Vector2( 0 ) );
-									ImGui.BeginChild( "##MapImageContainer", new Vector2( mapWidgetSize_Px ), false, ImGuiWindowFlags.NoDecoration );
-									Vector2 mapLowerBounds = new( Math.Min( 1.0f, Math.Max( 0.0f, mapPan.X - mapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mapPan.Y - mapZoom * 0.5f ) ) );
-									Vector2 mapUpperBounds = new( Math.Min( 1.0f, Math.Max( 0.0f, mapPan.X + mapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mapPan.Y + mapZoom * 0.5f ) ) );
-									ImGui.ImageButton( mapList[selectedSubMapIndex].ImGuiHandle, new Vector2( mapWidgetSize_Px ), mapLowerBounds, mapUpperBounds, 0, new Vector4( 0, 0, 0, 1 ), new Vector4( 1, 1, 1, 1 ) );
-									Vector2 mapWidgetScreenPos = ImGui.GetItemRectMin();
-									if( ImGui.IsItemHovered() && CapturedWaymarkIndex < 0 )
+									//	Ensure that the submap/zoom/pan for this map exists.
+									if( !MapViewStateData.ContainsKey( territoryTypeIDToShow ) )
 									{
-										if( ImGui.GetIO().MouseWheel < 0 ) mapZoom *= 1.1f;
-										if( ImGui.GetIO().MouseWheel > 0 ) mapZoom *= 0.9f;
+										MapViewStateData.Add( territoryTypeIDToShow, new MapViewState() );
 									}
-									mapZoom = Math.Min( 1.0f, Math.Max( 0.01f, mapZoom ) );
-									if( ImGui.IsItemActive() && ImGui.GetIO().MouseDown[0] )
+									for( int i = MapViewStateData[territoryTypeIDToShow].SubMapViewData.Count; i < mapInfo.Length; ++i )
 									{
-										Vector2 mouseDragDelta = ImGui.GetIO().MouseDelta;
-										//	If we have a captured waymark, convert it to screen coordinates, add on the mouse delta, and then convert it back and save off the new location as-appropriate
-										if( CapturedWaymarkIndex > -1 && CapturedWaymarkIndex < marker2dCoords.Length )
+										MapViewStateData[territoryTypeIDToShow].SubMapViewData.Add( new MapViewState.SubMapViewState( GetDefaultMapZoom( (float)mapInfo[i].SizeFactor ), new Vector2( 0.5f ) ) );
+									}
+
+									//	Aliases
+									ref int selectedSubMapIndex = ref MapViewStateData[territoryTypeIDToShow].SelectedSubMapIndex;
+
+									if( selectedSubMapIndex < mapList.Count )
+									{
+										//	Aliases
+										ref float mapZoom = ref MapViewStateData[territoryTypeIDToShow].SubMapViewData[selectedSubMapIndex].Zoom;
+										ref Vector2 mapPan = ref MapViewStateData[territoryTypeIDToShow].SubMapViewData[selectedSubMapIndex].Pan;
+
+										ImGui.PushStyleVar( ImGuiStyleVar.WindowPadding, new Vector2( 0 ) );
+										ImGui.BeginChild( "##MapImageContainer", new Vector2( mapWidgetSize_Px ), false, ImGuiWindowFlags.NoDecoration );
+										Vector2 mapLowerBounds = new( Math.Min( 1.0f, Math.Max( 0.0f, mapPan.X - mapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mapPan.Y - mapZoom * 0.5f ) ) );
+										Vector2 mapUpperBounds = new( Math.Min( 1.0f, Math.Max( 0.0f, mapPan.X + mapZoom * 0.5f ) ), Math.Min( 1.0f, Math.Max( 0.0f, mapPan.Y + mapZoom * 0.5f ) ) );
+										ImGui.ImageButton( mapList[selectedSubMapIndex].ImGuiHandle, new Vector2( mapWidgetSize_Px ), mapLowerBounds, mapUpperBounds, 0, new Vector4( 0, 0, 0, 1 ), new Vector4( 1, 1, 1, 1 ) );
+										Vector2 mapWidgetScreenPos = ImGui.GetItemRectMin();
+										if( ImGui.IsItemHovered() && CapturedWaymarkIndex < 0 )
 										{
-											Vector2 capturedMarkerPixelCoords = MapTextureCoordsToScreenCoords( mapInfo[selectedSubMapIndex].GetPixelCoordinates( marker2dCoords[CapturedWaymarkIndex] ),
+											if( ImGui.GetIO().MouseWheel < 0 ) mapZoom *= 1.1f;
+											if( ImGui.GetIO().MouseWheel > 0 ) mapZoom *= 0.9f;
+										}
+										mapZoom = Math.Min( 1.0f, Math.Max( 0.01f, mapZoom ) );
+										if( ImGui.IsItemActive() && ImGui.GetIO().MouseDown[0] )
+										{
+											Vector2 mouseDragDelta = ImGui.GetIO().MouseDelta;
+											//	If we have a captured waymark, convert it to screen coordinates, add on the mouse delta, and then convert it back and save off the new location as-appropriate
+											if( CapturedWaymarkIndex > -1 && CapturedWaymarkIndex < marker2dCoords.Length )
+											{
+												Vector2 capturedMarkerPixelCoords = MapTextureCoordsToScreenCoords( mapInfo[selectedSubMapIndex].GetPixelCoordinates( marker2dCoords[CapturedWaymarkIndex] ),
 																												mapLowerBounds,
 																												mapUpperBounds,
 																												new Vector2( mapWidgetSize_Px ),
 																												mapWidgetScreenPos );
 
-											capturedMarkerPixelCoords += mouseDragDelta;
+												capturedMarkerPixelCoords += mouseDragDelta;
 
-											Vector2 capturedMarkerTexCoords = MapScreenCoordsToMapTextureCoords(    capturedMarkerPixelCoords,
+												Vector2 capturedMarkerTexCoords = MapScreenCoordsToMapTextureCoords(    capturedMarkerPixelCoords,
 																													mapLowerBounds,
 																													mapUpperBounds,
 																													new Vector2( mapWidgetSize_Px ),
 																													mapWidgetScreenPos );
 
-											marker2dCoords[CapturedWaymarkIndex] = mapInfo[selectedSubMapIndex].GetMapCoordinates( capturedMarkerTexCoords );
+												marker2dCoords[CapturedWaymarkIndex] = mapInfo[selectedSubMapIndex].GetMapCoordinates( capturedMarkerTexCoords );
 
-											if( mUI.EditorWindow.EditingPreset && mUI.EditorWindow.ScratchEditingPreset != null )
+												if( mUI.EditorWindow.EditingPreset && mUI.EditorWindow.ScratchEditingPreset != null )
+												{
+													mUI.EditorWindow.ScratchEditingPreset.Waymarks[CapturedWaymarkIndex].X = marker2dCoords[CapturedWaymarkIndex].X;
+													mUI.EditorWindow.ScratchEditingPreset.Waymarks[CapturedWaymarkIndex].Z = marker2dCoords[CapturedWaymarkIndex].Y;
+												}
+											}
+											//	Otherwise, we're just panning the map.
+											else
 											{
-												mUI.EditorWindow.ScratchEditingPreset.Waymarks[CapturedWaymarkIndex].X = marker2dCoords[CapturedWaymarkIndex].X;
-												mUI.EditorWindow.ScratchEditingPreset.Waymarks[CapturedWaymarkIndex].Z = marker2dCoords[CapturedWaymarkIndex].Y;
+												mapPan.X -= mouseDragDelta.X * mapZoom / mapWidgetSize_Px;
+												mapPan.Y -= mouseDragDelta.Y * mapZoom / mapWidgetSize_Px;
 											}
 										}
-										//	Otherwise, we're just panning the map.
 										else
 										{
-											mapPan.X -= mouseDragDelta.X * mapZoom / mapWidgetSize_Px;
-											mapPan.Y -= mouseDragDelta.Y * mapZoom / mapWidgetSize_Px;
+											CapturedWaymarkIndex = -1;
 										}
-									}
-									else
-									{
-										CapturedWaymarkIndex = -1;
-									}
-									mapPan.X = Math.Min( 1.0f - mapZoom * 0.5f, Math.Max( 0.0f + mapZoom * 0.5f, mapPan.X ) );
-									mapPan.Y = Math.Min( 1.0f - mapZoom * 0.5f, Math.Max( 0.0f + mapZoom * 0.5f, mapPan.Y ) );
+										mapPan.X = Math.Min( 1.0f - mapZoom * 0.5f, Math.Max( 0.0f + mapZoom * 0.5f, mapPan.X ) );
+										mapPan.Y = Math.Min( 1.0f - mapZoom * 0.5f, Math.Max( 0.0f + mapZoom * 0.5f, mapPan.Y ) );
 
-									if( ImGui.IsItemHovered() )
-									{
-										Vector2 mapPixelCoords = ImGui.GetMousePos() - mapWidgetScreenPos;
-										//	If we are dragging a marker, offset the mouse position in here to show the actual point location, not the mouse position).
-										if( showingEditingView && CapturedWaymarkIndex > -1 )
+										if( ImGui.IsItemHovered() )
 										{
-											mapPixelCoords += CapturedWaymarkOffset;
+											Vector2 mapPixelCoords = ImGui.GetMousePos() - mapWidgetScreenPos;
+											//	If we are dragging a marker, offset the mouse position in here to show the actual point location, not the mouse position).
+											if( showingEditingView && CapturedWaymarkIndex > -1 )
+											{
+												mapPixelCoords += CapturedWaymarkOffset;
+											}
+											Vector2 mapNormCoords = mapPixelCoords / mapWidgetSize_Px * ( mapUpperBounds - mapLowerBounds ) + mapLowerBounds;
+											Vector2 mapRealCoords = mapInfo[selectedSubMapIndex].GetMapCoordinates( mapNormCoords * 2048.0f );
+											cursorPosText = $"X: {mapRealCoords.X:0.00}, Y: {mapRealCoords.Y:0.00}";
 										}
-										Vector2 mapNormCoords = mapPixelCoords / mapWidgetSize_Px * ( mapUpperBounds - mapLowerBounds ) + mapLowerBounds;
-										Vector2 mapRealCoords = mapInfo[selectedSubMapIndex].GetMapCoordinates( mapNormCoords * 2048.0f );
-										cursorPosText = $"X: {mapRealCoords.X:0.00}, Y: {mapRealCoords.Y:0.00}";
-									}
-									for( int i = 0; i < 8; ++i )
-									{
-										if( markerActiveFlags[i] )
+										for( int i = 0; i < 8; ++i )
 										{
-											Vector2 waymarkMapPt = MapTextureCoordsToScreenCoords(  mapInfo[selectedSubMapIndex].GetPixelCoordinates( marker2dCoords[i] ),
+											if( markerActiveFlags[i] )
+											{
+												Vector2 waymarkMapPt = MapTextureCoordsToScreenCoords(  mapInfo[selectedSubMapIndex].GetPixelCoordinates( marker2dCoords[i] ),
 																									mapLowerBounds,
 																									mapUpperBounds,
 																									new Vector2( mapWidgetSize_Px ),
 																									mapWidgetScreenPos );
 
-											ImGui.GetWindowDrawList().AddImage( mUI.WaymarkIconTextures[i].ImGuiHandle, waymarkMapPt - mWaymarkMapIconHalfSize_Px, waymarkMapPt + mWaymarkMapIconHalfSize_Px );
+												ImGui.GetWindowDrawList().AddImage( mUI.WaymarkIconTextures[i].ImGuiHandle, waymarkMapPt - mWaymarkMapIconHalfSize_Px, waymarkMapPt + mWaymarkMapIconHalfSize_Px );
 
-											//	Capture the waymark if appropriate.
-											if( showingEditingView &&
-												CapturedWaymarkIndex < 0 &&
-												ImGui.GetIO().MouseClicked[0] &&
-												ImGui.GetIO().MousePos.X >= mapWidgetScreenPos.X &&
-												ImGui.GetIO().MousePos.X <= mapWidgetScreenPos.X + mapWidgetSize_Px &&
-												ImGui.GetIO().MousePos.Y >= mapWidgetScreenPos.Y &&
-												ImGui.GetIO().MousePos.Y <= mapWidgetScreenPos.Y + mapWidgetSize_Px &&
-												ImGui.GetIO().MousePos.X >= waymarkMapPt.X - mWaymarkMapIconHalfSize_Px.X &&
-												ImGui.GetIO().MousePos.X <= waymarkMapPt.X + mWaymarkMapIconHalfSize_Px.X &&
-												ImGui.GetIO().MousePos.Y >= waymarkMapPt.Y - mWaymarkMapIconHalfSize_Px.Y &&
-												ImGui.GetIO().MousePos.Y <= waymarkMapPt.Y + mWaymarkMapIconHalfSize_Px.Y )
-											{
-												CapturedWaymarkIndex = i;
-												CapturedWaymarkOffset = waymarkMapPt - ImGui.GetIO().MousePos;
+												//	Capture the waymark if appropriate.
+												if( showingEditingView &&
+													CapturedWaymarkIndex < 0 &&
+													ImGui.GetIO().MouseClicked[0] &&
+													ImGui.GetIO().MousePos.X >= mapWidgetScreenPos.X &&
+													ImGui.GetIO().MousePos.X <= mapWidgetScreenPos.X + mapWidgetSize_Px &&
+													ImGui.GetIO().MousePos.Y >= mapWidgetScreenPos.Y &&
+													ImGui.GetIO().MousePos.Y <= mapWidgetScreenPos.Y + mapWidgetSize_Px &&
+													ImGui.GetIO().MousePos.X >= waymarkMapPt.X - mWaymarkMapIconHalfSize_Px.X &&
+													ImGui.GetIO().MousePos.X <= waymarkMapPt.X + mWaymarkMapIconHalfSize_Px.X &&
+													ImGui.GetIO().MousePos.Y >= waymarkMapPt.Y - mWaymarkMapIconHalfSize_Px.Y &&
+													ImGui.GetIO().MousePos.Y <= waymarkMapPt.Y + mWaymarkMapIconHalfSize_Px.Y )
+												{
+													CapturedWaymarkIndex = i;
+													CapturedWaymarkOffset = waymarkMapPt - ImGui.GetIO().MousePos;
+												}
 											}
 										}
+										ImGui.EndChild();
+										ImGui.PopStyleVar();
+										ImGui.Text( cursorPosText );
 									}
-									ImGui.EndChild();
-									ImGui.PopStyleVar();
-									ImGui.Text( cursorPosText );
-								}
 
-								if( mapList.Count <= 1 || selectedSubMapIndex >= mapList.Count )
-								{
-									selectedSubMapIndex = 0;
-								}
-								else
-								{
-									float subMapComboWidth = 0.0f;
-									List<string> subMaps = new();
-									for( int i = 0; i < mapInfo.Length; ++i )
+									if( mapList.Count <= 1 || selectedSubMapIndex >= mapList.Count )
 									{
-										string subMapName = mapInfo[i].PlaceNameSub.Trim().Length < 1 ? String.Format( Loc.Localize( "Map Window Text: Unnamed Submap Placeholder", "Unnamed Sub-map {0}" ), i + 1 ) : mapInfo[i].PlaceNameSub;
-										subMaps.Add( subMapName );
-										subMapComboWidth = Math.Max( subMapComboWidth, ImGui.CalcTextSize( subMapName ).X );
+										selectedSubMapIndex = 0;
 									}
-									subMapComboWidth += 40.0f;
+									else
+									{
+										float subMapComboWidth = 0.0f;
+										List<string> subMaps = new();
+										for( int i = 0; i < mapInfo.Length; ++i )
+										{
+											string subMapName = mapInfo[i].PlaceNameSub.Trim().Length < 1 ? String.Format( Loc.Localize( "Map Window Text: Unnamed Submap Placeholder", "Unnamed Sub-map {0}" ), i + 1 ) : mapInfo[i].PlaceNameSub;
+											subMaps.Add( subMapName );
+											subMapComboWidth = Math.Max( subMapComboWidth, ImGui.CalcTextSize( subMapName ).X );
+										}
+										subMapComboWidth += 40.0f;
 
-									ImGui.SameLine( Math.Max( mapWidgetSize_Px /*- ImGui.CalcTextSize( cursorPosText ).X*/ - subMapComboWidth + 8, 0 ) );
-									ImGui.SetNextItemWidth( subMapComboWidth );
-									ImGui.Combo( "###SubmapDropdown", ref selectedSubMapIndex, subMaps.ToArray(), mapList.Count );
+										ImGui.SameLine( Math.Max( mapWidgetSize_Px /*- ImGui.CalcTextSize( cursorPosText ).X*/ - subMapComboWidth + 8, 0 ) );
+										ImGui.SetNextItemWidth( subMapComboWidth );
+										ImGui.Combo( "###SubmapDropdown", ref selectedSubMapIndex, subMaps.ToArray(), mapList.Count );
+									}
 								}
 							}
+							else
+							{
+								ImGui.Text( Loc.Localize( "Map Window Text: Loading Maps", "Loading zone map(s)." ) );
+								LoadMapTextures( (UInt16)territoryTypeIDToShow );
+							}
+
+							mMapTextureDictMutex.ReleaseMutex();
 						}
 						else
 						{
 							ImGui.Text( Loc.Localize( "Map Window Text: Loading Maps", "Loading zone map(s)." ) );
-							LoadMapTextures( (UInt16)territoryTypeIDToShow );
 						}
-
-						mMapTextureDictMutex.ReleaseMutex();
 					}
 					else
 					{
-						ImGui.Text( Loc.Localize( "Map Window Text: Loading Maps", "Loading zone map(s)." ) );
+						ImGui.Text( Loc.Localize( "Map Window Text: Unknown Zone", "Unknown Zone: No maps available." ) );
 					}
 				}
 				else
 				{
-					//***** TODO: The "else" message for this is a bit misleading; change this to be invalid zone selected, and make a separate one for actually no preset selected.
 					ImGui.Text( Loc.Localize( "Map Window Text: No Preset Selected", "No Preset Selected" ) );
 				}
 			}
@@ -318,7 +326,7 @@ namespace WaymarkPresetPlugin
 			ImGui.End();
 		}
 
-		private Vector2 MapTextureCoordsToScreenCoords( Vector2 mapTextureCoords_Px, Vector2 mapVisibleLowerBounds_Norm, Vector2 mapVisibleUpperBounds_Norm, Vector2 mapViewportSize_Px, Vector2 mapViewportScreenPos_Px )
+		private static Vector2 MapTextureCoordsToScreenCoords( Vector2 mapTextureCoords_Px, Vector2 mapVisibleLowerBounds_Norm, Vector2 mapVisibleUpperBounds_Norm, Vector2 mapViewportSize_Px, Vector2 mapViewportScreenPos_Px )
 		{
 			Vector2 newScreenCoords = mapTextureCoords_Px;
 			newScreenCoords /= 2048.0f;
@@ -328,7 +336,7 @@ namespace WaymarkPresetPlugin
 			return newScreenCoords;
 		}
 
-		private Vector2 MapScreenCoordsToMapTextureCoords( Vector2 mapScreenCoords_Px, Vector2 mapVisibleLowerBounds_Norm, Vector2 mapVisibleUpperBounds_Norm, Vector2 mapViewportSize_Px, Vector2 mapViewportScreenPos_Px )
+		private static Vector2 MapScreenCoordsToMapTextureCoords( Vector2 mapScreenCoords_Px, Vector2 mapVisibleLowerBounds_Norm, Vector2 mapVisibleUpperBounds_Norm, Vector2 mapViewportSize_Px, Vector2 mapViewportScreenPos_Px )
 		{
 			Vector2 newMapTexCoords = mapScreenCoords_Px;
 			newMapTexCoords -= mapViewportScreenPos_Px;

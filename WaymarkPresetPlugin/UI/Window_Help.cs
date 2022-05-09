@@ -50,7 +50,7 @@ namespace WaymarkPresetPlugin
 					{
 						ImGui.PushStyleColor( ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered] );
 					}
-					if( ImGui.Button( Enum.GetNames( typeof( HelpWindowPage ) )[i] ) )
+					if( ImGui.Button( ( (HelpWindowPage)Enum.GetValues( typeof( HelpWindowPage ) ).GetValue(i)).GetLocalizedName() + $"###{Enum.GetNames( typeof( HelpWindowPage ) )[i]}" ) )
 					{
 						mCurrentHelpPage = (HelpWindowPage)i;
 					}
@@ -84,7 +84,7 @@ namespace WaymarkPresetPlugin
 		private void DrawHelpWindow_General()
 		{
 			ImGui.Text( Loc.Localize( "Help Window Text: General 1",
-						"All presets in this plugin's list are fully separate from the game's presets.  This allows you to store an effectively " +
+						"All presets in this plugin's list are fully separate from the game's presets.  This allows you to store an " +
 						"unlimited number of presets, as well as to easily back up and share them, or import presets that others have shared with you." ) );
 			ImGui.Spacing();
 			ImGui.Spacing();
@@ -150,7 +150,7 @@ namespace WaymarkPresetPlugin
 		{
 			ImGui.Text( Loc.Localize( "Help Window Text: Maps 1",
 						"The \"Map View\" window displays a copy of the applicable map(s) for the selected preset's duty.  Any placed " +
-						"waymarks are overlain on the map.  If a zone has multiple submaps, you can switch between submaps using the dropdown " +
+						"waymarks are shown on the map.  If a zone has multiple submaps, you can switch between submaps using the dropdown " +
 						"in the lower right corner of the window.  The world cordinates corresponding to your cursor position on the map are " +
 						"shown at the bottom right of the window.  Please read the \"Coordinates\" tab of this help window if you wish to understand " +
 						"the game's internal coordinate systems, and their relationship to what is presented in-game to the player." ) );
@@ -167,7 +167,8 @@ namespace WaymarkPresetPlugin
 			ImGui.Spacing();
 			ImGui.Text( Loc.Localize( "Help Window Text: Maps 3",
 						"Please also note that the plugin cannot currently determine which waymarks are present on which submaps, so all waymarks " +
-						"are shown at their positions on all submaps (provided that they are within the map's bounds)." ) );
+						"are shown at their positions on all submaps (provided that they are within the map's bounds).  For some rare cases (like e12s), " +
+						"the default submap is not the one in which you enter the area, so you will need to manually select the correct submap." ) );
 		}
 
 		private void DrawHelpWindow_Coordinates()
@@ -355,7 +356,7 @@ namespace WaymarkPresetPlugin
 
 	public static class HelpWindowPageExtensions
 	{
-		public static string ToName( this HelpWindowPage value )
+		public static string GetLocalizedName( this HelpWindowPage value )
 		{
 			return value switch
 			{
