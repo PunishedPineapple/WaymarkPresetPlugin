@@ -135,349 +135,373 @@
     "message": "An unknown error occured while trying to copy presets to clipboard.",
     "description": "Plugin.ProcessTextCommand_ExportAll"
   },
-  "Window Title: Waymark Library": {
-    "message": "Waymark Library",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Config Option: Filter on Current Zone": {
-    "message": "Filter on Current Zone",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Button: Save Current Waymarks": {
-    "message": "Save Current Waymarks",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Drag and Drop Preview: Moving Preset": {
-    "message": "Moving: ",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Drag and Drop Preview: Move to Bottom": {
-    "message": "<Move To Bottom>",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Header: Presets": {
-    "message": "Presets",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Main Window Text: Library Empty": {
-    "message": "Preset library empty!",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Header: Import Options": {
-    "message": "Import Options",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Button: Import": {
-    "message": "Import",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Main Window Text: Import from Game Slot Label": {
-    "message": "Or import from game slot: ",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Main Window Text: Preset Resources Link": {
-    "message": "Where to find importable presets",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Header: Export and Backup Options": {
-    "message": "Export/Backup Options",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Button: Export All Presets to Clipboard": {
-    "message": "Export All Presets to Clipboard",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Button: Backup Current Config": {
-    "message": "Backup Current Config",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Help: Backup Current Config": {
-    "message": "Copies the current config file to a backup folder in the Dalamud \"pluginConfigs\" directory.",
-    "description": "PluginUI.DrawMainWindow"
-  },
-  "Window Title: Preset Info": {
-    "message": "Preset Info",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Info Pane Text: Copy to Slot Label": {
-    "message": "Copy to slot:",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Button: Place": {
-    "message": "Place",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Info Pane Text: Preset Info Label": {
-    "message": "Preset Info:",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Button: Map View": {
-    "message": "Map View",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Info Pane Text: Waymark Column Header": {
-    "message": "Waymark",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Info Pane Text: Unused Waymark": {
-    "message": "Unused",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Info Pane Text: Zone Label": {
-    "message": "Zone: {0}",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Info Pane Text: Last Modified Label": {
-    "message": "Last Modified: {0}",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Button: Export to Clipboard": {
-    "message": "Export to Clipboard",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Button: Edit": {
-    "message": "Edit",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Button: Delete": {
-    "message": "Delete",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Info Pane Text: Confirm Delete Label": {
-    "message": "Confirm delete: ",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Button: Yes": {
-    "message": "Yes",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Button: No": {
-    "message": "No",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Info Pane Text: No Preset Selected": {
-    "message": "No preset selected.",
-    "description": "PluginUI.DrawInfoWindow"
-  },
-  "Window Title: Waymark Help": {
-    "message": "Waymark Help",
-    "description": "PluginUI.DrawHelpWindow"
-  },
-  "Help Window Text: General 1": {
-    "message": "All presets in this plugin's list are fully separate from the game's presets.  This allows you to store an effectively unlimited number of presets, as well as to easily back up and share them, or import presets that others have shared with you.",
-    "description": "PluginUI.DrawHelpWindow_General"
-  },
-  "Help Window Text: General 2": {
-    "message": "Selecting a preset in the library will show a window to the side with information about that preset, such as where the waymarks are placed, as well as actions that you can take with that preset.",
-    "description": "PluginUI.DrawHelpWindow_General"
-  },
-  "Help Window Text: General 3": {
-    "message": "If you want to copy a preset in the library to a game slot, select that preset in the list, and then press the button with the number of the slot to which you want to copy it.  If you want to import a preset from the game's list into the library, scroll down to \"Import Options\" and press the button of the slot that you wish to import from the game.  This is also where you can paste presets to import them from outside of the game.",
-    "description": "PluginUI.DrawHelpWindow_General"
-  },
-  "Help Window Text: General 4": {
-    "message": "If you wish to share a preset with someone else, you can select the preset in the library, and click the \"Export to Clipboard\" button.",
-    "description": "PluginUI.DrawHelpWindow_General"
-  },
-  "Help Window Text: General 5": {
-    "message": "The plugin also allows you to place and save waymarks directly to/from the field.  These are what the \"Place\" and \"Save Current Waymarks\" buttons do.  Please note that saving and placing presets is only supported in areas that the game allows with its built in system.  Saving presets outside of those duties will result in a preset that shows an unknown zone.  Trying to place presets outside of those duties will simply fail to do anything.",
-    "description": "PluginUI.DrawHelpWindow_General"
-  },
-  "Help Window Text: General 6": {
-    "message": "Presets can be reordered in the library by dragging and dropping them at the desired spot.  The sorting of duties in the library cannot currently be changed; the order is the same as they are sorted in the game's files, and is approximately the order in which the duties were added to the game.",
-    "description": "PluginUI.DrawHelpWindow_General"
-  },
-  "Help Window Text: Editing 1": {
-    "message": "Clicking the \"Edit\" button in the preset info pane will bring up a window that allows you to edit a preset.  You can adjust any of the available parameters, and you can drag waymarks on to other waymarks to swap their positions.  You can also drag points from the circle calculator tab in this help window on to a waymark in the editor window to replace its coordinates with the ones from that calculator.",
-    "description": "PluginUI.DrawHelpWindow_Editing"
-  },
-  "Help Window Text: Editing 2": {
-    "message": "Changes made in the editor window will not be applied until the \"Save\" button is clicked.",
-    "description": "PluginUI.DrawHelpWindow_Editing"
-  },
-  "Help Window Text: Maps 1": {
-    "message": "The \"Map View\" window displays a copy of the applicable map(s) for the selected preset's duty.  Any placed waymarks are overlain on the map.  If a zone has multiple submaps, you can switch between submaps using the dropdown in the lower right corner of the window.  The world cordinates corresponding to your cursor position on the map are shown at the bottom right of the window.  Please read the \"Coordinates\" tab of this help window if you wish to understand the game's internal coordinate systems, and their relationship to what is presented in-game to the player.",
-    "description": "PluginUI.DrawHelpWindow_Maps"
-  },
-  "Help Window Text: Maps 2": {
-    "message": "When editing a preset, you can drag waymark icons on the map to adjust their positions.  While you are doing this, the coordinate readout reflects the position of the marker, and not the position of your mouse.  Please note that editing waymarks in this manner is not advised in areas that have uneven ground, as it is not possible to automatically adjust the Y coordinate to match the terrain.",
-    "description": "PluginUI.DrawHelpWindow_Maps"
-  },
-  "Help Window Text: Maps 3": {
-    "message": "Please also note that the plugin cannot currently determine which waymarks are present on which submaps, so all waymarks are shown at their positions on all submaps (provided that they are within the map's bounds).",
-    "description": "PluginUI.DrawHelpWindow_Maps"
-  },
-  "Help Window Text: Coordinates 1": {
-    "message": "Coordinate Systems:",
-    "description": "PluginUI.DrawHelpWindow_Coordinates"
-  },
-  "Help Window Text: Coordinates 2": {
-    "message": "The game internally uses a right-handed 3D coordinate system, with X running West to East, Y running down to up, and Z running North to South.  The on-map coordinate system is a 2D projection of the XZ plane, with X running West to East, and Y running North to South.  Please note that the coordinates presented in chat links or on the map widgets in game are scaled to arbitrary values, and the Y and Z axes are swapped.  This plugin uses the game's internal coordinate systems as shown below:",
-    "description": "PluginUI.DrawHelpWindow_Coordinates"
-  },
-  "Circle Computer Text: Instructions 1": {
-    "message": "This calculator will compute radially symmetric points (\"clock spots\") with the information that you give it.  You can then drag these into the preset editor to replace any waymarks with the calculated points, or you can use the buttons at the bottom of this pane.",
-    "description": "PluginUI.DrawHelpWindow_CircleCalculator"
-  },
-  "Circle Computer Text: Center Position": {
-    "message": "Center Position",
-    "description": "PluginUI.DrawHelpWindow_CircleCalculator"
-  },
-  "Circle Computer Text: Radius": {
-    "message": "Radius (y)",
-    "description": "PluginUI.DrawHelpWindow_CircleCalculator"
-  },
-  "Circle Computer Text: Number of Points": {
-    "message": "Number of Points",
-    "description": "PluginUI.DrawHelpWindow_CircleCalculator"
-  },
-  "Circle Computer Text: Angle Offset": {
-    "message": "Angle Offset (deg)",
-    "description": "PluginUI.DrawHelpWindow_CircleCalculator"
-  },
-  "Drag and Drop Preview: Circle Computer Waymark": {
-    "message": "Copy coordinates to...",
-    "description": "PluginUI.DrawHelpWindow_CircleCalculator"
-  },
-  "Button: Copy Points from Circle Computer": {
-    "message": "Copy these points into the editor",
-    "description": "PluginUI.DrawHelpWindow_CircleCalculator"
-  },
-  "Button: Create Preset from Circle Computer": {
-    "message": "Create a new preset using these points",
-    "description": "PluginUI.DrawHelpWindow_CircleCalculator"
-  },
-  "Default Preset Name - Circle Computer": {
-    "message": "Imported from Circle Computer",
-    "description": "PluginUI.DrawHelpWindow_CircleCalculator"
+  "Window Title: Debug Tools": {
+    "message": "Debug Tools",
+    "description": "Window_Debug.Draw"
   },
   "Window Title: Preset Editor": {
     "message": "Preset Editor",
-    "description": "PluginUI.DrawEditorWindow"
+    "description": "Window_Editor.Draw"
   },
   "Edit Window Text: Name": {
     "message": "Name: ",
-    "description": "PluginUI.DrawEditorWindow"
+    "description": "Window_Editor.Draw"
   },
   "Edit Window Text: Active Column Header": {
     "message": "Active",
-    "description": "PluginUI.DrawEditorWindow"
+    "description": "Window_Editor.Draw"
   },
   "Drag and Drop Preview: Edit Swap Waymark": {
     "message": "Swap Waymark {0} with...",
-    "description": "PluginUI.DrawEditorWindow"
+    "description": "Window_Editor.Draw"
   },
   "Button: Save": {
     "message": "Save",
-    "description": "PluginUI.DrawEditorWindow"
+    "description": "Window_Editor.Draw"
   },
   "Button: Cancel": {
     "message": "Cancel",
-    "description": "PluginUI.DrawEditorWindow"
+    "description": "Window_Editor.Draw"
   },
-  "Window Title: Config": {
-    "message": "Waymark Settings",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Button: Map View": {
+    "message": "Map View",
+    "description": "Window_Editor.Draw"
   },
-  "Config Option: Always Show Info Pane": {
-    "message": "Always show preset info pane.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Window Title: Waymark Help": {
+    "message": "Waymark Help",
+    "description": "Window_Help.Draw"
   },
-  "Config Option: Clicking Preset Unselects": {
-    "message": "Clicking the selected preset unselects it.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: General 1": {
+    "message": "All presets in this plugin's list are fully separate from the game's presets.  This allows you to store an unlimited number of presets, as well as to easily back up and share them, or import presets that others have shared with you.",
+    "description": "Window_Help.DrawHelpWindow_General"
   },
-  "Config Option: Categorize Presets by Zone": {
-    "message": "Categorize presets by zone.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: General 2": {
+    "message": "Selecting a preset in the library will show a window to the side with information about that preset, such as where the waymarks are placed, as well as actions that you can take with that preset.",
+    "description": "Window_Help.DrawHelpWindow_General"
   },
-  "Config Option: Open and Close with Game Window": {
-    "message": "Open and close library with the game's waymark window.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: General 3": {
+    "message": "If you want to copy a preset in the library to a game slot, select that preset in the list, and then press the button with the number of the slot to which you want to copy it.  If you want to import a preset from the game's list into the library, scroll down to \"Import Options\" and press the button of the slot that you wish to import from the game.  This is also where you can paste presets to import them from outside of the game.",
+    "description": "Window_Help.DrawHelpWindow_General"
   },
-  "Config Option: Attach to Game Window": {
-    "message": "Attach library window to the game's waymark window.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: General 4": {
+    "message": "If you wish to share a preset with someone else, you can select the preset in the library, and click the \"Export to Clipboard\" button.",
+    "description": "Window_Help.DrawHelpWindow_General"
   },
-  "Config Option: Show ID in Zone Names": {
-    "message": "Show ID numbers next to zone names.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: General 5": {
+    "message": "The plugin also allows you to place and save waymarks directly to/from the field.  These are what the \"Place\" and \"Save Current Waymarks\" buttons do.  Please note that saving and placing presets is only supported in areas that the game allows with its built in system.  Saving presets outside of those duties will result in a preset that shows an unknown zone.  Trying to place presets outside of those duties will simply fail to do anything.",
+    "description": "Window_Help.DrawHelpWindow_General"
   },
-  "Help: Show ID in Zone Names": {
-    "message": "Shows the internal Content Finder ID of the zone/duty in some places.  Generally only used for debugging.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: General 6": {
+    "message": "Presets can be reordered in the library by dragging and dropping them at the desired spot.  The sorting of duties in the library cannot currently be changed; the order is the same as they are sorted in the game's files, and is approximately the order in which the duties were added to the game.",
+    "description": "Window_Help.DrawHelpWindow_General"
   },
-  "Config Option: Show Preset Indices": {
-    "message": "Show the index of the preset within the library.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: Editing 1": {
+    "message": "Clicking the \"Edit\" button in the preset info pane will bring up a window that allows you to edit a preset.  You can adjust any of the available parameters, and you can drag waymarks on to other waymarks to swap their positions.  You can also drag points from the circle calculator tab in this help window on to a waymark in the editor window to replace its coordinates with the ones from that calculator.",
+    "description": "Window_Help.DrawHelpWindow_Editing"
   },
-  "Help: Show Preset Indices": {
-    "message": "The primary use of this is if you need to know the preset index to use within a text command.  You can always leave this disabled if you only use the GUI.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: Editing 2": {
+    "message": "Changes made in the editor window will not be applied until the \"Save\" button is clicked.",
+    "description": "Window_Help.DrawHelpWindow_Editing"
   },
-  "Config Option: Autoload Presets from Libarary": {
-    "message": "Autoload presets from library.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: Maps 1": {
+    "message": "The \"Map View\" window displays a copy of the applicable map(s) for the selected preset's duty.  Any placed waymarks are shown on the map.  If a zone has multiple submaps, you can switch between submaps using the dropdown in the lower right corner of the window.  The world cordinates corresponding to your cursor position on the map are shown at the bottom right of the window.  Please read the \"Coordinates\" tab of this help window if you wish to understand the game's internal coordinate systems, and their relationship to what is presented in-game to the player.",
+    "description": "Window_Help.DrawHelpWindow_Maps"
   },
-  "Help: Autoload presets from Library": {
-    "message": "Automatically loads the first five presets that exist in the library for a zone when you load into it.  THIS WILL OVERWRITE THE GAME'S SLOTS WITHOUT WARNING, so please do not turn this on until you are certain that you have saved any data that you want to keep.  Consider using this with the auto-import option below to reduce the risk of inadvertent preset loss.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: Maps 2": {
+    "message": "When editing a preset, you can drag waymark icons on the map to adjust their positions.  While you are doing this, the coordinate readout reflects the position of the marker, and not the position of your mouse.  Please note that editing waymarks in this manner is not advised in areas that have uneven ground, as it is not possible to automatically adjust the Y coordinate to match the terrain.",
+    "description": "Window_Help.DrawHelpWindow_Maps"
   },
-  "Config Option: Autosave Presets to Library": {
-    "message": "Autosave presets to library.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: Maps 3": {
+    "message": "Please also note that the plugin cannot currently determine which waymarks are present on which submaps, so all waymarks are shown at their positions on all submaps (provided that they are within the map's bounds).  For some rare cases (like e12s), the default submap is not the one in which you enter the area, so you will need to manually select the correct submap.",
+    "description": "Window_Help.DrawHelpWindow_Maps"
   },
-  "Help: Autosave Presets to Library": {
-    "message": "Automatically copies any populated game preset slots into the library upon exiting an instance.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: Coordinates 1": {
+    "message": "Coordinate Systems:",
+    "description": "Window_Help.DrawHelpWindow_Coordinates"
   },
-  "Config Option: Suppress Text Command Responses": {
-    "message": "Suppress responses to text commands (besides \"{0}\").",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Help Window Text: Coordinates 2": {
+    "message": "The game internally uses a right-handed 3D coordinate system, with X running West to East, Y running down to up, and Z running North to South.  The on-map coordinate system is a 2D projection of the XZ plane, with X running West to East, and Y running North to South.  Please note that the coordinates presented in chat links or on the map widgets in game are scaled to arbitrary values, and the Y and Z axes are swapped.  This plugin uses the game's internal coordinate systems as shown below:",
+    "description": "Window_Help.DrawHelpWindow_Coordinates"
   },
-  "Button: Clear All Map View Data": {
-    "message": "Clear All Map View Data",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Circle Computer Text: Instructions 1": {
+    "message": "This calculator will compute radially symmetric points (\"clock spots\") with the information that you give it.  You can then drag these into the preset editor to replace any waymarks with the calculated points, or you can use the buttons at the bottom of this pane.",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
   },
-  "Help: Clear All Map View Data": {
-    "message": "This deletes all map view pan/zoom/submap state, resetting every map back to default.",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Circle Computer Text: Center Position": {
+    "message": "Center Position",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
   },
-  "Button: Save and Close": {
-    "message": "Save and Close",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Circle Computer Text: Radius": {
+    "message": "Radius (y)",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
   },
-  "Button: Show Library": {
-    "message": "Show Library",
-    "description": "PluginUI.DrawSettingsWindow"
+  "Circle Computer Text: Number of Points": {
+    "message": "Number of Points",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
   },
-  "Window Title: Debug Tools": {
-    "message": "Debug Tools",
-    "description": "PluginUI.DrawDebugWindow"
+  "Circle Computer Text: Angle Offset": {
+    "message": "Angle Offset (deg)",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Drag and Drop Preview: Circle Computer Waymark": {
+    "message": "Copy coordinates to...",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Button: Copy Points from Circle Computer": {
+    "message": "Copy these points into the editor",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Button: Create Preset from Circle Computer": {
+    "message": "Create a new preset using these points",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Default Preset Name - Circle Computer": {
+    "message": "Imported from Circle Computer",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Header: Help Window Page - General": {
+    "message": "General",
+    "description": "HelpWindowPageExtensions.GetTranslatedName"
+  },
+  "Header: Help Window Page - Editing": {
+    "message": "Editing",
+    "description": "HelpWindowPageExtensions.GetTranslatedName"
+  },
+  "Header: Help Window Page - Maps": {
+    "message": "Maps",
+    "description": "HelpWindowPageExtensions.GetTranslatedName"
+  },
+  "Header: Help Window Page - Coordinates": {
+    "message": "Coordinates",
+    "description": "HelpWindowPageExtensions.GetTranslatedName"
+  },
+  "Header: Help Window Page - Circle Calculator": {
+    "message": "Circle Calculator",
+    "description": "HelpWindowPageExtensions.GetTranslatedName"
+  },
+  "Window Title: Preset Info": {
+    "message": "Preset Info",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Copy to Slot Label": {
+    "message": "Copy to slot:",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: Place": {
+    "message": "Place",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Preset Info Label": {
+    "message": "Preset Info:",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Waymark Column Header": {
+    "message": "Waymark",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Unused Waymark": {
+    "message": "Unused",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Zone Label": {
+    "message": "Zone: {0}",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Last Modified Label": {
+    "message": "Last Modified: {0}",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: Export to Clipboard": {
+    "message": "Export to Clipboard",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: Edit": {
+    "message": "Edit",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: Delete": {
+    "message": "Delete",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Confirm Delete Label": {
+    "message": "Confirm delete: ",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: Yes": {
+    "message": "Yes",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: No": {
+    "message": "No",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: No Preset Selected": {
+    "message": "No preset selected.",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Window Title: Waymark Library": {
+    "message": "Waymark Library",
+    "description": "Window_Library.Draw"
+  },
+  "Config Option: Filter on Current Zone": {
+    "message": "Filter on Current Zone",
+    "description": "Window_Library.Draw"
+  },
+  "Button: Save Current Waymarks": {
+    "message": "Save Current Waymarks",
+    "description": "Window_Library.Draw"
+  },
+  "Drag and Drop Preview: Moving Preset": {
+    "message": "Moving: ",
+    "description": "Window_Library.Draw"
+  },
+  "Drag and Drop Preview: Move to Bottom": {
+    "message": "<Move To Bottom>",
+    "description": "Window_Library.Draw"
+  },
+  "Header: Presets": {
+    "message": "Presets",
+    "description": "Window_Library.Draw"
+  },
+  "Main Window Text: Library Empty": {
+    "message": "Preset library empty!",
+    "description": "Window_Library.Draw"
+  },
+  "Header: Import Options": {
+    "message": "Import Options",
+    "description": "Window_Library.Draw"
+  },
+  "Button: Import": {
+    "message": "Import",
+    "description": "Window_Library.Draw"
+  },
+  "Main Window Text: Import from Game Slot Label": {
+    "message": "Or import from game slot: ",
+    "description": "Window_Library.Draw"
+  },
+  "Main Window Text: Preset Resources Link": {
+    "message": "Where to find importable presets",
+    "description": "Window_Library.Draw"
+  },
+  "Header: Export and Backup Options": {
+    "message": "Export/Backup Options",
+    "description": "Window_Library.Draw"
+  },
+  "Button: Export All Presets to Clipboard": {
+    "message": "Export All Presets to Clipboard",
+    "description": "Window_Library.Draw"
+  },
+  "Button: Backup Current Config": {
+    "message": "Backup Current Config",
+    "description": "Window_Library.Draw"
+  },
+  "Help: Backup Current Config": {
+    "message": "Copies the current config file to a backup folder in the Dalamud \"pluginConfigs\" directory.",
+    "description": "Window_Library.Draw"
   },
   "Window Title: Map View": {
     "message": "Map View",
-    "description": "PluginUI.DrawMapWindow"
+    "description": "Window_Map.Draw"
   },
   "Window Title: Map View (Editing)": {
     "message": "Map View - Editing",
-    "description": "PluginUI.DrawMapWindow"
+    "description": "Window_Map.Draw"
   },
   "Map Window Text: No Maps Available": {
     "message": "No maps available for this zone.",
-    "description": "PluginUI.DrawMapWindow"
+    "description": "Window_Map.Draw"
   },
   "Map Window Text: Unnamed Submap Placeholder": {
     "message": "Unnamed Sub-map {0}",
-    "description": "PluginUI.DrawMapWindow"
+    "description": "Window_Map.Draw"
   },
   "Map Window Text: Loading Maps": {
     "message": "Loading zone map(s).",
-    "description": "PluginUI.DrawMapWindow"
+    "description": "Window_Map.Draw"
+  },
+  "Map Window Text: Unknown Zone": {
+    "message": "Unknown Zone: No maps available.",
+    "description": "Window_Map.Draw"
   },
   "Map Window Text: No Preset Selected": {
     "message": "No Preset Selected",
-    "description": "PluginUI.DrawMapWindow"
+    "description": "Window_Map.Draw"
+  },
+  "Window Title: Config": {
+    "message": "Waymark Settings",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Always Show Info Pane": {
+    "message": "Always show preset info pane.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Clicking Preset Unselects": {
+    "message": "Clicking the selected preset unselects it.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Categorize Presets by Zone": {
+    "message": "Categorize presets by zone.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Open and Close with Game Window": {
+    "message": "Open and close library with the game's waymark window.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Attach to Game Window": {
+    "message": "Attach library window to the game's waymark window.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Show ID in Zone Names": {
+    "message": "Show ID numbers next to zone names.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Show ID in Zone Names": {
+    "message": "Shows the internal Content Finder ID of the zone/duty in some places.  Generally only used for debugging.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Show Preset Indices": {
+    "message": "Show the index of the preset within the library.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Show Preset Indices": {
+    "message": "The primary use of this is if you need to know the preset index to use within a text command.  You can always leave this disabled if you only use the GUI.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Autoload Presets from Libarary": {
+    "message": "Autoload presets from library.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Autoload presets from Library": {
+    "message": "Automatically loads the first five presets that exist in the library for a zone when you load into it.  THIS WILL OVERWRITE THE GAME'S SLOTS WITHOUT WARNING, so please do not turn this on until you are certain that you have saved any data that you want to keep.  Consider using this with the auto-import option below to reduce the risk of inadvertent preset loss.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Autosave Presets to Library": {
+    "message": "Autosave presets to library.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Autosave Presets to Library": {
+    "message": "Automatically copies any populated game preset slots into the library upon exiting an instance.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Suppress Text Command Responses": {
+    "message": "Suppress responses to text commands (besides \"{0}\").",
+    "description": "Window_Settings.Draw"
+  },
+  "Button: Clear All Map View Data": {
+    "message": "Clear All Map View Data",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Clear All Map View Data": {
+    "message": "This deletes all map view pan/zoom/submap state, resetting every map back to default.",
+    "description": "Window_Settings.Draw"
+  },
+  "Button: Save and Close": {
+    "message": "Save and Close",
+    "description": "Window_Settings.Draw"
+  },
+  "Button: Show Library": {
+    "message": "Show Library",
+    "description": "Window_Settings.Draw"
   },
   "Waymark Status: Unused": {
     "message": "Unused",
