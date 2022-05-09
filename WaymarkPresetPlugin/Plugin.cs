@@ -48,9 +48,7 @@ namespace WaymarkPresetPlugin
 			ZoneInfoHandler.Init( mDataManager );
 
 			//	UI Initialization
-			mUI = new PluginUI( mConfiguration, mPluginInterface, mDataManager, mCommandManager, mGameGui );
-			mUI.SetCurrentTerritoryTypeID( mClientState.TerritoryType );
-			mUI.Initialize();
+			mUI = new PluginUI( mConfiguration, mPluginInterface, mDataManager, mGameGui, mClientState );
 
 			//	Event Subscription
 			mPluginInterface.UiBuilder.Draw += DrawUI;
@@ -124,15 +122,15 @@ namespace WaymarkPresetPlugin
 			string commandResponse = "";
 			if( subCommand.Length == 0 )
 			{
-				mUI.MainWindowVisible = !mUI.MainWindowVisible;
+				mUI.LibraryWindow.WindowVisible = !mUI.LibraryWindow.WindowVisible;
 			}
 			else if( subCommand.ToLower() == SubcommandName_Config )
 			{
-				mUI.SettingsWindowVisible = !mUI.SettingsWindowVisible;
+				mUI.SettingsWindow.WindowVisible = !mUI.SettingsWindow.WindowVisible;
 			}
 			else if( subCommand.ToLower() == "debug" )
 			{
-				mUI.DebugWindowVisible = !mUI.DebugWindowVisible;
+				mUI.DebugWindow.WindowVisible = !mUI.DebugWindow.WindowVisible;
 			}
 			else if( subCommand.ToLower() == SubcommandName_SlotInfo )
 			{
@@ -482,7 +480,7 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawConfigUI()
 		{
-			mUI.SettingsWindowVisible = true;
+			mUI.SettingsWindow.WindowVisible = true;
 		}
 
 		protected void OnTerritoryChanged( object sender, UInt16 ID )
@@ -490,7 +488,6 @@ namespace WaymarkPresetPlugin
 			ZoneInfo prevTerritoryTypeInfo = ZoneInfoHandler.GetZoneInfoFromTerritoryTypeID( CurrentTerritoryTypeID );
 			ZoneInfo newTerritoryTypeInfo = ZoneInfoHandler.GetZoneInfoFromTerritoryTypeID( ID );
 			CurrentTerritoryTypeID = ID;
-			mUI.SetCurrentTerritoryTypeID( ID );
 
 			//	Auto-save presets on leaving instance.
 			if( mConfiguration.AutoSavePresetsOnInstanceLeave && ZoneInfoHandler.IsKnownContentFinderID( prevTerritoryTypeInfo.ContentFinderConditionID ) )
