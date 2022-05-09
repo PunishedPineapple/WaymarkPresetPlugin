@@ -50,7 +50,7 @@ namespace WaymarkPresetPlugin
 					{
 						ImGui.PushStyleColor( ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered] );
 					}
-					if( ImGui.Button( ( (HelpWindowPage)Enum.GetValues( typeof( HelpWindowPage ) ).GetValue(i)).GetLocalizedName() + $"###{Enum.GetNames( typeof( HelpWindowPage ) )[i]}" ) )
+					if( ImGui.Button( ((HelpWindowPage)i).GetTranslatedName() + $"###HelpButton_{(HelpWindowPage)i}" ) )
 					{
 						mCurrentHelpPage = (HelpWindowPage)i;
 					}
@@ -136,14 +136,6 @@ namespace WaymarkPresetPlugin
 			ImGui.Spacing();
 			ImGui.Text( Loc.Localize( "Help Window Text: Editing 2",
 						"Changes made in the editor window will not be applied until the \"Save\" button is clicked." ) );
-
-			/*ImGui.Text( "Clicking the \"Edit\" button in the preset info pane will bring up a window that allows you to " +
-						"edit a preset.  You can adjust any of the available parameters, and you can drag waymarks on to " +
-						"other waymarks to swap their positions.  You can also drag points from the" );
-			//ImGui.SameLine();
-			ImGuiUtils.TextLink( () => { ShowHelpWindow( HelpWindowPage.CircleComputer ); }, "circle calculator tab" );
-			//ImGui.SameLine();
-			ImGui.Text( "on to a waymark in the editor window to replace its coordinates with the ones from that calculator." );*/
 		}
 
 		private void DrawHelpWindow_Maps()
@@ -356,7 +348,7 @@ namespace WaymarkPresetPlugin
 
 	public static class HelpWindowPageExtensions
 	{
-		public static string GetLocalizedName( this HelpWindowPage value )
+		public static string GetTranslatedName( this HelpWindowPage value )
 		{
 			return value switch
 			{
