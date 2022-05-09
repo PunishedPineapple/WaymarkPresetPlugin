@@ -14,9 +14,10 @@ namespace WaymarkPresetPlugin
 	{
 		public static void URLLink( string URL, string textToShow = "", bool showTooltip = true, ImFontPtr? iconFont = null )
 		{
-			ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered] );
+			ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
 			ImGui.Text( textToShow.Length > 0 ? textToShow : URL );
 			ImGui.PopStyleColor();
+
 			if( ImGui.IsItemHovered() )
 			{
 				ImGui.SetMouseCursor( ImGuiMouseCursor.Hand );
@@ -136,7 +137,8 @@ namespace WaymarkPresetPlugin
 
 				var iconSize = ImGui.CalcTextSize( buttonText );
 				float titlebarHeight = iconSize.Y + ImGui.GetStyle().FramePadding.Y * 2f;
-				Vector2 buttonPos = new( ImGui.GetWindowSize().X - ( iconSize.X + ImGui.GetStyle().FramePadding.X ) * ( idxFromRight + 1 ) - ImGui.GetStyle().WindowPadding.X, Math.Max( 0, ( titlebarHeight - iconSize.Y ) / 2f - 1f ) );
+				Vector2 buttonPos = new(	ImGui.GetWindowSize().X - ( iconSize.X + ImGui.GetStyle().FramePadding.X ) * ( idxFromRight + 1 ) - ImGui.GetStyle().WindowPadding.X + ImGui.GetScrollX(),
+											Math.Max( 0f, ( titlebarHeight - iconSize.Y ) / 2f - 1f ) + ImGui.GetScrollY() );
 
 				ImGui.SetCursorPos( buttonPos );
 				ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled] );
