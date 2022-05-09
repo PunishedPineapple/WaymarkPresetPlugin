@@ -65,7 +65,7 @@ namespace WaymarkPresetPlugin
 			mMapTextureDictMutex.WaitOne( 500 );
 
 			//	Clean up all of the map textures that we've loaded.
-			foreach( var mapTexturesList in MapTextureDict )
+			foreach( var mapTexturesList in mMapTextureDict )
 			{
 				foreach( var tex in mapTexturesList.Value )
 				{
@@ -95,7 +95,7 @@ namespace WaymarkPresetPlugin
 				ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse ) )
 			{
 				//	Help button.
-				ImGuiUtils.TitleBarHelpButton( () => { mUI.HelpWindow.OpenHelpWindow( Window_Help.HelpWindowPage.Maps ); }, 1, UiBuilder.IconFont );
+				ImGuiUtils.TitleBarHelpButton( () => { mUI.HelpWindow.OpenHelpWindow( HelpWindowPage.Maps ); }, 1, UiBuilder.IconFont );
 
 				//	Get TerritoryType ID of map to show, along with the (2D/XZ) zone coordinates of the waymarks.  Do this up front because we can be showing both normal presets or an editing scratch preset in the map view.
 				uint territoryTypeIDToShow = 0;
@@ -138,16 +138,16 @@ namespace WaymarkPresetPlugin
 					//	Try to show the map(s); otherwise, show a message that they're still loading.
 					if( mMapTextureDictMutex.WaitOne( 0 ) )
 					{
-						if( MapTextureDict.ContainsKey( (UInt16)territoryTypeIDToShow ) )
+						if( mMapTextureDict.ContainsKey( (UInt16)territoryTypeIDToShow ) )
 						{
-							if( MapTextureDict[(UInt16)territoryTypeIDToShow].Count < 1 )
+							if( mMapTextureDict[(UInt16)territoryTypeIDToShow].Count < 1 )
 							{
 								ImGui.Text( Loc.Localize( "Map Window Text: No Maps Available", "No maps available for this zone." ) );
 							}
 							else
 							{
 								//	Some things that we'll need as we (attempt to) draw the map.
-								var mapList = MapTextureDict[(UInt16)territoryTypeIDToShow];
+								var mapList = mMapTextureDict[(UInt16)territoryTypeIDToShow];
 								var mapInfo = ZoneInfoHandler.GetMapInfoFromTerritoryTypeID( territoryTypeIDToShow );
 								string cursorPosText = "X: ---, Y: ---";
 								Vector2 windowSize = ImGui.GetWindowSize();
@@ -342,13 +342,13 @@ namespace WaymarkPresetPlugin
 		private void LoadMapTextures( UInt16 territoryTypeID )
 		{
 			//	Only add/load stuff that we don't already have.  Callers should be checking this, but we should too.
-			if( !MapTextureDict.ContainsKey( territoryTypeID ) )
+			if( !mMapTextureDict.ContainsKey( territoryTypeID ) )
 			{
 
 				Task.Run( () =>
 				{
 					//	Add the entry.
-					MapTextureDict.Add( territoryTypeID, new List<TextureWrap>() );
+					mMapTextureDict.Add( territoryTypeID, new List<TextureWrap>() );
 
 					//	Grab the texture files for this zone's maps and load them in.
 					foreach( var map in ZoneInfoHandler.GetMapInfoFromTerritoryTypeID( territoryTypeID ) )
@@ -369,7 +369,7 @@ namespace WaymarkPresetPlugin
 									var tex = mPluginInterface.UiBuilder.LoadImageRaw( texData, texFile.Header.Width, texFile.Header.Height, 4 );
 									if( tex != null && tex.ImGuiHandle != IntPtr.Zero )
 									{
-										MapTextureDict[territoryTypeID].Add( tex );
+										mMapTextureDict[territoryTypeID].Add( tex );
 									}
 								}
 							}
@@ -454,8 +454,8 @@ namespace WaymarkPresetPlugin
 		private readonly Configuration mConfiguration;
 
 		private Dictionary<uint, MapViewState> MapViewStateData { get; set; } = new();
-		private Dictionary<UInt16, List<TextureWrap>> MapTextureDict { get; set; } = new();
-		private Mutex mMapTextureDictMutex = new();
+		private readonly Dictionary<UInt16, List<TextureWrap>> mMapTextureDict = new();
+		private readonly Mutex mMapTextureDictMutex = new();
 		private int CapturedWaymarkIndex { get; set; } = -1;
 		private Vector2 CapturedWaymarkOffset { get; set; } = new( 0, 0 );
 		private static readonly Vector2 mWaymarkMapIconHalfSize_Px = new( 15, 15 );

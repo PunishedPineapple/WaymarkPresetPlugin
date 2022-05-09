@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.IO;
+using System.ComponentModel;
 
 using ImGuiNET;
 using ImGuiScene;
@@ -317,7 +318,7 @@ namespace WaymarkPresetPlugin
 			return computedPoints;
 		}
 
-		public void OpenHelpWindow( Window_Help.HelpWindowPage page )
+		public void OpenHelpWindow( HelpWindowPage page )
 		{
 			mCurrentHelpPage = page;
 			WindowVisible = true;
@@ -341,15 +342,30 @@ namespace WaymarkPresetPlugin
 		private HelpWindowPage mCurrentHelpPage = HelpWindowPage.General;
 		private readonly IntPtr mpEditWaymarkCoordDragAndDropData;
 		private float mHelpWindowMinWidth;
+	}
 
-		//***** TODO: Localize Enum
-		public enum HelpWindowPage : int
+	public enum HelpWindowPage : int
+	{
+		General,
+		Editing,
+		Maps,
+		Coordinates,
+		CircleCalculator
+	}
+
+	public static class HelpWindowPageExtensions
+	{
+		public static string ToName( this HelpWindowPage value )
 		{
-			General,
-			Editing,
-			Maps,
-			Coordinates,
-			CircleCalculator
+			return value switch
+			{
+				HelpWindowPage.General => Loc.Localize( "Header: Help Window Page - General", "General" ),
+				HelpWindowPage.Editing => Loc.Localize( "Header: Help Window Page - Editing", "Editing" ),
+				HelpWindowPage.Maps => Loc.Localize( "Header: Help Window Page - Maps", "Maps" ),
+				HelpWindowPage.Coordinates => Loc.Localize( "Header: Help Window Page - Coordinates", "Coordinates" ),
+				HelpWindowPage.CircleCalculator => Loc.Localize( "Header: Help Window Page - Circle Calculator", "Circle Calculator" ),
+				_ => throw new InvalidEnumArgumentException( $"Unrecognized \"HelpWindowPage\" Enum value \"{value}\"." ),
+			};
 		}
 	}
 }

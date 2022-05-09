@@ -378,7 +378,7 @@ namespace WaymarkPresetPlugin
 					case 5: return ( Data & 32 ) > 0;
 					case 6: return ( Data & 64 ) > 0;
 					case 7: return ( Data & 128 ) > 0;
-					default: throw new ArgumentOutOfRangeException( "i", "Array index out of bounds." );
+					default: throw new ArgumentOutOfRangeException( nameof( i ), "Array index out of bounds." );
 				}
 			}
 			set
@@ -393,7 +393,7 @@ namespace WaymarkPresetPlugin
 					case 5: Data = (byte)( ( value ? 32 : 0 ) | Data ); break;
 					case 6: Data = (byte)( ( value ? 64 : 0 ) | Data ); break;
 					case 7: Data = (byte)( ( value ? 128 : 0 ) | Data ); break;
-					default: throw new ArgumentOutOfRangeException( "i", "Array index out of bounds." );
+					default: throw new ArgumentOutOfRangeException( nameof( i ), "Array index out of bounds." );
 				}
 			}
 		}

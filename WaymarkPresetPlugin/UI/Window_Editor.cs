@@ -49,7 +49,7 @@ namespace WaymarkPresetPlugin
 
 			if( ImGui.Begin( Loc.Localize( "Window Title: Preset Editor", "Preset Editor" ) + "###Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize ) )
 			{
-				ImGuiUtils.TitleBarHelpButton( () => { mUI.HelpWindow.OpenHelpWindow( Window_Help.HelpWindowPage.Editing ); }, 0, UiBuilder.IconFont );
+				ImGuiUtils.TitleBarHelpButton( () => { mUI.HelpWindow.OpenHelpWindow( HelpWindowPage.Editing ); }, 0, UiBuilder.IconFont );
 
 				if( ScratchEditingPreset != null )
 				{

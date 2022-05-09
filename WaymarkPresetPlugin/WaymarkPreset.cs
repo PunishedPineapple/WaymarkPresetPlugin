@@ -99,7 +99,7 @@ namespace WaymarkPresetPlugin
 
 		public GamePreset GetAsGamePreset()
 		{
-			GamePreset preset = new GamePreset();
+			GamePreset preset = new();
 
 			preset.ActiveMarkers[0] = A.Active;
 			preset.A.X = A.Active ? (int)( A.X * 1000.0 ) : 0;

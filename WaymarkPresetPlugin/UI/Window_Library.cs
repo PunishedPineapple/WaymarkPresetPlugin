@@ -80,7 +80,7 @@ namespace WaymarkPresetPlugin
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 375 ) * ImGui.GetIO().FontGlobalScale, new Vector2( float.MaxValue, float.MaxValue ) );
 			if( ImGui.Begin( Loc.Localize( "Window Title: Waymark Library", "Waymark Library" ) + "###Waymark Library", ref mWindowVisible, ImGuiWindowFlags.NoCollapse ) )
 			{
-				ImGuiUtils.TitleBarHelpButton( () => { mUI.HelpWindow.OpenHelpWindow( Window_Help.HelpWindowPage.General ); }, 1, UiBuilder.IconFont );
+				ImGuiUtils.TitleBarHelpButton( () => { mUI.HelpWindow.OpenHelpWindow( HelpWindowPage.General ); }, 1, UiBuilder.IconFont );
 
 				/*if( ImGui.Button( "A" ) )
 				{
