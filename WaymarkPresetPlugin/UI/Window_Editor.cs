@@ -115,10 +115,10 @@ namespace WaymarkPresetPlugin
 					ImGui.Spacing();
 					ImGui.Spacing();
 					ImGui.Spacing();
-					ImGui.Text( "Zone: " );
+					ImGui.Text( Loc.Localize( "Edit Window Text: Zone Dropdown Label", "Zone: " ) );
 					if( ImGui.BeginCombo( "##MapID", mConfiguration.GetZoneName( ScratchEditingPreset.MapID ) ) )
 					{
-						ImGui.Text( "Search: " );
+						ImGui.Text( Loc.Localize( "Edit Window Text: Zone Search Label", "Search: " ) );
 						ImGui.SameLine();
 						ImGui.InputText( "##ZoneComboFilter", ref mEditWindowZoneFilterString, 16u );
 						if( !EditWindowZoneComboWasOpen )

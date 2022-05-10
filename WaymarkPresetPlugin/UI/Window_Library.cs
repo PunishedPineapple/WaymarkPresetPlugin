@@ -351,7 +351,7 @@ namespace WaymarkPresetPlugin
 				if( ImGui.CollapsingHeader( Loc.Localize( "Header: Import Options", "Import Options" ) + "###Import Options" ) )
 				{
 					ImGui.BeginGroup(); //Buttons don't seem to work under a header without being in a group.
-					ImGui.InputTextWithHint( "##JSONImportTextBox", "Paste a preset here and click \"Import\".", ref mPresetImportString, 1024 );   //Most exports max out around 500 characters with all waymarks, so this leaves heaps of room for a long name.
+					ImGui.InputTextWithHint( "##JSONImportTextBox", Loc.Localize( "Text Box Prompt: Import", "Paste a preset here and click \"Import\"." ), ref mPresetImportString, 1024 );   //Most exports max out around 500 characters with all waymarks, so this leaves heaps of room for a long name.
 					ImGui.SameLine();
 					if( ImGui.Button( Loc.Localize( "Button: Import", "Import" ) + "###Import Button" ) )
 					{

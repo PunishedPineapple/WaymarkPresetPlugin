@@ -155,6 +155,14 @@
     "message": "Swap Waymark {0} with...",
     "description": "Window_Editor.Draw"
   },
+  "Edit Window Text: Zone Dropdown Label": {
+    "message": "Zone: ",
+    "description": "Window_Editor.Draw"
+  },
+  "Edit Window Text: Zone Search Label": {
+    "message": "Search: ",
+    "description": "Window_Editor.Draw"
+  },
   "Button: Save": {
     "message": "Save",
     "description": "Window_Editor.Draw"
@@ -369,6 +377,10 @@
   },
   "Header: Import Options": {
     "message": "Import Options",
+    "description": "Window_Library.Draw"
+  },
+  "Text Box Prompt: Import": {
+    "message": "Paste a preset here and click \"Import\".",
     "description": "Window_Library.Draw"
   },
   "Button: Import": {
