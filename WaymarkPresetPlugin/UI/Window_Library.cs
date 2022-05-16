@@ -160,10 +160,10 @@ namespace WaymarkPresetPlugin
 				var zoneFilterString = "";
 
 				// Show the search text box when not filtering on current zone
-				if (!mConfiguration.FilterOnCurrentZone && mConfiguration.SortPresetsByZone)
+				if( !mConfiguration.FilterOnCurrentZone && mConfiguration.SortPresetsByZone )
 				{
-					ImGui.PushItemWidth(ImGui.CalcTextSize("_").X * 20u);
-					ImGui.InputText(Loc.Localize("Search Input Text: Search", "Search"), ref mSearchText, 16u);
+					ImGui.PushItemWidth( ImGui.CalcTextSize( "_" ).X * 20u );
+					ImGui.InputText( Loc.Localize( "Search Input Text: Search", "Search" ), ref mSearchText, 16u );
 					ImGui.PopItemWidth();
 
 					zoneFilterString = mSearchText;
@@ -184,7 +184,7 @@ namespace WaymarkPresetPlugin
 							{
 								var zoneInfo = ZoneInfoHandler.GetZoneInfoFromContentFinderID( zone.Key );
 
-								if ( IsZoneFilteredBySearch( zoneFilterString, zoneInfo ) && ImGui.CollapsingHeader( zoneInfo.DutyName.ToString() ) )
+								if( IsZoneFilteredBySearch( zoneFilterString, zoneInfo ) && ImGui.CollapsingHeader( zoneInfo.DutyName.ToString() ) )
 								{
 									var indices = zone.Value;
 									for( int i = 0; i < indices.Count; ++i )
@@ -511,11 +511,11 @@ namespace WaymarkPresetPlugin
 		public Vector2 WindowPos { get; private set; }
 		public Vector2 WindowSize { get; private set; }
 		
-		private bool IsZoneFilteredBySearch(string zoneFilterString, ZoneInfo zoneInfo)
+		private bool IsZoneFilteredBySearch( string zoneFilterString, ZoneInfo zoneInfo )
 		{
-			var matchingZones = LibraryWindowZoneSearcher.GetMatchingZones(zoneFilterString);
+			var matchingZones = LibraryWindowZoneSearcher.GetMatchingZones( zoneFilterString );
 			
-			return zoneFilterString.Length == 0 || matchingZones.Any(id => id == zoneInfo.ContentFinderConditionID);
+			return zoneFilterString.Length == 0 || matchingZones.Any( id => id == zoneInfo.ContentFinderConditionID );
 		}
 
 		private readonly PluginUI mUI;
