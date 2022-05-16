@@ -155,6 +155,20 @@ namespace WaymarkPresetPlugin
 					ImGui.PopStyleColor();
 					ImGui.PopStyleColor();
 				}
+
+				// The string to use for filtering the list of zones
+				var zoneFilterString = "";
+
+				// Show the search text box when not filtering on current zone
+				if( !mConfiguration.FilterOnCurrentZone && mConfiguration.SortPresetsByZone )
+				{
+					ImGui.PushItemWidth( ImGui.CalcTextSize( "_" ).X * 20u );
+					ImGui.InputText( Loc.Localize( "Search Input Text: Search", "Search" ), ref mSearchText, 16u );
+					ImGui.PopItemWidth();
+
+					zoneFilterString = mSearchText;
+				}
+
 				int indexToMove = -1;
 				int indexToMoveTo = -1;
 				bool moveToAfter = false;
@@ -168,7 +182,9 @@ namespace WaymarkPresetPlugin
 						{
 							if( !mConfiguration.FilterOnCurrentZone || zone.Key == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType ) )
 							{
-								if( ImGui.CollapsingHeader( ZoneInfoHandler.GetZoneInfoFromContentFinderID( zone.Key ).DutyName.ToString() ) )
+								var zoneInfo = ZoneInfoHandler.GetZoneInfoFromContentFinderID( zone.Key );
+
+								if( IsZoneFilteredBySearch( zoneFilterString, zoneInfo ) && ImGui.CollapsingHeader( zoneInfo.DutyName.ToString() ) )
 								{
 									var indices = zone.Value;
 									for( int i = 0; i < indices.Count; ++i )
@@ -494,6 +510,13 @@ namespace WaymarkPresetPlugin
 
 		public Vector2 WindowPos { get; private set; }
 		public Vector2 WindowSize { get; private set; }
+		
+		private bool IsZoneFilteredBySearch( string zoneFilterString, ZoneInfo zoneInfo )
+		{
+			var matchingZones = LibraryWindowZoneSearcher.GetMatchingZones( zoneFilterString );
+			
+			return zoneFilterString.Length == 0 || matchingZones.Any( id => id == zoneInfo.ContentFinderConditionID );
+		}
 
 		private readonly PluginUI mUI;
 		private readonly DalamudPluginInterface mPluginInterface;
@@ -513,5 +536,8 @@ namespace WaymarkPresetPlugin
 		private bool FieldMarkerAddonWasOpen { get; set; } = false;
 
 		private readonly IntPtr mpLibraryPresetDragAndDropData;
+		
+		private ZoneSearcher LibraryWindowZoneSearcher { get; set; } = new ZoneSearcher();
+		private string mSearchText = "";
 	}
 }
