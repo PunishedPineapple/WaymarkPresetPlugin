@@ -83,45 +83,7 @@ namespace WaymarkPresetPlugin
 			{
 				ImGuiUtils.TitleBarHelpButton( () => { mUI.HelpWindow.OpenHelpWindow( HelpWindowPage.General ); }, 1, UiBuilder.IconFont );
 
-				/*if( ImGui.Button( "A" ) )
-				{
-					mCommandManager.ProcessCommand( "/waymark a" );
-				}
-				ImGui.SameLine();
-				if( ImGui.Button( "B" ) )
-				{
-					mCommandManager.ProcessCommand( "/waymark b" );
-				}
-				ImGui.SameLine();
-				if( ImGui.Button( "C" ) )
-				{
-					mCommandManager.ProcessCommand( "/waymark c" );
-				}
-				ImGui.SameLine();
-				if( ImGui.Button( "D" ) )
-				{
-					mCommandManager.ProcessCommand( "/waymark d" );
-				}
-				ImGui.SameLine();
-				if( ImGui.Button( "1" ) )
-				{
-					mCommandManager.ProcessCommand( "/waymark 1" );
-				}
-				ImGui.SameLine();
-				if( ImGui.Button( "2" ) )
-				{
-					mCommandManager.ProcessCommand( "/waymark 2" );
-				}
-				ImGui.SameLine();
-				if( ImGui.Button( "3" ) )
-				{
-					mCommandManager.ProcessCommand( "/waymark 3" );
-				}
-				ImGui.SameLine();
-				if( ImGui.Button( "4" ) )
-				{
-					mCommandManager.ProcessCommand( "/waymark 4" );
-				}*/
+				DrawWaymarkButtons();
 
 				bool previouslyFilteredOnZone = mConfiguration.FilterOnCurrentZone;
 				ImGui.Checkbox( Loc.Localize( "Config Option: Filter on Current Zone", "Filter on Current Zone" ) + "###Filter on Current Zone Checkbox", ref mConfiguration.mFilterOnCurrentZone );
@@ -169,7 +131,6 @@ namespace WaymarkPresetPlugin
 
 					zoneFilterString = mSearchText;
 				}
-
 				
 				ImGui.BeginChild( "###Library Preset List Child Window" );
 
@@ -200,6 +161,8 @@ namespace WaymarkPresetPlugin
 									{
 										zoneDragDropResult = DoZoneDragAndDrop( zoneInfo );
 									}
+									//***** TESTING
+									if( zoneDragDropResult != null ) PluginLog.LogDebug( $"Non-null Zone Drag and Drop Result: {zoneDragDropResult}" );
 								}
 							}
 						}
@@ -219,115 +182,26 @@ namespace WaymarkPresetPlugin
 				}
 				ImGui.EndGroup();
 
-				//	Input box for import.
 				ImGui.Spacing();
 				ImGui.Spacing();
 				ImGui.Spacing();
 				ImGui.Spacing();
 				ImGui.Spacing();
+
 				if( ImGui.CollapsingHeader( Loc.Localize( "Header: Import Options", "Import Options" ) + "###Import Options" ) )
 				{
-					ImGui.BeginGroup(); //Buttons don't seem to work under a header without being in a group.
-					ImGui.InputTextWithHint( "##JSONImportTextBox", Loc.Localize( "Text Box Prompt: Import", "Paste a preset here and click \"Import\"." ), ref mPresetImportString, 1024 );   //Most exports max out around 500 characters with all waymarks, so this leaves heaps of room for a long name.
-					ImGui.SameLine();
-					if( ImGui.Button( Loc.Localize( "Button: Import", "Import" ) + "###Import Button" ) )
-					{
-						PluginLog.LogInformation( $"Attempting to import preset string: \"{mPresetImportString}\"" );
-						if( mConfiguration.PresetLibrary.ImportPreset( PresetImportString ) >= 0 )
-						{
-							PresetImportString = "";
-							mConfiguration.Save();
-						}
-					}
-					if( MemoryHandler.FoundSavedPresetSigs() )
-					{
-						//ImGui.SameLine();
-						ImGui.Text( Loc.Localize( "Main Window Text: Import from Game Slot Label", "Or import from game slot: " ) );
-						ImGui.SameLine();
-						if( ImGui.Button( "1" ) )
-						{
-							if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 1 ) ) >= 0 )
-							{
-								mConfiguration.Save();
-							}
-						}
-						ImGui.SameLine();
-						if( ImGui.Button( "2" ) )
-						{
-							if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 2 ) ) >= 0 )
-							{
-								mConfiguration.Save();
-							}
-						}
-						ImGui.SameLine();
-						if( ImGui.Button( "3" ) )
-						{
-							if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 3 ) ) >= 0 )
-							{
-								mConfiguration.Save();
-							}
-						}
-						ImGui.SameLine();
-						if( ImGui.Button( "4" ) )
-						{
-							if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 4 ) ) >= 0 )
-							{
-								mConfiguration.Save();
-							}
-						}
-						ImGui.SameLine();
-						if( ImGui.Button( "5" ) )
-						{
-							if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 5 ) ) >= 0 )
-							{
-								mConfiguration.Save();
-							}
-						}
-					}
-					try
-					{
-						ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
-						ImGui.PushFont( UiBuilder.IconFont );
-						ImGui.Text( "\uF0C1" );
-						ImGui.PopFont();
-						ImGui.PopStyleColor();
-						ImGui.SameLine();
-						ImGuiUtils.URLLink( "https://github.com/PunishedPineapple/WaymarkPresetPlugin/wiki/Preset-Resources", Loc.Localize( "Main Window Text: Preset Resources Link", "Where to find importable presets" ), false, UiBuilder.IconFont );
-					}
-					catch( Exception e )
-					{
-						PluginLog.LogWarning( $"Unable to open the requested link:\r\n{e}" );
-					}
-					ImGui.EndGroup();
+					DrawImportSection();
 				}
+				
 				if( ImGui.CollapsingHeader( Loc.Localize( "Header: Export and Backup Options", "Export/Backup Options" ) + "###Export/Backup Options" ) )
 				{
-					ImGui.BeginGroup(); //Buttons don't seem to work under a header without being in a group.
-					if( ImGui.Button( Loc.Localize( "Button: Export All Presets to Clipboard", "Export All Presets to Clipboard" ) + "###Export All Presets to Clipboard Button" ) )
-					{
-						try
-						{
-							string str = "";
-							foreach( var preset in mConfiguration.PresetLibrary.Presets )
-							{
-								str += WaymarkPresetExport.GetExportString( preset ) + "\r\n";
-							}
-							Win32Clipboard.CopyTextToClipboard( str );
-						}
-						catch( Exception e )
-						{
-							PluginLog.Log( $"Error while exporting all presets: {e}" );
-						}
-					}
-					if( ImGui.Button( Loc.Localize( "Button: Backup Current Config", "Backup Current Config" ) + "###Backup Current Config Button" ) )
-					{
-						mConfiguration.BackupConfigFile();
-					}
-					ImGuiUtils.HelpMarker( Loc.Localize( "Help: Backup Current Config", "Copies the current config file to a backup folder in the Dalamud \"pluginConfigs\" directory." ) );
-					ImGui.EndGroup();
+					DrawExportSection();
 				}
 
 				ImGui.EndChild();
+
+				//***** TESTING
+				if( zoneDragDropResult != null ) PluginLog.LogDebug( $"Non-null Zone Drag and Drop Result 2: {zoneDragDropResult}" );
 
 				//	Handle moving a zone header if the user wanted to.
 				if( zoneDragDropResult != null )
@@ -573,7 +447,7 @@ namespace WaymarkPresetPlugin
 						zoneIndexToMove = *(UInt16*)payload.Data;
 						zoneIndexToMoveTo = zoneInfo.ContentFinderConditionID;
 						doDragAndDropMove = true;
-						PluginLog.LogDebug( $"In Zone Delivery with {zoneIndexToMove} -> {zoneIndexToMoveTo}." );
+						PluginLog.LogDebug( $"Zone Drag and Drop Delivery with {zoneIndexToMove} -> {zoneIndexToMoveTo}." );
 					}
 					else
 					{
@@ -605,7 +479,7 @@ namespace WaymarkPresetPlugin
 				ImGui.GetDragDropPayload().IsDataType( $"PresetZoneHeader" ) &&
 				ImGui.GetDragDropPayload().Data != IntPtr.Zero )
 			{
-				UInt16 draggedZone = (UInt16)Marshal.ReadInt16( mpLibraryZoneDragAndDropData );
+				UInt16 draggedZone = *(UInt16*)mpLibraryZoneDragAndDropData;
 				if( draggedZone >= 0 )
 				{
 					if( isTop )	ImGui.CollapsingHeader( Loc.Localize( "Drag and Drop Preview: Move to Top", "<Move To Top>" ) + "###<Move To Top>" );
@@ -620,6 +494,7 @@ namespace WaymarkPresetPlugin
 								zoneIndexToMove = draggedZone;
 								zoneIndexToMoveTo = UInt16.MaxValue;
 								doDragAndDropMove = true;
+								PluginLog.LogDebug( $"Zone Drag and Drop Delivery with {zoneIndexToMove} -> {zoneIndexToMoveTo}." );
 							}
 							else
 							{
@@ -639,7 +514,159 @@ namespace WaymarkPresetPlugin
 			}
 
 			//	Return the drag and drop results.
-			return doDragAndDropMove ? new(zoneIndexToMove, zoneIndexToMoveTo) : null;
+			return doDragAndDropMove ? new( zoneIndexToMove, zoneIndexToMoveTo ) : null;
+		}
+
+		private void DrawImportSection()
+		{
+			ImGui.BeginGroup(); //Buttons don't seem to work under a header without being in a group.
+			ImGui.InputTextWithHint( "##JSONImportTextBox", Loc.Localize( "Text Box Prompt: Import", "Paste a preset here and click \"Import\"." ), ref mPresetImportString, 1024 );   //Most exports max out around 500 characters with all waymarks, so this leaves heaps of room for a long name.
+			ImGui.SameLine();
+			if( ImGui.Button( Loc.Localize( "Button: Import", "Import" ) + "###Import Button" ) )
+			{
+				PluginLog.LogInformation( $"Attempting to import preset string: \"{mPresetImportString}\"" );
+				if( mConfiguration.PresetLibrary.ImportPreset( PresetImportString ) >= 0 )
+				{
+					PresetImportString = "";
+					mConfiguration.Save();
+				}
+			}
+			if( MemoryHandler.FoundSavedPresetSigs() )
+			{
+				//ImGui.SameLine();
+				ImGui.Text( Loc.Localize( "Main Window Text: Import from Game Slot Label", "Or import from game slot: " ) );
+				ImGui.SameLine();
+				if( ImGui.Button( "1" ) )
+				{
+					if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 1 ) ) >= 0 )
+					{
+						mConfiguration.Save();
+					}
+				}
+				ImGui.SameLine();
+				if( ImGui.Button( "2" ) )
+				{
+					if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 2 ) ) >= 0 )
+					{
+						mConfiguration.Save();
+					}
+				}
+				ImGui.SameLine();
+				if( ImGui.Button( "3" ) )
+				{
+					if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 3 ) ) >= 0 )
+					{
+						mConfiguration.Save();
+					}
+				}
+				ImGui.SameLine();
+				if( ImGui.Button( "4" ) )
+				{
+					if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 4 ) ) >= 0 )
+					{
+						mConfiguration.Save();
+					}
+				}
+				ImGui.SameLine();
+				if( ImGui.Button( "5" ) )
+				{
+					if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 5 ) ) >= 0 )
+					{
+						mConfiguration.Save();
+					}
+				}
+			}
+			try
+			{
+				ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
+				ImGui.PushFont( UiBuilder.IconFont );
+				ImGui.Text( "\uF0C1" );
+				ImGui.PopFont();
+				ImGui.PopStyleColor();
+				ImGui.SameLine();
+				ImGuiUtils.URLLink( "https://github.com/PunishedPineapple/WaymarkPresetPlugin/wiki/Preset-Resources", Loc.Localize( "Main Window Text: Preset Resources Link", "Where to find importable presets" ), false, UiBuilder.IconFont );
+			}
+			catch( Exception e )
+			{
+				PluginLog.LogWarning( $"Unable to open the requested link:\r\n{e}" );
+			}
+			ImGui.EndGroup();
+		}
+
+		private void DrawExportSection()
+		{
+			ImGui.BeginGroup(); //Buttons don't seem to work under a header without being in a group.
+			if( ImGui.Button( Loc.Localize( "Button: Export All Presets to Clipboard", "Export All Presets to Clipboard" ) + "###Export All Presets to Clipboard Button" ) )
+			{
+				try
+				{
+					string str = "";
+					foreach( var preset in mConfiguration.PresetLibrary.Presets )
+					{
+						str += WaymarkPresetExport.GetExportString( preset ) + "\r\n";
+					}
+					Win32Clipboard.CopyTextToClipboard( str );
+				}
+				catch( Exception e )
+				{
+					PluginLog.Log( $"Error while exporting all presets: {e}" );
+				}
+			}
+			if( ImGui.Button( Loc.Localize( "Button: Backup Current Config", "Backup Current Config" ) + "###Backup Current Config Button" ) )
+			{
+				mConfiguration.BackupConfigFile();
+			}
+			ImGuiUtils.HelpMarker( Loc.Localize( "Help: Backup Current Config", "Copies the current config file to a backup folder in the Dalamud \"pluginConfigs\" directory." ) );
+			ImGui.EndGroup();
+		}
+
+		public void DrawWaymarkButtons()
+		{
+			//***** TODO: Move to a separate window on the side probably if we every actually do this.
+			/*if( ImGui.Button( "A" ) )
+			{
+				mCommandManager.ProcessCommand( "/waymark a" );
+			}
+			ImGui.SameLine();
+			if( ImGui.Button( "B" ) )
+			{
+				mCommandManager.ProcessCommand( "/waymark b" );
+			}
+			ImGui.SameLine();
+			if( ImGui.Button( "C" ) )
+			{
+				mCommandManager.ProcessCommand( "/waymark c" );
+			}
+			ImGui.SameLine();
+			if( ImGui.Button( "D" ) )
+			{
+				mCommandManager.ProcessCommand( "/waymark d" );
+			}
+			ImGui.SameLine();
+			if( ImGui.Button( "1" ) )
+			{
+				mCommandManager.ProcessCommand( "/waymark 1" );
+			}
+			ImGui.SameLine();
+			if( ImGui.Button( "2" ) )
+			{
+				mCommandManager.ProcessCommand( "/waymark 2" );
+			}
+			ImGui.SameLine();
+			if( ImGui.Button( "3" ) )
+			{
+				mCommandManager.ProcessCommand( "/waymark 3" );
+			}
+			ImGui.SameLine();
+			if( ImGui.Button( "4" ) )
+			{
+				mCommandManager.ProcessCommand( "/waymark 4" );
+			}
+			ImGui.SameLine();
+			if( ImGui.Button( "Clear" ) )
+			{
+				mCommandManager.ProcessCommand( "/waymarks clear" );
+			}*/
 		}
 
 		public void TrySetSelectedPreset( int presetIndex )
