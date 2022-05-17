@@ -28,13 +28,14 @@ namespace WaymarkPresetPlugin
 {
 	internal sealed class Window_Library : IDisposable
 	{
-		public Window_Library( PluginUI UI, DalamudPluginInterface pluginInterface, GameGui gameGui, Configuration configuration, ClientState clientState, IntPtr pLibraryPresetDragAndDropData )
+		public Window_Library( PluginUI UI, DalamudPluginInterface pluginInterface, GameGui gameGui, Configuration configuration, ClientState clientState, IntPtr pLibraryZoneDragAndDropData, IntPtr pLibraryPresetDragAndDropData )
 		{
 			mUI = UI;
 			mPluginInterface = pluginInterface;
 			mGameGui = gameGui;
 			mConfiguration = configuration;
 			mClientState = clientState;
+			mpLibraryZoneDragAndDropData = pLibraryZoneDragAndDropData;
 			mpLibraryPresetDragAndDropData = pLibraryPresetDragAndDropData;
 		}
 
@@ -78,7 +79,7 @@ namespace WaymarkPresetPlugin
 			if( mConfiguration.AttachLibraryToFieldMarkerAddon && fieldMarkerAddonVisible ) ImGui.SetNextWindowPos( dockedWindowPos );
 			ImGui.SetNextWindowSize( new Vector2( 375, 375 ) * ImGui.GetIO().FontGlobalScale, ImGuiCond.FirstUseEver );
 			ImGui.SetNextWindowSizeConstraints( new Vector2( 375, 375 ) * ImGui.GetIO().FontGlobalScale, new Vector2( float.MaxValue, float.MaxValue ) );
-			if( ImGui.Begin( Loc.Localize( "Window Title: Waymark Library", "Waymark Library" ) + "###Waymark Library", ref mWindowVisible, ImGuiWindowFlags.NoCollapse ) )
+			if( ImGui.Begin( Loc.Localize( "Window Title: Waymark Library", "Waymark Library" ) + "###Waymark Library", ref mWindowVisible, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar ) )
 			{
 				ImGuiUtils.TitleBarHelpButton( () => { mUI.HelpWindow.OpenHelpWindow( HelpWindowPage.General ); }, 1, UiBuilder.IconFont );
 
@@ -160,195 +161,55 @@ namespace WaymarkPresetPlugin
 				var zoneFilterString = "";
 
 				// Show the search text box when not filtering on current zone
-				if( !mConfiguration.FilterOnCurrentZone && mConfiguration.SortPresetsByZone )
+				if( mConfiguration.ShowLibraryZoneFilterBox && !mConfiguration.FilterOnCurrentZone && mConfiguration.SortPresetsByZone )
 				{
 					ImGui.PushItemWidth( ImGui.CalcTextSize( "_" ).X * 20u );
-					ImGui.InputText( Loc.Localize( "Search Input Text: Search", "Search" ), ref mSearchText, 16u );
+					ImGui.InputText( Loc.Localize( "Library Window Text: Zone Search Label", "Search Zones" ) + "###Zone Filter Text Box", ref mSearchText, 16u );
 					ImGui.PopItemWidth();
 
 					zoneFilterString = mSearchText;
 				}
 
-				int indexToMove = -1;
-				int indexToMoveTo = -1;
-				bool moveToAfter = false;
+				
+				ImGui.BeginChild( "###Library Preset List Child Window" );
+
+				(int,int,bool)? presetDragDropResult = null;
+				(UInt16,UInt16)? zoneDragDropResult = null;
 				ImGui.BeginGroup();
 				if( mConfiguration.PresetLibrary.Presets.Count > 0 )
 				{
 					if( mConfiguration.mSortPresetsByZone )
 					{
-						var dict = mConfiguration.PresetLibrary.GetSortedIndices();
+						mConfiguration.PresetLibrary.SortZonesDescending( mConfiguration.SortZonesDescending );
+						var dict = mConfiguration.PresetLibrary.GetSortedIndices( false );
+						//if( mConfiguration.SortZonesDescending ) DrawZoneDragDropTopOrBottomPlaceholder( true );	//***** TODO: Not using this for now because having this make the list move down feels pretty bad.
 						foreach( var zone in dict )
 						{
 							if( !mConfiguration.FilterOnCurrentZone || zone.Key == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType ) )
 							{
 								var zoneInfo = ZoneInfoHandler.GetZoneInfoFromContentFinderID( zone.Key );
 
-								if( IsZoneFilteredBySearch( zoneFilterString, zoneInfo ) && ImGui.CollapsingHeader( zoneInfo.DutyName.ToString() ) )
+								if( IsZoneFilteredBySearch( zoneFilterString, zoneInfo ) )
 								{
-									var indices = zone.Value;
-									for( int i = 0; i < indices.Count; ++i )
+									if( ImGui.CollapsingHeader( zoneInfo.DutyName.ToString() ) )
 									{
-										if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[indices[i]].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + indices[i].ToString() + ")" : "" )}###_Preset_{indices[i]}", indices[i] == SelectedPreset ) )
-										{
-											//	It's probably a bad idea to allow the selection to change when a preset's being edited.
-											if( !mUI.EditorWindow.EditingPreset )
-											{
-												if( mConfiguration.AllowUnselectPreset && indices[i] == SelectedPreset )
-												{
-													SelectedPreset = -1;
-												}
-												else
-												{
-													SelectedPreset = indices[i];
-												}
-
-												mUI.InfoPaneWindow.CancelPendingDelete();
-											}
-										}
-										if( !mUI.EditorWindow.EditingPreset && ImGui.BeginDragDropSource( ImGuiDragDropFlags.None ) )
-										{
-											ImGui.SetDragDropPayload( $"PresetIdxZ{zone.Key}", mpLibraryPresetDragAndDropData, sizeof( int ) );
-											Marshal.WriteInt32( mpLibraryPresetDragAndDropData, indices[i] );
-											ImGui.Text( Loc.Localize( "Drag and Drop Preview: Moving Preset", "Moving: " ) + $"{mConfiguration.PresetLibrary.Presets[indices[i]].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + indices[i].ToString() + ")" : "" )}" );
-											ImGui.EndDragDropSource();
-										}
-										if( !mUI.EditorWindow.EditingPreset && ImGui.BeginDragDropTarget() )
-										{
-											unsafe
-											{
-												ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zone.Key}", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
-												if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
-												{
-													if( payload.IsDelivery() )
-													{
-														indexToMove = Marshal.ReadInt32( payload.Data );
-														indexToMoveTo = indices[i];
-													}
-													else
-													{
-														ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
-													}
-												}
-											}
-											ImGui.EndDragDropTarget();
-										}
+										zoneDragDropResult = DoZoneDragAndDrop( zoneInfo );
+										presetDragDropResult = DrawPresetsForZone( zone );
 									}
-									unsafe
+									else
 									{
-										if( !mUI.EditorWindow.EditingPreset && ImGui.GetDragDropPayload().NativePtr != null && ImGui.GetDragDropPayload().Data != IntPtr.Zero )
-										{
-											int draggedIndex = Marshal.ReadInt32( mpLibraryPresetDragAndDropData );
-											if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count && mConfiguration.PresetLibrary.Presets[draggedIndex].MapID == zone.Key )
-											{
-												ImGui.Selectable( Loc.Localize( "Drag and Drop Preview: Move to Bottom", "<Move To Bottom>" ) + "###<Move To Bottom>" );
-												if( ImGui.BeginDragDropTarget() )
-												{
-													ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zone.Key}", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
-													if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
-													{
-														if( payload.IsDelivery() )
-														{
-															indexToMove = Marshal.ReadInt32( payload.Data );
-															indexToMoveTo = indices.Last();
-															moveToAfter = true;
-														}
-														else
-														{
-															ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
-														}
-													}
-													ImGui.EndDragDropTarget();
-												}
-											}
-										}
+										zoneDragDropResult = DoZoneDragAndDrop( zoneInfo );
 									}
 								}
 							}
 						}
+						if( !mConfiguration.SortZonesDescending ) DrawZoneDragDropTopOrBottomPlaceholder( false );
 					}
 					else
 					{
 						if( ImGui.CollapsingHeader( Loc.Localize( "Header: Presets", "Presets" ) + "###Presets" ) )
 						{
-							for( int i = 0; i < mConfiguration.PresetLibrary.Presets.Count; ++i )
-							{
-								if( !mConfiguration.FilterOnCurrentZone || mConfiguration.PresetLibrary.Presets[i].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType ) )
-								{
-									if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}###_Preset_{i}", i == SelectedPreset ) )
-									{
-										//	It's probably a bad idea to allow the selection to change when a preset's being edited.
-										if( !mUI.EditorWindow.EditingPreset )
-										{
-											if( mConfiguration.AllowUnselectPreset && i == SelectedPreset )
-											{
-												SelectedPreset = -1;
-											}
-											else
-											{
-												SelectedPreset = i;
-											}
-
-											mUI.InfoPaneWindow.CancelPendingDelete();
-										}
-									}
-									if( !mUI.EditorWindow.EditingPreset && ImGui.BeginDragDropSource( ImGuiDragDropFlags.None ) )
-									{
-										ImGui.SetDragDropPayload( $"PresetIdxAnyZone", mpLibraryPresetDragAndDropData, sizeof( int ) );
-										Marshal.WriteInt32( mpLibraryPresetDragAndDropData, i );
-										ImGui.Text( Loc.Localize( "Drag and Drop Preview: Moving Preset", "Moving: " ) + $"{mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}" );
-										ImGui.EndDragDropSource();
-									}
-									if( !mUI.EditorWindow.EditingPreset && ImGui.BeginDragDropTarget() )
-									{
-										unsafe
-										{
-											ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
-											if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
-											{
-												if( payload.IsDelivery() )
-												{
-													indexToMove = Marshal.ReadInt32( payload.Data );
-													indexToMoveTo = i;
-												}
-												else
-												{
-													ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
-												}
-											}
-										}
-										ImGui.EndDragDropTarget();
-									}
-								}
-							}
-							unsafe
-							{
-								if( !mUI.EditorWindow.EditingPreset && ImGui.GetDragDropPayload().NativePtr != null && ImGui.GetDragDropPayload().Data != IntPtr.Zero )
-								{
-									int draggedIndex = Marshal.ReadInt32( mpLibraryPresetDragAndDropData );
-									if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count )
-									{
-										ImGui.Selectable( Loc.Localize( "Drag and Drop Preview: Move to Bottom", "<Move To Bottom>" ) + "###<Move To Bottom>" );
-										if( ImGui.BeginDragDropTarget() )
-										{
-											ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
-											if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
-											{
-												if( payload.IsDelivery() )
-												{
-													indexToMove = Marshal.ReadInt32( payload.Data );
-													indexToMoveTo = mConfiguration.PresetLibrary.Presets.Count;
-												}
-												else
-												{
-													ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
-												}
-											}
-											ImGui.EndDragDropTarget();
-										}
-									}
-								}
-							}
+							presetDragDropResult = DrawUncategorizedPresets();
 						}
 					}
 				}
@@ -466,17 +327,36 @@ namespace WaymarkPresetPlugin
 					ImGui.EndGroup();
 				}
 
-				//	Handle moving a preset now if the user wanted to.
-				if( indexToMove >= 0 && indexToMoveTo >= 0 )
+				ImGui.EndChild();
+
+				//	Handle moving a zone header if the user wanted to.
+				if( zoneDragDropResult != null )
 				{
-					SelectedPreset = mConfiguration.PresetLibrary.MovePreset( indexToMove, indexToMoveTo, moveToAfter );
+					//	If it's the first time someone is dragging and dropping, set the sort order to what's currently visible.
+					if( !mConfiguration.PresetLibrary.GetSortOrder().Any() )
+					{
+						List<UInt16> baseSortOrder = new();
+						foreach( var zone in mConfiguration.PresetLibrary.GetSortedIndices( mConfiguration.SortZonesDescending ) ) baseSortOrder.Add( zone.Key );
+						mConfiguration.PresetLibrary.SetSortOrder( baseSortOrder, mConfiguration.mSortZonesDescending );
+						PluginLog.LogDebug( "Tried to set up initial zone sort order." );
+					}
+
+					//	Modify the sort entry for the drag and drop.
+					mConfiguration.PresetLibrary.AddOrChangeSortEntry( zoneDragDropResult.Value.Item1, zoneDragDropResult.Value.Item2 );
+					PluginLog.LogDebug( $"Tried to move zone id {zoneDragDropResult.Value.Item1} in front of {zoneDragDropResult.Value.Item2}." );
+				}
+
+				//	Handle moving a preset now if the user wanted to.
+				if( presetDragDropResult != null )
+				{
+					SelectedPreset = mConfiguration.PresetLibrary.MovePreset( presetDragDropResult.Value.Item1, presetDragDropResult.Value.Item2, presetDragDropResult.Value.Item3 );
 					if( SelectedPreset == -1 )
 					{
-						PluginLog.LogDebug( $"Unable to move preset {indexToMove} to {( moveToAfter ? "after " : "" )}index {indexToMoveTo}." );
+						PluginLog.LogDebug( $"Unable to move preset {presetDragDropResult.Value.Item1} to {( presetDragDropResult.Value.Item3 ? "after " : "" )}index {presetDragDropResult.Value.Item2}." );
 					}
 					else
 					{
-						PluginLog.LogDebug( $"Moved preset {indexToMove} to index {SelectedPreset}." );
+						PluginLog.LogDebug( $"Moved preset {presetDragDropResult.Value.Item1} to index {SelectedPreset}." );
 						mConfiguration.Save();
 					}
 					Marshal.WriteInt32( mpLibraryPresetDragAndDropData, -1 );
@@ -489,6 +369,277 @@ namespace WaymarkPresetPlugin
 
 			//	We're done.
 			ImGui.End();
+		}
+
+		unsafe private (int,int,bool)? DrawPresetsForZone( KeyValuePair<UInt16, List<int>> zonePresets )
+		{
+			bool doDragAndDropMove = false;
+			int indexToMove = -1;
+			int indexToMoveTo = -1;
+			bool moveToAfter = false;
+			var indices = zonePresets.Value;
+			for( int i = 0; i < indices.Count; ++i )
+			{
+				if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[indices[i]].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + indices[i].ToString() + ")" : "" )}###_Preset_{indices[i]}", indices[i] == SelectedPreset ) )
+				{
+					//	It's probably a bad idea to allow the selection to change when a preset's being edited.
+					if( !mUI.EditorWindow.EditingPreset )
+					{
+						if( mConfiguration.AllowUnselectPreset && indices[i] == SelectedPreset )
+						{
+							SelectedPreset = -1;
+						}
+						else
+						{
+							SelectedPreset = indices[i];
+						}
+
+						mUI.InfoPaneWindow.CancelPendingDelete();
+					}
+				}
+				if( !mUI.EditorWindow.EditingPreset && mConfiguration.AllowPresetDragAndDropOrdering && ImGui.BeginDragDropSource( ImGuiDragDropFlags.SourceNoHoldToOpenOthers ) )
+				{
+					ImGui.SetDragDropPayload( $"PresetIdxZ{zonePresets.Key}", mpLibraryPresetDragAndDropData, sizeof( int ) );
+					Marshal.WriteInt32( mpLibraryPresetDragAndDropData, indices[i] );
+					ImGui.Text( Loc.Localize( "Drag and Drop Preview: Moving Preset", "Moving: " ) + $"{mConfiguration.PresetLibrary.Presets[indices[i]].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + indices[i].ToString() + ")" : "" )}" );
+					ImGui.EndDragDropSource();
+				}
+				if( !mUI.EditorWindow.EditingPreset && mConfiguration.AllowPresetDragAndDropOrdering && ImGui.BeginDragDropTarget() )
+				{
+					ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zonePresets.Key}", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
+					if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
+					{
+						if( payload.IsDelivery() )
+						{
+							indexToMove = Marshal.ReadInt32( payload.Data );
+							indexToMoveTo = indices[i];
+							doDragAndDropMove = true;
+						}
+						else
+						{
+							ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+						}
+					}
+
+					ImGui.EndDragDropTarget();
+				}
+			}
+
+			if( !mUI.EditorWindow.EditingPreset &&
+				mConfiguration.AllowPresetDragAndDropOrdering &&
+				ImGui.GetDragDropPayload().NativePtr != null &&
+				ImGui.GetDragDropPayload().IsDataType( $"PresetIdxZ{zonePresets.Key}" ) &&
+				ImGui.GetDragDropPayload().Data != IntPtr.Zero )
+			{
+				int draggedIndex = Marshal.ReadInt32( mpLibraryPresetDragAndDropData );
+				if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count && mConfiguration.PresetLibrary.Presets[draggedIndex].MapID == zonePresets.Key )
+				{
+					ImGui.Selectable( Loc.Localize( "Drag and Drop Preview: Move to Bottom", "<Move To Bottom>" ) + "###<Move To Bottom>" );
+					if( ImGui.BeginDragDropTarget() )
+					{
+						ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxZ{zonePresets.Key}", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
+						if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
+						{
+							if( payload.IsDelivery() )
+							{
+								indexToMove = Marshal.ReadInt32( payload.Data );
+								indexToMoveTo = indices.Last();
+								moveToAfter = true;
+								doDragAndDropMove = true;
+							}
+							else
+							{
+								ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+							}
+						}
+						ImGui.EndDragDropTarget();
+					}
+				}
+			}
+
+			//	Return the drag and drop results.
+			return doDragAndDropMove ? new( indexToMove, indexToMoveTo, moveToAfter ) : null;
+		}
+
+		unsafe private (int,int,bool)? DrawUncategorizedPresets()
+		{
+			bool doDragAndDropMove = false;
+			int indexToMove = -1;
+			int indexToMoveTo = -1;
+			bool moveToAfter = false;
+			for( int i = 0; i < mConfiguration.PresetLibrary.Presets.Count; ++i )
+			{
+				if( !mConfiguration.FilterOnCurrentZone || mConfiguration.PresetLibrary.Presets[i].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType ) )
+				{
+					if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}###_Preset_{i}", i == SelectedPreset ) )
+					{
+						//	It's probably a bad idea to allow the selection to change when a preset's being edited.
+						if( !mUI.EditorWindow.EditingPreset )
+						{
+							if( mConfiguration.AllowUnselectPreset && i == SelectedPreset )
+							{
+								SelectedPreset = -1;
+							}
+							else
+							{
+								SelectedPreset = i;
+							}
+
+							mUI.InfoPaneWindow.CancelPendingDelete();
+						}
+					}
+					if( !mUI.EditorWindow.EditingPreset && mConfiguration.AllowPresetDragAndDropOrdering && ImGui.BeginDragDropSource( ImGuiDragDropFlags.SourceNoHoldToOpenOthers ) )
+					{
+						ImGui.SetDragDropPayload( $"PresetIdxAnyZone", mpLibraryPresetDragAndDropData, sizeof( int ) );
+						Marshal.WriteInt32( mpLibraryPresetDragAndDropData, i );
+						ImGui.Text( Loc.Localize( "Drag and Drop Preview: Moving Preset", "Moving: " ) + $"{mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}" );
+						ImGui.EndDragDropSource();
+					}
+					if( !mUI.EditorWindow.EditingPreset && mConfiguration.AllowPresetDragAndDropOrdering && ImGui.BeginDragDropTarget() )
+					{
+						ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
+						if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
+						{
+							if( payload.IsDelivery() )
+							{
+								indexToMove = Marshal.ReadInt32( payload.Data );
+								indexToMoveTo = i;
+								doDragAndDropMove = true;
+							}
+							else
+							{
+								ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+							}
+						}
+						ImGui.EndDragDropTarget();
+					}
+				}
+			}
+
+			if( !mUI.EditorWindow.EditingPreset &&
+				mConfiguration.AllowPresetDragAndDropOrdering &&
+				ImGui.GetDragDropPayload().NativePtr != null &&
+				ImGui.GetDragDropPayload().IsDataType( $"PresetIdxAnyZone" ) &&
+				ImGui.GetDragDropPayload().Data != IntPtr.Zero )
+			{
+				int draggedIndex = Marshal.ReadInt32( mpLibraryPresetDragAndDropData );
+				if( draggedIndex >= 0 && draggedIndex < mConfiguration.PresetLibrary.Presets.Count )
+				{
+					ImGui.Selectable( Loc.Localize( "Drag and Drop Preview: Move to Bottom", "<Move To Bottom>" ) + "###<Move To Bottom>" );
+					if( ImGui.BeginDragDropTarget() )
+					{
+						ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetIdxAnyZone", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
+						if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
+						{
+							if( payload.IsDelivery() )
+							{
+								indexToMove = Marshal.ReadInt32( payload.Data );
+								indexToMoveTo = mConfiguration.PresetLibrary.Presets.Count;
+								doDragAndDropMove = true;
+							}
+							else
+							{
+								ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+							}
+						}
+						ImGui.EndDragDropTarget();
+					}
+				}
+			}
+
+			//	Return the drag and drop results.
+			return doDragAndDropMove ? new( indexToMove, indexToMoveTo, moveToAfter ) : null;
+		}
+
+		unsafe private (UInt16,UInt16)? DoZoneDragAndDrop( ZoneInfo zoneInfo )
+		{
+			bool doDragAndDropMove = false;
+			UInt16 zoneIndexToMove = 0;
+			UInt16 zoneIndexToMoveTo = 0;
+			if( !mUI.EditorWindow.EditingPreset && mConfiguration.AllowZoneDragAndDropOrdering && ImGui.BeginDragDropSource( ImGuiDragDropFlags.SourceNoHoldToOpenOthers ) )
+			{
+				ImGui.SetDragDropPayload( $"PresetZoneHeader", mpLibraryZoneDragAndDropData, sizeof( UInt16 ) );
+				*(UInt16*)mpLibraryZoneDragAndDropData = zoneInfo.ContentFinderConditionID;
+				ImGui.Text( Loc.Localize( "Drag and Drop Preview: Moving Zone", "Moving: " ) + $"{zoneInfo.DutyName}" );
+				ImGui.EndDragDropSource();
+			}
+			if( !mUI.EditorWindow.EditingPreset && mConfiguration.AllowZoneDragAndDropOrdering && ImGui.BeginDragDropTarget() )
+			{
+				ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetZoneHeader", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
+				if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
+				{
+					if( payload.IsDelivery() )
+					{
+						zoneIndexToMove = *(UInt16*)payload.Data;
+						zoneIndexToMoveTo = zoneInfo.ContentFinderConditionID;
+						doDragAndDropMove = true;
+						PluginLog.LogDebug( $"In Zone Delivery with {zoneIndexToMove} -> {zoneIndexToMoveTo}." );
+					}
+					else
+					{
+						if( mConfiguration.SortZonesDescending )
+						{
+							ImGuiUtils.AddUnderline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+						}
+						else
+						{
+							ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+						}
+					}
+				}
+				ImGui.EndDragDropTarget();
+			}
+
+			//	Return the drag and drop results.
+			return doDragAndDropMove ? new( zoneIndexToMove, zoneIndexToMoveTo ) : null;
+		}
+
+		unsafe private (UInt16,UInt16)? DrawZoneDragDropTopOrBottomPlaceholder( bool isTop )
+		{
+			bool doDragAndDropMove = false;
+			UInt16 zoneIndexToMove = 0;
+			UInt16 zoneIndexToMoveTo = 0;
+			if( !mUI.EditorWindow.EditingPreset &&
+				mConfiguration.AllowZoneDragAndDropOrdering &&
+				ImGui.GetDragDropPayload().NativePtr != null &&
+				ImGui.GetDragDropPayload().IsDataType( $"PresetZoneHeader" ) &&
+				ImGui.GetDragDropPayload().Data != IntPtr.Zero )
+			{
+				UInt16 draggedZone = (UInt16)Marshal.ReadInt16( mpLibraryZoneDragAndDropData );
+				if( draggedZone >= 0 )
+				{
+					if( isTop )	ImGui.CollapsingHeader( Loc.Localize( "Drag and Drop Preview: Move to Top", "<Move To Top>" ) + "###<Move To Top>" );
+					else		ImGui.CollapsingHeader( Loc.Localize( "Drag and Drop Preview: Move to Bottom", "<Move To Bottom>" ) + "###<Move To Bottom>" );
+					if( ImGui.BeginDragDropTarget() )
+					{
+						ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload( $"PresetZoneHeader", ImGuiDragDropFlags.AcceptBeforeDelivery | ImGuiDragDropFlags.AcceptNoDrawDefaultRect );
+						if( payload.NativePtr != null && payload.Data != IntPtr.Zero )
+						{
+							if( payload.IsDelivery() )
+							{
+								zoneIndexToMove = draggedZone;
+								zoneIndexToMoveTo = UInt16.MaxValue;
+								doDragAndDropMove = true;
+							}
+							else
+							{
+								if( isTop )
+								{
+									ImGuiUtils.AddUnderline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+								}
+								else
+								{
+									ImGuiUtils.AddOverline( new Vector4( 1.0f, 1.0f, 0.0f, 1.0f ), 3.0f );
+								}
+							}
+						}
+						ImGui.EndDragDropTarget();
+					}
+				}
+			}
+
+			//	Return the drag and drop results.
+			return doDragAndDropMove ? new(zoneIndexToMove, zoneIndexToMoveTo) : null;
 		}
 
 		public void TrySetSelectedPreset( int presetIndex )
@@ -535,6 +686,7 @@ namespace WaymarkPresetPlugin
 
 		private bool FieldMarkerAddonWasOpen { get; set; } = false;
 
+		private readonly IntPtr mpLibraryZoneDragAndDropData;
 		private readonly IntPtr mpLibraryPresetDragAndDropData;
 		
 		private ZoneSearcher LibraryWindowZoneSearcher { get; set; } = new ZoneSearcher();

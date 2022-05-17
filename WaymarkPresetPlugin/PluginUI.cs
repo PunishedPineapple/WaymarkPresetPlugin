@@ -19,15 +19,23 @@ namespace WaymarkPresetPlugin
 		{
 
 			//	Allocate drag and drop memory.
-			mpLibraryPresetDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
-			mpEditWaymarkDragAndDropData = Marshal.AllocHGlobal( sizeof( int ) );
+			mpLibraryZoneDragAndDropData = Marshal.AllocHGlobal( sizeof( UInt32 ) );
+			mpLibraryPresetDragAndDropData = Marshal.AllocHGlobal( sizeof( Int32 ) );
+			mpEditWaymarkDragAndDropData = Marshal.AllocHGlobal( sizeof( Int32 ) );
 			mpEditWaymarkCoordDragAndDropData = Marshal.AllocHGlobal( Marshal.SizeOf<Vector3>() );
-			if( mpLibraryPresetDragAndDropData == IntPtr.Zero ||
+			if( mpLibraryZoneDragAndDropData == IntPtr.Zero ||
+				mpLibraryPresetDragAndDropData == IntPtr.Zero ||
 				mpEditWaymarkDragAndDropData == IntPtr.Zero ||
 				mpEditWaymarkCoordDragAndDropData  == IntPtr.Zero )
 			{
 				throw new Exception( "Error in PluginUI constructor: Unable to allocate memory for drag and drop info." );
 			}
+
+			//	Zero out the memory for debug purposes (we are using the zone drag and drop as a UInt16 for now, so keep the other bytes clean).
+			Marshal.WriteInt32( mpLibraryZoneDragAndDropData, 0 );
+			Marshal.WriteInt32( mpLibraryPresetDragAndDropData, 0 );
+			Marshal.WriteInt32( mpEditWaymarkDragAndDropData, 0 );
+			Marshal.StructureToPtr( Vector3.Zero, mpEditWaymarkCoordDragAndDropData, true );
 
 			//	Load waymark icons.
 			WaymarkIconTextures[0] ??= dataManager.GetImGuiTextureIcon( 61241 );   //A
@@ -40,7 +48,7 @@ namespace WaymarkPresetPlugin
 			WaymarkIconTextures[7] ??= dataManager.GetImGuiTextureIcon( 61248 );   //4
 
 			//	Make child windows.
-			LibraryWindow = new( this, pluginInterface, gameGui, configuration, clientState, mpLibraryPresetDragAndDropData );
+			LibraryWindow = new( this, pluginInterface, gameGui, configuration, clientState, mpLibraryZoneDragAndDropData, mpLibraryPresetDragAndDropData );
 			InfoPaneWindow = new( this, pluginInterface, configuration );
 			MapWindow = new( this, pluginInterface, dataManager, configuration );
 			HelpWindow = new( this, pluginInterface, configuration, mpEditWaymarkCoordDragAndDropData );
@@ -67,6 +75,7 @@ namespace WaymarkPresetPlugin
 			}
 
 			//	Free the drag and drop data.
+			Marshal.FreeHGlobal( mpLibraryZoneDragAndDropData );
 			Marshal.FreeHGlobal( mpLibraryPresetDragAndDropData );
 			Marshal.FreeHGlobal( mpEditWaymarkDragAndDropData );
 			Marshal.FreeHGlobal( mpEditWaymarkCoordDragAndDropData );
@@ -95,9 +104,11 @@ namespace WaymarkPresetPlugin
 
 		//	The fields below are here because multiple windows might need them.
 		internal readonly TextureWrap[] WaymarkIconTextures = new TextureWrap[8];
-		
-		private readonly IntPtr mpLibraryPresetDragAndDropData;
-		private readonly IntPtr mpEditWaymarkDragAndDropData;
-		private readonly IntPtr mpEditWaymarkCoordDragAndDropData;
+
+		//***** TODO: Make private again after debugging.
+		internal readonly IntPtr mpLibraryZoneDragAndDropData;
+		internal readonly IntPtr mpLibraryPresetDragAndDropData;
+		internal readonly IntPtr mpEditWaymarkDragAndDropData;
+		internal readonly IntPtr mpEditWaymarkCoordDragAndDropData;
 	}
 }

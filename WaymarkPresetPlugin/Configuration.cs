@@ -103,6 +103,34 @@ namespace WaymarkPresetPlugin
 			set { mAttachLibraryToFieldMarkerAddon = value; }
 		}
 
+		public bool mAllowPresetDragAndDropOrdering = true;
+		public bool AllowPresetDragAndDropOrdering
+		{
+			get { return mAllowPresetDragAndDropOrdering; }
+			set { mAllowPresetDragAndDropOrdering = value; }
+		}
+
+		public bool mAllowZoneDragAndDropOrdering = true;
+		public bool AllowZoneDragAndDropOrdering
+		{
+			get { return mAllowZoneDragAndDropOrdering; }
+			set { mAllowZoneDragAndDropOrdering = value; }
+		}
+
+		public bool mSortZonesDescending = false;
+		public bool SortZonesDescending
+		{
+			get { return mSortZonesDescending; }
+			set { mSortZonesDescending = value; }
+		}
+
+		public bool mShowLibraryZoneFilterBox = true;
+		public bool ShowLibraryZoneFilterBox
+		{
+			get { return mShowLibraryZoneFilterBox; }
+			set { mShowLibraryZoneFilterBox = value; }
+		}
+
 		public string GetZoneName( UInt16 ID )
 		{
 			return GetZoneNameDelegate( ID, ShowIDNumberNextToZoneNames );

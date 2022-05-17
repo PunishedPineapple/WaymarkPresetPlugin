@@ -120,8 +120,9 @@ namespace WaymarkPresetPlugin
 			ImGui.Spacing();
 			ImGui.Text( Loc.Localize( "Help Window Text: General 6",
 						"Presets can be reordered in the library by dragging and dropping them at the desired spot.  The sorting of duties in " +
-						"the library cannot currently be changed; the order is the same as they are sorted in the game's files, and is approximately " +
-						"the order in which the duties were added to the game." ) );
+						"the library is by default the same as they are sorted in the game's files, and is approximately " +
+						"the order in which the duties were added to the game.  Duties can be drag and drop reordered if desired.  If you create your own " +
+						"order by doing this, newly-seen duties will appear at the bottom of the list." ) );
 		}
 
 		private void DrawHelpWindow_Editing()

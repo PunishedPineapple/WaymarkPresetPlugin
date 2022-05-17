@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using ImGuiNET;
 using ImGuiScene;
 using Dalamud.Plugin;
@@ -25,7 +26,7 @@ namespace WaymarkPresetPlugin
 
 		}
 
-		public void Draw()
+		public unsafe void Draw()
 		{
 			if( !WindowVisible )
 			{
@@ -44,6 +45,21 @@ namespace WaymarkPresetPlugin
 					Loc.ExportLocalizable();
 					Directory.SetCurrentDirectory( pwd );
 				}
+				ImGui.Text( "Drag and Drop Data:" );
+				ImGui.Indent();
+				ImGui.Text( $"Zone: 0x{mUI.mpLibraryZoneDragAndDropData:X}" );
+				ImGui.Text( $"Preset: 0x{mUI.mpLibraryPresetDragAndDropData:X}" );
+				ImGui.Text( $"Waymark: 0x{mUI.mpEditWaymarkDragAndDropData:X}" );
+				ImGui.Text( $"Coords: 0x{mUI.mpEditWaymarkCoordDragAndDropData:X}" );
+				ImGui.Spacing();
+				if( ImGui.GetDragDropPayload().NativePtr != null )
+				{
+					ImGui.Text( $"Current Payload: 0x{ImGui.GetDragDropPayload().Data:X}" );
+					ImGui.Text( $"Current Payload Contents: 0x{Marshal.ReadInt32( ImGui.GetDragDropPayload().Data )}" );
+					
+				}
+				ImGui.Unindent();
+
 			}
 
 			//	We're done.

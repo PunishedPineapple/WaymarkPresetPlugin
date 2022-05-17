@@ -2,10 +2,10 @@
 	<PropertyGroup>
 		<TargetFramework>net5.0-windows</TargetFramework>
 		<Platforms>AnyCPU</Platforms>
-		<Version>1.4.0.0</Version>
+		<Version>1.4.1.0</Version>
 		<Authors>PunishedPineapple</Authors>
 		<Product />
-		<Copyright>Copyright © PunishedPineapple 2020-2021</Copyright>
+		<Copyright>Copyright © PunishedPineapple 2020-2022</Copyright>
 		<PackageProjectUrl>https://github.com/PunishedPineapple/WaymarkPresetPlugin</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/PunishedPineapple/WaymarkPresetPlugin</RepositoryUrl>
 	</PropertyGroup>
