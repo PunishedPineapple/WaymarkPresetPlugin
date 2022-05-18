@@ -1,27 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.IO;
-using System.Threading;
 
-using Newtonsoft.Json;
+using CheapLoc;
+
+using Dalamud.Game.ClientState;
+using Dalamud.Game.Gui;
+using Dalamud.Interface;
+using Dalamud.Logging;
+using Dalamud.Plugin;
+
+using FFXIVClientStructs.FFXIV.Component.GUI;
 
 using ImGuiNET;
-using ImGuiScene;
-
-using Dalamud.Interface;
-using Dalamud.Plugin;
-using Dalamud.Data;
-using Dalamud.Logging;
-using Dalamud.Utility;
-using Dalamud.Game.Gui;
-using Dalamud.Game.ClientState;
-using FFXIVClientStructs.FFXIV.Component.GUI;
-using CheapLoc;
 
 
 namespace WaymarkPresetPlugin

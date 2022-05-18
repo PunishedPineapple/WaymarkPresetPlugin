@@ -1,18 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel;
+using System.IO;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.IO;
-using System.ComponentModel;
 
-using ImGuiNET;
-using ImGuiScene;
+using CheapLoc;
+
 using Dalamud.Interface;
 using Dalamud.Plugin;
-using CheapLoc;
+
+using ImGuiNET;
+
+using ImGuiScene;
 
 namespace WaymarkPresetPlugin
 {

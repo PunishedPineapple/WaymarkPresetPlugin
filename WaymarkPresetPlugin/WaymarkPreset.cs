@@ -1,6 +1,8 @@
 ﻿using System;
-using Newtonsoft.Json;
+
 using CheapLoc;
+
+using Newtonsoft.Json;
 
 namespace WaymarkPresetPlugin
 {

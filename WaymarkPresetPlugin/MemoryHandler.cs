@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState;
 using Dalamud.Game;
+using Dalamud.Game.ClientState;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
 
 namespace WaymarkPresetPlugin

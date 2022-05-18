@@ -1,17 +1,20 @@
-﻿using Dalamud.Plugin;
-using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState;
-using Dalamud.Game.Command;
-using Dalamud.Game.Gui;
-using Dalamud.Game;
-using Dalamud.Data;
-using Dalamud.Logging;
-using System;
-using System.Linq;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
+using System.Linq;
+
 using CheapLoc;
+
+using Dalamud.Data;
+using Dalamud.Game;
+using Dalamud.Game.ClientState;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.Command;
+using Dalamud.Game.Gui;
+using Dalamud.Logging;
+using Dalamud.Plugin;
+
+using Newtonsoft.Json;
 
 namespace WaymarkPresetPlugin
 {

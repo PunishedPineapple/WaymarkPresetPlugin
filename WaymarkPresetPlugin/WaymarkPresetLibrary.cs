@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
-using Dalamud.Logging;
+
 using CheapLoc;
+
+using Dalamud.Logging;
+
+using Newtonsoft.Json;
 
 namespace WaymarkPresetPlugin
 {
