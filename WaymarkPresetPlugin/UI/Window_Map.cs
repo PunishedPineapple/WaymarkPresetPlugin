@@ -33,14 +33,14 @@ namespace WaymarkPresetPlugin
 			//	Try to read in the view state data.
 			try
 			{
-				string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"\\MapViewStateData_v1.json" );
+				string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mMapViewStateDataFileName_v1 );
 				string jsonStr = File.ReadAllText( viewStateDataFilePath );
 				var viewData = JsonConvert.DeserializeObject<Dictionary<uint, MapViewState>>( jsonStr );
 				if( viewData != null ) MapViewStateData = viewData;
 			}
 			catch( Exception e )
 			{
-				PluginLog.LogWarning( $"Unable to load map view state data: {e}" );
+				PluginLog.LogWarning( $"Unable to load map view state data:\r\n{e}" );
 			}
 		}
 
@@ -50,12 +50,12 @@ namespace WaymarkPresetPlugin
 			try
 			{
 				string jsonStr = JsonConvert.SerializeObject( MapViewStateData, Formatting.Indented );
-				string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"\\MapViewStateData_v1.json" );
+				string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mMapViewStateDataFileName_v1 );
 				File.WriteAllText( viewStateDataFilePath, jsonStr );
 			}
 			catch( Exception e )
 			{
-				PluginLog.LogWarning( $"Unable to save map view state data: {e}" );
+				PluginLog.LogWarning( $"Unable to save map view state data:\r\n{e}" );
 			}
 
 			//	Try to do this nicely for a moment, but then just brute force it to clean up as much as we can.
@@ -440,7 +440,7 @@ namespace WaymarkPresetPlugin
 		public void ClearAllMapViewStateData()
 		{
 			MapViewStateData.Clear();
-			string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"\\MapViewStateData_v1.json" );
+			string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mMapViewStateDataFileName_v1 );
 			if( File.Exists( viewStateDataFilePath ) )
 			{
 				File.Delete( viewStateDataFilePath );
@@ -465,5 +465,7 @@ namespace WaymarkPresetPlugin
 		private int CapturedWaymarkIndex { get; set; } = -1;
 		private Vector2 CapturedWaymarkOffset { get; set; } = new( 0, 0 );
 		private static readonly Vector2 mWaymarkMapIconHalfSize_Px = new( 15, 15 );
+
+		private const string mMapViewStateDataFileName_v1 = "MapViewStateData_v1.json";
 	}
 }
