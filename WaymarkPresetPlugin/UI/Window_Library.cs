@@ -142,8 +142,12 @@ namespace WaymarkPresetPlugin
 					if( mConfiguration.mSortPresetsByZone )
 					{
 						mConfiguration.PresetLibrary.SortZonesDescending( mConfiguration.SortZonesDescending );
-						var dict = mConfiguration.PresetLibrary.GetSortedIndices( false );
-						//if( mConfiguration.SortZonesDescending ) DrawZoneDragDropTopOrBottomPlaceholder( true );	//***** TODO: Not using this for now because having this make the list move down feels pretty bad.
+						var dict = mConfiguration.PresetLibrary.GetSortedIndices( true );
+						/*if( mConfiguration.SortZonesDescending )
+						{
+							var tempZoneResult = DrawZoneDragDropTopOrBottomPlaceholder( true ); //***** TODO: Not using this for now because having this make the list move down feels pretty bad.
+							zoneDragDropResult ??= tempZoneResult;
+						}*/
 						foreach( var zone in dict )
 						{
 							if( !mConfiguration.FilterOnCurrentZone || zone.Key == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType ) )
@@ -154,19 +158,24 @@ namespace WaymarkPresetPlugin
 								{
 									if( ImGui.CollapsingHeader( zoneInfo.DutyName.ToString() ) )
 									{
-										zoneDragDropResult = DoZoneDragAndDrop( zoneInfo );
-										presetDragDropResult = DrawPresetsForZone( zone );
+										var tempZoneResult = DoZoneDragAndDrop( zoneInfo );
+										var tempPresetResult = DrawPresetsForZone( zone );
+										zoneDragDropResult ??= tempZoneResult;
+										presetDragDropResult ??= tempPresetResult;
 									}
 									else
 									{
-										zoneDragDropResult = DoZoneDragAndDrop( zoneInfo );
+										var tempZoneResult = DoZoneDragAndDrop( zoneInfo );
+										zoneDragDropResult ??= tempZoneResult;
 									}
-									//***** TESTING
-									if( zoneDragDropResult != null ) PluginLog.LogDebug( $"Non-null Zone Drag and Drop Result: {zoneDragDropResult}" );
 								}
 							}
 						}
-						if( !mConfiguration.SortZonesDescending ) DrawZoneDragDropTopOrBottomPlaceholder( false );
+						if( !mConfiguration.SortZonesDescending )
+						{
+							var tempZoneResult = DrawZoneDragDropTopOrBottomPlaceholder( false );
+							zoneDragDropResult ??= tempZoneResult;
+						}
 					}
 					else
 					{
@@ -199,9 +208,6 @@ namespace WaymarkPresetPlugin
 				}
 
 				ImGui.EndChild();
-
-				//***** TESTING
-				if( zoneDragDropResult != null ) PluginLog.LogDebug( $"Non-null Zone Drag and Drop Result 2: {zoneDragDropResult}" );
 
 				//	Handle moving a zone header if the user wanted to.
 				if( zoneDragDropResult != null )
@@ -340,7 +346,6 @@ namespace WaymarkPresetPlugin
 			bool doDragAndDropMove = false;
 			int indexToMove = -1;
 			int indexToMoveTo = -1;
-			bool moveToAfter = false;
 			for( int i = 0; i < mConfiguration.PresetLibrary.Presets.Count; ++i )
 			{
 				if( !mConfiguration.FilterOnCurrentZone || mConfiguration.PresetLibrary.Presets[i].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType ) )
@@ -422,7 +427,7 @@ namespace WaymarkPresetPlugin
 			}
 
 			//	Return the drag and drop results.
-			return doDragAndDropMove ? new( indexToMove, indexToMoveTo, moveToAfter ) : null;
+			return doDragAndDropMove ? new( indexToMove, indexToMoveTo, false ) : null;
 		}
 
 		unsafe private (UInt16,UInt16)? DoZoneDragAndDrop( ZoneInfo zoneInfo )
@@ -447,7 +452,6 @@ namespace WaymarkPresetPlugin
 						zoneIndexToMove = *(UInt16*)payload.Data;
 						zoneIndexToMoveTo = zoneInfo.ContentFinderConditionID;
 						doDragAndDropMove = true;
-						PluginLog.LogDebug( $"Zone Drag and Drop Delivery with {zoneIndexToMove} -> {zoneIndexToMoveTo}." );
 					}
 					else
 					{
@@ -494,7 +498,6 @@ namespace WaymarkPresetPlugin
 								zoneIndexToMove = draggedZone;
 								zoneIndexToMoveTo = UInt16.MaxValue;
 								doDragAndDropMove = true;
-								PluginLog.LogDebug( $"Zone Drag and Drop Delivery with {zoneIndexToMove} -> {zoneIndexToMoveTo}." );
 							}
 							else
 							{
