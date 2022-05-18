@@ -200,7 +200,7 @@
     "description": "Window_Help.DrawHelpWindow_General"
   },
   "Help Window Text: General 6": {
-    "message": "Presets can be reordered in the library by dragging and dropping them at the desired spot.  The sorting of duties in the library cannot currently be changed; the order is the same as they are sorted in the game's files, and is approximately the order in which the duties were added to the game.",
+    "message": "Presets can be reordered in the library by dragging and dropping them at the desired spot.  The sorting of duties in the library is by default the same as they are sorted in the game's files, and is approximately the order in which the duties were added to the game.  Duties can be drag and drop reordered if desired.  If you create your own order by doing this, newly-seen duties will appear at the bottom of the list.",
     "description": "Window_Help.DrawHelpWindow_General"
   },
   "Help Window Text: Editing 1": {
@@ -359,12 +359,8 @@
     "message": "Save Current Waymarks",
     "description": "Window_Library.Draw"
   },
-  "Drag and Drop Preview: Moving Preset": {
-    "message": "Moving: ",
-    "description": "Window_Library.Draw"
-  },
-  "Drag and Drop Preview: Move to Bottom": {
-    "message": "<Move To Bottom>",
+  "Library Window Text: Zone Search Label": {
+    "message": "Search Zones",
     "description": "Window_Library.Draw"
   },
   "Header: Presets": {
@@ -379,37 +375,53 @@
     "message": "Import Options",
     "description": "Window_Library.Draw"
   },
-  "Text Box Prompt: Import": {
-    "message": "Paste a preset here and click \"Import\".",
-    "description": "Window_Library.Draw"
-  },
-  "Button: Import": {
-    "message": "Import",
-    "description": "Window_Library.Draw"
-  },
-  "Main Window Text: Import from Game Slot Label": {
-    "message": "Or import from game slot: ",
-    "description": "Window_Library.Draw"
-  },
-  "Main Window Text: Preset Resources Link": {
-    "message": "Where to find importable presets",
-    "description": "Window_Library.Draw"
-  },
   "Header: Export and Backup Options": {
     "message": "Export/Backup Options",
     "description": "Window_Library.Draw"
   },
+  "Drag and Drop Preview: Moving Preset": {
+    "message": "Moving: ",
+    "description": "Window_Library.DrawPresetsForZone"
+  },
+  "Drag and Drop Preview: Move to Bottom": {
+    "message": "<Move To Bottom>",
+    "description": "Window_Library.DrawPresetsForZone"
+  },
+  "Drag and Drop Preview: Moving Zone": {
+    "message": "Moving: ",
+    "description": "Window_Library.DoZoneDragAndDrop"
+  },
+  "Drag and Drop Preview: Move to Top": {
+    "message": "<Move To Top>",
+    "description": "Window_Library.DrawZoneDragDropTopOrBottomPlaceholder"
+  },
+  "Text Box Prompt: Import": {
+    "message": "Paste a preset here and click \"Import\".",
+    "description": "Window_Library.DrawImportSection"
+  },
+  "Button: Import": {
+    "message": "Import",
+    "description": "Window_Library.DrawImportSection"
+  },
+  "Main Window Text: Import from Game Slot Label": {
+    "message": "Or import from game slot: ",
+    "description": "Window_Library.DrawImportSection"
+  },
+  "Main Window Text: Preset Resources Link": {
+    "message": "Where to find importable presets",
+    "description": "Window_Library.DrawImportSection"
+  },
   "Button: Export All Presets to Clipboard": {
     "message": "Export All Presets to Clipboard",
-    "description": "Window_Library.Draw"
+    "description": "Window_Library.DrawExportSection"
   },
   "Button: Backup Current Config": {
     "message": "Backup Current Config",
-    "description": "Window_Library.Draw"
+    "description": "Window_Library.DrawExportSection"
   },
   "Help: Backup Current Config": {
     "message": "Copies the current config file to a backup folder in the Dalamud \"pluginConfigs\" directory.",
-    "description": "Window_Library.Draw"
+    "description": "Window_Library.DrawExportSection"
   },
   "Window Title: Map View": {
     "message": "Map View",
@@ -479,6 +491,34 @@
     "message": "The primary use of this is if you need to know the preset index to use within a text command.  You can always leave this disabled if you only use the GUI.",
     "description": "Window_Settings.Draw"
   },
+  "Config Option: Allow Preset Drag and Drop": {
+    "message": "Allow drag and drop reordering of presets.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Allow Zone Drag and Drop": {
+    "message": "Allow drag and drop reordering of zones.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Allow Zone Drag and Drop": {
+    "message": "If this is enabled, you can change the order of preset folders sorted by zone.  New zones will be added at the bottom of the list.  This option has no effect if the \"Categorize presets by zone\" option is disabled.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Sort Zones Descending": {
+    "message": "Sort zones descending (newest at the top).",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Sort Zones Descending": {
+    "message": "When this is checked, zones will be sorted roughly (SE's ordering isn't perfect) newest to oldest.  When coupled with the \"Allow drag and drop reordering of zones\" option, new zones will be added at the top of the list (with everything else remaining in the same order below).",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Show Library Zone Filter Search Box": {
+    "message": "Show search box to filter zones in library window.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Show Library Zone Filter Search Box": {
+    "message": "When this is checked, a search box will be shown at the top of the library window to filter the zones you want to see.  This has no effect when the \"Categorize presets by zone\" option is disabled.",
+    "description": "Window_Settings.Draw"
+  },
   "Config Option: Autoload Presets from Libarary": {
     "message": "Autoload presets from library.",
     "description": "Window_Settings.Draw"
@@ -505,6 +545,18 @@
   },
   "Help: Clear All Map View Data": {
     "message": "This deletes all map view pan/zoom/submap state, resetting every map back to default.",
+    "description": "Window_Settings.Draw"
+  },
+  "Settings Window Text: Confirm Delete Label": {
+    "message": "Confirm delete: ",
+    "description": "Window_Settings.Draw"
+  },
+  "Button: Clear All Zone Sort Data": {
+    "message": "Clear All Zone Sort Data",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Clear All Zone Sort Data": {
+    "message": "This deletes any custom ordering of the zones in the library window, and resets the sort order back to default.",
     "description": "Window_Settings.Draw"
   },
   "Button: Save and Close": {
