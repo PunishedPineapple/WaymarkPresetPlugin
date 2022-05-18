@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -16,6 +17,8 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 
 using ImGuiNET;
 
+using Newtonsoft.Json;
+
 
 namespace WaymarkPresetPlugin
 {
@@ -30,11 +33,38 @@ namespace WaymarkPresetPlugin
 			mClientState = clientState;
 			mpLibraryZoneDragAndDropData = pLibraryZoneDragAndDropData;
 			mpLibraryPresetDragAndDropData = pLibraryPresetDragAndDropData;
+
+			//	Try to read in the zone sort data.
+			try
+			{
+				string zoneSortDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mZoneSortDataFileName_v1 );
+				string jsonStr = File.ReadAllText( zoneSortDataFilePath );
+				var sortData = JsonConvert.DeserializeObject<List<UInt16>>( jsonStr );
+				if( sortData != null ) mConfiguration.PresetLibrary.SetSortOrder( sortData );
+			}
+			catch( Exception e )
+			{
+				PluginLog.LogWarning( $"Unable to load library zone sort data:\r\n{e}" );
+			}
 		}
 
 		public void Dispose()
 		{
-
+			//	Try to save off the zone sort data if we have any.
+			try
+			{
+				var sortData = mConfiguration.PresetLibrary.GetSortOrder();
+				if( sortData.Any() )
+				{
+					string jsonStr = JsonConvert.SerializeObject( sortData );
+					string zoneSortDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mZoneSortDataFileName_v1 );
+					File.WriteAllText( zoneSortDataFilePath, jsonStr );
+				}
+			}
+			catch( Exception e )
+			{
+				PluginLog.LogWarning( $"Unable to save library zone sort data:\r\n{e}" );
+			}
 		}
 
 		public void Draw()
@@ -665,6 +695,16 @@ namespace WaymarkPresetPlugin
 			}*/
 		}
 
+		public void ClearAllZoneSortData()
+		{
+			mConfiguration.PresetLibrary.ClearSortOrder();
+			string zoneSortDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mZoneSortDataFileName_v1 );
+			if( File.Exists( zoneSortDataFilePath ) )
+			{
+				File.Delete( zoneSortDataFilePath );
+			}
+		}
+
 		public void TrySetSelectedPreset( int presetIndex )
 		{
 			if( !mUI.EditorWindow.EditingPreset ) SelectedPreset = presetIndex;
@@ -714,5 +754,7 @@ namespace WaymarkPresetPlugin
 		
 		private ZoneSearcher LibraryWindowZoneSearcher { get; set; } = new ZoneSearcher();
 		private string mSearchText = "";
+
+		private const string mZoneSortDataFileName_v1 = "LibraryZoneSortData_v1.json";
 	}
 }

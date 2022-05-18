@@ -95,7 +95,7 @@ namespace WaymarkPresetPlugin
 					ImGui.SameLine();
 					if( ImGui.Button( Loc.Localize( "Button: Yes", "Yes" ) + "###Delete Zone Sort Data Yes Button" ) )
 					{
-						mConfiguration.PresetLibrary.ClearSortOrder();
+						mUI.LibraryWindow.ClearAllZoneSortData();
 						mWantToDeleteZoneSortData = false;
 					}
 					ImGui.PopStyleColor();
