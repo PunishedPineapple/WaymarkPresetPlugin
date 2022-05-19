@@ -7,7 +7,7 @@
 - Message about no presets existing for filtered zones when library zone filter brings up nothing.
 
 
-Simple UI stuff:
+UI Ideas from Other People:
 
 - Option to lock height to height of in-game waymark window when they're docked.
 	- Make sure to take into account both game's window scaling and ImGui global scale.
@@ -15,6 +15,14 @@ Simple UI stuff:
 	- Use whatever tech from this to let dragging by the info pane work?
 - Wrap the zone name text in the info pane.
 	- Probably going to be extra annoying doing the layout for the window with this.
+- Maybe have a context menu option to one-time sort alphabetically?
+	- Maybe this isn't good though, because new stuff will still appear at the bottom and people would have to re-sort frequently.
+	- Maybe at some point in the future, have a context menu with sorting options (Ascending, descending and then By ID, Alphabetical, Custom).
+- People want an option to not show the Info Pane.
+	- Maybe add the context menu to presets in the library with options to place preset, show info, export into slot, edit, show map view, etc.
+	- And then config option to not show info pane when selecting a preset.  Make sure to hide the pane again if a different preset is selected.
+		- Or do we make it a different instance of the info pane that can float and stays on that preset?  Or just open the editor window and bypass the info pane entirely?
+- Double click to place?
 
 
 Low Priority:
@@ -62,3 +70,5 @@ Rejected:
 	-This has not been an issue, and is just added complexity.
 - Add options to sort both zones and presets by name alphabetically (GitHub Issue #3).
 	- The user can now drag and drop to whatever custom order they want.
+- Grouping presets by expansion, difficulty, etc.
+	- This is just too much work, and would probably be a maintenance nightmare even after initial implementation.
