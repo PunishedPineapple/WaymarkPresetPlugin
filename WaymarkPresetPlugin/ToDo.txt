@@ -1,19 +1,43 @@
 ﻿High Priority:
 
-- Replace gimped mode popup with just help markers in the locations of missing buttons.
+- Double check that the maps mutex is not hanging in dispose.
+	- It never did, but just make absolutely sure that we're not the reason for game exit hanging after 6.0, since in theory we can delay dispose.
+	- Also see if it's still being weird when unloading with the map window open and take a second look at that if so.
+- Backup map view and zone sort files when backing up config file.
+- Message about no presets existing for filtered zones when library zone filter brings up nothing.
+
+
+Simple UI stuff:
+
+- Option to lock height to height of in-game waymark window when they're docked.
+	- Make sure to take into account both game's window scaling and ImGui global scale.
+- Have dragging the plugin window move the game's window position to follow it.
+	- Use whatever tech from this to let dragging by the info pane work?
+- Wrap the zone name text in the info pane.
+	- Probably going to be extra annoying doing the layout for the window with this.
 
 
 Low Priority:
 
-- Add options to sort both zones and presets by name alphabetically (GitHub Issue #3).  We should probably do the next thing first:
-- Make the library enumerable and protect the presets list.  This doesn't completely solve the potential for untracked changes (names and zone IDs can change), but it helps.  To be able to fully remove sorting the presets each frame, presets would have to have change events for those fields as well to which the library could subscribe.
-- Give the UI a reference to the actual plugin object itself and see if we can get rid of duplicate functionality between the two parts.
+- Make the library enumerable and protect the presets list.  This doesn't completely solve the potential for untracked changes (names and zone IDs can change), but it helps.
+	- Subscribe to the presets' zone changed events.
+	- Add and Subscribe to name changed events if we ever do alphabetical sorting.
+	- How will the event subscriptions work when first loading up the plugin, since it doesn't use our add preset functions?
 - Look into getting information about multi-map situations from the lgbs in order to only show waymarks on the appropriate maps of a zone.  Starting point information to pick back up on this:
 	- Basic paths to bg lgbs for zones are in Bg column of TerritoryType sheet.
 	- Lumina command line to get basic bg lgb file information for say Pharos Sirius is therefore: Lumina.Cmd.exe file bg/ffxiv/sea_s1/dun/s1d4/level/bg.lgb extract --datapath "C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack"
 	- No idea how to process the lgb for the map boundaries though.
 		- These really looked like sets of floating point coordinates, but didn't seem to be any kind of reasonable bounding boxes.
+	- See if Sapphire sends the map change packet and look at how it does it.
+		-Assuming the map change packet is a real thing; someone said line type 40 in ACT is this.
 - Try to constrain the aspect ratio of the map window if possible.
+- Make "unknown zone" in zone dict reload upon language change?
+- Add in old unreals for the zone dict?
+	- Will be extra annoying for other client languages.
+- The info pane is surprisingly expensive to draw.  Figure out what's going on.
+- Replace multiple ImGui.Spacing() lines with better solution.
+	- Scaled Dummies or a single Spacing() and let people change ImGui styles.
+- Can we expand the zone header when we select a preset in a collapsed zone?
 
 
 New Functionality:
@@ -26,10 +50,7 @@ New Functionality:
 
 Completed (Follow Up):
 
-- Allow drag and drop (or context menu or something) swap of waymarks when editing?
-	- https://github.com/goatcorp/suggestions/issues/206
-- Option to tie plugin window to main game waymark window.
-	- https://github.com/PunishedPineapple/WaymarkPresetPlugin/issues/17
+- Nothing for now.
 
 
 Rejected:
@@ -39,3 +60,5 @@ Rejected:
 	- Added drag and drop reordering, which makes this even less useful.
 - Think about whether ints or possbily even fixed-precision coordinates would be preferable to floats going forward.  Eliminates impact of rounding errors, but makes interop with other existing programs more difficult, and may or may not interfere with any future direct placement/saving features.  Are rounding errors even a potential issue as-is?
 	-This has not been an issue, and is just added complexity.
+- Add options to sort both zones and presets by name alphabetically (GitHub Issue #3).
+	- The user can now drag and drop to whatever custom order they want.
