@@ -1,10 +1,9 @@
 ﻿High Priority:
 
-- Double check that the maps mutex is not hanging in dispose.
-	- It never did, but just make absolutely sure that we're not the reason for game exit hanging after 6.0, since in theory we can delay dispose.
-	- Also see if it's still being weird when unloading with the map window open and take a second look at that if so.
+- See if it's still being weird when unloading with the map window open and take a second look at that if so.
 - Backup map view and zone sort files when backing up config file.
 - Message about no presets existing for filtered zones when library zone filter brings up nothing.
+- Verify layout with translated strings.
 
 
 UI Ideas from Other People:
@@ -22,6 +21,7 @@ UI Ideas from Other People:
 	- Maybe add the context menu to presets in the library with options to place preset, show info, export into slot, edit, show map view, etc.
 	- And then config option to not show info pane when selecting a preset.  Make sure to hide the pane again if a different preset is selected.
 		- Or do we make it a different instance of the info pane that can float and stays on that preset?  Or just open the editor window and bypass the info pane entirely?
+		- Maybe just leave it as it is, and make showing/hiding the info pane a right click option.
 - Double click to place?
 
 

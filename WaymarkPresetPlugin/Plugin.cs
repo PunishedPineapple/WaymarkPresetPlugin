@@ -64,11 +64,11 @@ namespace WaymarkPresetPlugin
 		public void Dispose()
 		{
 			MemoryHandler.Uninit();
-			mUI.Dispose();
 			mPluginInterface.LanguageChanged -= OnLanguageChanged;
 			mClientState.TerritoryChanged -= OnTerritoryChanged;
 			mPluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;
 			mPluginInterface.UiBuilder.Draw -= DrawUI;
+			mUI?.Dispose();
 			mCommandManager.RemoveHandler( TextCommandName );
 		}
 
@@ -541,7 +541,7 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public string Name => "WaymarkPresetPlugin";
+		public string Name => "Waymark Preset Plugin";
 		internal static string TextCommandName => "/pwaymark";
 		internal static string SubcommandName_Config => "config";
 		internal static string SubcommandName_SlotInfo => "slotinfo";
