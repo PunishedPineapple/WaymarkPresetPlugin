@@ -52,7 +52,7 @@ namespace WaymarkPresetPlugin
 			InfoPaneWindow = new( this, pluginInterface, configuration );
 			MapWindow = new( this, pluginInterface, dataManager, configuration );
 			HelpWindow = new( this, pluginInterface, configuration, mpEditWaymarkCoordDragAndDropData );
-			DebugWindow = new( this, pluginInterface );
+			DebugWindow = new( this, pluginInterface, dataManager, clientState, gameGui );
 			SettingsWindow = new( this, pluginInterface, configuration );
 			EditorWindow = new( this, pluginInterface, configuration, mpEditWaymarkDragAndDropData );
 		}
