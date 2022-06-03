@@ -58,18 +58,22 @@ namespace WaymarkPresetPlugin
 			mPluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
 			mPluginInterface.LanguageChanged += OnLanguageChanged;
 			mClientState.TerritoryChanged += OnTerritoryChanged;
+
+			//	IPC
+			IpcProvider.RegisterIPC( this, pluginInterface );
 		}
 
 		//	Cleanup
 		public void Dispose()
 		{
-			MemoryHandler.Uninit();
+			IpcProvider.UnregisterIPC();
+			mCommandManager.RemoveHandler( TextCommandName );
 			mPluginInterface.LanguageChanged -= OnLanguageChanged;
 			mClientState.TerritoryChanged -= OnTerritoryChanged;
 			mPluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;
 			mPluginInterface.UiBuilder.Draw -= DrawUI;
 			mUI?.Dispose();
-			mCommandManager.RemoveHandler( TextCommandName );
+			MemoryHandler.Uninit();
 		}
 
 		protected void OnLanguageChanged( string langCode )
@@ -275,14 +279,12 @@ namespace WaymarkPresetPlugin
 				//	Try to do the actual placement.
 				if( libraryIndex >= 0 && libraryIndex < mConfiguration.PresetLibrary.Presets.Count )
 				{
-					try
+					if( InternalCommand_PlacePresetByIndex( libraryIndex ) )
 					{
-						MemoryHandler.PlacePreset( mConfiguration.PresetLibrary.Presets[libraryIndex].GetAsGamePreset() /*, mConfiguration.AllowClientSidePlacementInOverworldZones*/ );
 						return "";
 					}
-					catch( Exception e )
+					else
 					{
-						PluginLog.Log( $"An unknown error occured while attempting to place preset {libraryIndex}:\r\n{e}" );
 						return String.Format(	Loc.Localize( "Text Command Response: Place - Error 3", "An unknown error occured placing preset {0}." ),
 												libraryIndex );
 					}
@@ -476,6 +478,99 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
+		internal List<int> InternalCommand_GetPresetsForContentFinderCondition( UInt16 contentFinderCondition )
+		{
+			List<int> foundPresets = new();
+
+			if( contentFinderCondition != 0 )
+			{
+				for( int i = 0; i < mConfiguration.PresetLibrary.Presets.Count; ++i )
+				{
+					if( mConfiguration.PresetLibrary.Presets[i].MapID == contentFinderCondition ) foundPresets.Add( i );
+				}
+			}
+
+			return foundPresets;
+		}
+
+		internal List<int> InternalCommand_GetPresetsForTerritoryType( UInt32 territoryType )
+		{
+			UInt16 contentFinderCondition = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( territoryType );
+			return InternalCommand_GetPresetsForContentFinderCondition( contentFinderCondition );
+		}
+
+		internal List<int> InternalCommand_GetPresetsForCurrentArea()
+		{
+			return InternalCommand_GetPresetsForTerritoryType( mClientState.TerritoryType );
+		}
+
+		internal bool InternalCommand_PlacePresetByIndex( int index, bool requireZoneMatch = true )
+		{
+			if( !MemoryHandler.FoundDirectPlacementSigs() ) return false;
+			if( index < 0 || index >= mConfiguration.PresetLibrary.Presets.Count ) return false;
+			if( requireZoneMatch && mConfiguration.PresetLibrary.Presets[index].MapID != ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType ) ) return false;
+
+			try
+			{
+				MemoryHandler.PlacePreset( mConfiguration.PresetLibrary.Presets[index].GetAsGamePreset() );
+				return true;
+			}
+			catch( Exception e )
+			{
+				PluginLog.Log( $"An unknown error occured while attempting to place preset {index}:\r\n{e}" );
+				return false;
+			}
+		}
+
+		internal bool InternalCommand_PlacePresetByName( string name )
+		{
+			int libraryIndex = mConfiguration.PresetLibrary.Presets.FindIndex( p =>
+			{
+				return p.Name.Equals( name, StringComparison.OrdinalIgnoreCase );
+			} );
+
+			if( libraryIndex < 0 )
+			{
+				return false;
+			}
+			else
+			{
+				return InternalCommand_PlacePresetByIndex( libraryIndex );
+			}
+		}
+
+		internal bool InternalCommand_PlacePresetByNameAndContentFinderCondition( string name, UInt16 contentFinderCondition )
+		{
+			if( contentFinderCondition == 0 ) return false;
+
+			int libraryIndex = mConfiguration.PresetLibrary.Presets.FindIndex( p =>
+			{
+				return	p.MapID == contentFinderCondition &&
+						p.Name.Equals( name, StringComparison.OrdinalIgnoreCase );
+			} );
+
+			if( libraryIndex < 0 )
+			{
+				return false;
+			}
+			else
+			{
+				return InternalCommand_PlacePresetByIndex( libraryIndex );
+			}
+		}
+
+		internal bool InternalCommand_PlacePresetByNameAndTerritoryType( string name, UInt32 territoryType )
+		{
+			UInt16 contentFinderCondition = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( territoryType );
+			return InternalCommand_PlacePresetByNameAndContentFinderCondition( name, contentFinderCondition );
+		}
+
+		internal string GetLibraryPresetName( int index )
+		{
+			if( index < 0 || index >= mConfiguration.PresetLibrary.Presets.Count ) return null;
+			else return mConfiguration.PresetLibrary.Presets[index].Name;
+		}
+
 		protected void DrawUI()
 		{
 			mUI.Draw();
@@ -541,6 +636,7 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
+		internal const string InternalName = "WaymarkPresetPlugin";
 		public string Name => "Waymark Preset Plugin";
 		internal static string TextCommandName => "/pwaymark";
 		internal static string SubcommandName_Config => "config";
