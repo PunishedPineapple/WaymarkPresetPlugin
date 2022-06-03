@@ -363,6 +363,10 @@
     "message": "Search Zones",
     "description": "Window_Library.Draw"
   },
+  "Main Window Text: No Presets Found": {
+    "message": "No presets match the current filter.",
+    "description": "Window_Library.Draw"
+  },
   "Header: Presets": {
     "message": "Presets",
     "description": "Window_Library.Draw"
