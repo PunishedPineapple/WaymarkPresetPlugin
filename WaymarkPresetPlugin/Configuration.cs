@@ -160,17 +160,35 @@ namespace WaymarkPresetPlugin
 
 		public void BackupConfigFile()
 		{
-			string backupFolderPath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"\\Backups\\" );
+			string backupFolderPath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), "Backups" );
 			Directory.CreateDirectory( backupFolderPath );
-			string backupFileBasePath = Path.Join( backupFolderPath, $"\\PluginConfig_{DateTimeOffset.UtcNow:yyyy-MM-dd_HH.mm.ssZ}" );
-			string backupFilePath = backupFileBasePath + ".json";
-			int i = 2;
-			while( File.Exists( backupFilePath ) )
+			string backupFilePath = GetBackupFilePath( backupFolderPath, "PluginConfig", "json" );
+			mPluginInterface.ConfigFile.CopyTo( backupFilePath );
+		}
+
+		internal void BackupConfigFolderFile( string fileName, string extension )
+		{
+			string backupFolderPath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), "Backups" );
+			Directory.CreateDirectory( backupFolderPath );
+			if( File.Exists( Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"{fileName}.{extension}" ) ) )
 			{
-				backupFilePath = backupFileBasePath + $"_{i}.json";
+				string backupFilePath = GetBackupFilePath( backupFolderPath, fileName, extension );
+				var fileToCopy = new FileInfo( Path.Combine( mPluginInterface.GetPluginConfigDirectory(), $"{fileName}.{extension}" ) );
+				fileToCopy?.CopyTo( backupFilePath );
+			}
+		}
+
+		internal static string GetBackupFilePath( string folderPath, string fileName, string extension )
+		{
+			string fileBasePath = Path.Join( folderPath, $"{fileName}_{DateTimeOffset.UtcNow:yyyy-MM-dd_HH.mm.ssZ}" );
+			string filePath = fileBasePath + $".{extension}";
+			int i = 2;
+			while( File.Exists( filePath ) )
+			{
+				filePath = fileBasePath + $"_{i}.{extension}";
 				++i;
 			}
-			mPluginInterface.ConfigFile.CopyTo( backupFilePath );
+			return filePath;
 		}
 
 		[NonSerialized]

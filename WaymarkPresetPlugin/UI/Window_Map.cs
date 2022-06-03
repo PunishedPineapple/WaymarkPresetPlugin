@@ -47,16 +47,7 @@ namespace WaymarkPresetPlugin
 		public void Dispose()
 		{
 			//	Try to save off the view state data.
-			try
-			{
-				string jsonStr = JsonConvert.SerializeObject( MapViewStateData, Formatting.Indented );
-				string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mMapViewStateDataFileName_v1 );
-				File.WriteAllText( viewStateDataFilePath, jsonStr );
-			}
-			catch( Exception e )
-			{
-				PluginLog.LogWarning( $"Unable to save map view state data:\r\n{e}" );
-			}
+			WriteMapViewStateToFile();
 
 			//	Try to do this nicely for a moment, but then just brute force it to clean up as much as we can.
 			mMapTextureDictMutex.WaitOne( 500 );
@@ -437,7 +428,21 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public void ClearAllMapViewStateData()
+		internal void WriteMapViewStateToFile()
+		{
+			try
+			{
+				string jsonStr = JsonConvert.SerializeObject( MapViewStateData, Formatting.Indented );
+				string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mMapViewStateDataFileName_v1 );
+				File.WriteAllText( viewStateDataFilePath, jsonStr );
+			}
+			catch( Exception e )
+			{
+				PluginLog.LogWarning( $"Unable to save map view state data:\r\n{e}" );
+			}
+		}
+
+		internal void ClearAllMapViewStateData()
 		{
 			MapViewStateData.Clear();
 			string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mMapViewStateDataFileName_v1 );
@@ -466,6 +471,6 @@ namespace WaymarkPresetPlugin
 		private Vector2 CapturedWaymarkOffset { get; set; } = new( 0, 0 );
 		private static readonly Vector2 mWaymarkMapIconHalfSize_Px = new( 15, 15 );
 
-		private const string mMapViewStateDataFileName_v1 = "MapViewStateData_v1.json";
+		internal const string mMapViewStateDataFileName_v1 = "MapViewStateData_v1.json";
 	}
 }

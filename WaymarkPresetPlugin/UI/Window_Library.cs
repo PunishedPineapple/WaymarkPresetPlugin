@@ -51,20 +51,7 @@ namespace WaymarkPresetPlugin
 		public void Dispose()
 		{
 			//	Try to save off the zone sort data if we have any.
-			try
-			{
-				var sortData = mConfiguration.PresetLibrary.GetSortOrder();
-				if( sortData.Any() )
-				{
-					string jsonStr = JsonConvert.SerializeObject( sortData );
-					string zoneSortDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mZoneSortDataFileName_v1 );
-					File.WriteAllText( zoneSortDataFilePath, jsonStr );
-				}
-			}
-			catch( Exception e )
-			{
-				PluginLog.LogWarning( $"Unable to save library zone sort data:\r\n{e}" );
-			}
+			WriteZoneSortDataToFile();
 		}
 
 		public void Draw()
@@ -656,13 +643,18 @@ namespace WaymarkPresetPlugin
 			}
 			if( ImGui.Button( Loc.Localize( "Button: Backup Current Config", "Backup Current Config" ) + "###Backup Current Config Button" ) )
 			{
+				mConfiguration.Save();
+				WriteZoneSortDataToFile();
+				mUI.MapWindow.WriteMapViewStateToFile();
 				mConfiguration.BackupConfigFile();
+				mConfiguration.BackupConfigFolderFile( mZoneSortDataFileName_v1[..mZoneSortDataFileName_v1.LastIndexOf( '.' )], mZoneSortDataFileName_v1[(mZoneSortDataFileName_v1.LastIndexOf( '.' )+1)..] );
+				mConfiguration.BackupConfigFolderFile( Window_Map.mMapViewStateDataFileName_v1[..Window_Map.mMapViewStateDataFileName_v1.LastIndexOf( '.' )], Window_Map.mMapViewStateDataFileName_v1[( Window_Map.mMapViewStateDataFileName_v1.LastIndexOf( '.' )+1)..] );
 			}
 			ImGuiUtils.HelpMarker( Loc.Localize( "Help: Backup Current Config", "Copies the current config file to a backup folder in the Dalamud \"pluginConfigs\" directory." ) );
 			ImGui.EndGroup();
 		}
 
-		public void DrawWaymarkButtons()
+		private void DrawWaymarkButtons()
 		{
 			//***** TODO: Move to a separate window on the side probably if we every actually do this.
 			/*if( ImGui.Button( "A" ) )
@@ -711,7 +703,25 @@ namespace WaymarkPresetPlugin
 			}*/
 		}
 
-		public void ClearAllZoneSortData()
+		internal void WriteZoneSortDataToFile()
+		{
+			try
+			{
+				var sortData = mConfiguration.PresetLibrary.GetSortOrder();
+				if( sortData.Any() )
+				{
+					string jsonStr = JsonConvert.SerializeObject( sortData );
+					string zoneSortDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mZoneSortDataFileName_v1 );
+					File.WriteAllText( zoneSortDataFilePath, jsonStr );
+				}
+			}
+			catch( Exception e )
+			{
+				PluginLog.LogWarning( $"Unable to save library zone sort data:\r\n{e}" );
+			}
+		}
+
+		internal void ClearAllZoneSortData()
 		{
 			mConfiguration.PresetLibrary.ClearSortOrder();
 			string zoneSortDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mZoneSortDataFileName_v1 );
@@ -771,6 +781,6 @@ namespace WaymarkPresetPlugin
 		private ZoneSearcher LibraryWindowZoneSearcher { get; set; } = new ZoneSearcher();
 		private string mSearchText = "";
 
-		private const string mZoneSortDataFileName_v1 = "LibraryZoneSortData_v1.json";
+		internal const string mZoneSortDataFileName_v1 = "LibraryZoneSortData_v1.json";
 	}
 }
