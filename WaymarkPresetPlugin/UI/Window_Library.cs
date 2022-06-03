@@ -214,6 +214,7 @@ namespace WaymarkPresetPlugin
 				}
 				ImGui.EndGroup();
 
+				//ImGuiHelpers.ScaledDummy( 20.0f );	//***** TODO: Replace excess spacings with scaled dummies.
 				ImGui.Spacing();
 				ImGui.Spacing();
 				ImGui.Spacing();
