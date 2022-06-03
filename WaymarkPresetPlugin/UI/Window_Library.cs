@@ -164,6 +164,7 @@ namespace WaymarkPresetPlugin
 				{
 					if( mConfiguration.mSortPresetsByZone )
 					{
+						bool anyPresetsVisibleWithCurrentFilters = false;
 						mConfiguration.PresetLibrary.SortZonesDescending( mConfiguration.SortZonesDescending );
 						var dict = mConfiguration.PresetLibrary.GetSortedIndices( true );
 						/*if( mConfiguration.SortZonesDescending )
@@ -179,6 +180,8 @@ namespace WaymarkPresetPlugin
 
 								if( IsZoneFilteredBySearch( zoneFilterString, zoneInfo ) )
 								{
+									anyPresetsVisibleWithCurrentFilters = true;
+
 									if( ImGui.CollapsingHeader( zoneInfo.DutyName.ToString() ) )
 									{
 										var tempZoneResult = DoZoneDragAndDrop( zoneInfo );
@@ -198,6 +201,11 @@ namespace WaymarkPresetPlugin
 						{
 							var tempZoneResult = DrawZoneDragDropTopOrBottomPlaceholder( false );
 							zoneDragDropResult ??= tempZoneResult;
+						}
+
+						if( !anyPresetsVisibleWithCurrentFilters )
+						{
+							ImGui.Text( Loc.Localize( "Main Window Text: No Presets Found", "No presets match the current filter." ) );
 						}
 					}
 					else
@@ -370,10 +378,12 @@ namespace WaymarkPresetPlugin
 			bool doDragAndDropMove = false;
 			int indexToMove = -1;
 			int indexToMoveTo = -1;
+			bool anyPresetsVisibleWithCurrentFilters = false;
 			for( int i = 0; i < mConfiguration.PresetLibrary.Presets.Count; ++i )
 			{
 				if( !mConfiguration.FilterOnCurrentZone || mConfiguration.PresetLibrary.Presets[i].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType ) )
 				{
+					anyPresetsVisibleWithCurrentFilters = true;
 					if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}###_Preset_{i}", i == SelectedPreset ) )
 					{
 						//	It's probably a bad idea to allow the selection to change when a preset's being edited.
@@ -448,6 +458,11 @@ namespace WaymarkPresetPlugin
 						ImGui.EndDragDropTarget();
 					}
 				}
+			}
+
+			if( !anyPresetsVisibleWithCurrentFilters )
+			{
+				ImGui.Text( Loc.Localize( "Main Window Text: No Presets Found", "No presets match the current filter." ) );
 			}
 
 			//	Return the drag and drop results.
