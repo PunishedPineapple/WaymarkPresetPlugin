@@ -1,12 +1,7 @@
 ﻿High Priority:
 
 - See if it's still being weird when unloading with the map window open and take a second look at that if so.
-- Backup map view and zone sort files when backing up config file.
-- Message about no presets existing for filtered zones when library zone filter brings up nothing.
 - Verify layout with translated strings.
-- Add IPC.
-	- Get Presets (index and name) in the current zone (or for a given zone?).
-	- Place a preset (by index or by name).
 
 
 UI Ideas from Other People:
