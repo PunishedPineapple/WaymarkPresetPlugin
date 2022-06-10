@@ -1,0 +1,602 @@
+{
+  "Text Command Description": {
+    "message": "Effectue des commandes pour les marqueurs prédéfinis. Utilisez \"{0}\" pour des informations d'utilisation détaillées.",
+    "description": "Plugin.OnLanguageChanged"
+  },
+  "Text Command Response: Help - Subcommands": {
+    "message": "Les commandes valides sont les suivantes : {0}, {1}, {2}, {3}, {4}, et {5}. Si aucune commande n'est fournie, la bibliothèque de préréglages sera ouverte. Tapez \"{6} <command>\" pour des informations détaillées sur les sous-commandes.",
+    "description": "Plugin.ProcessTextCommand_Help"
+  },
+  "Text Command Response: Help - Config": {
+    "message": "Ouvre la fenêtre de configuration.",
+    "description": "Plugin.ProcessTextCommand_Help"
+  },
+  "Text Command Response: Help - Slot Info": {
+    "message": "Affiche les données sauvegardées dans les emplacements du jeu dans la fenêtre de discussion. Utilisation : \"{0} <slot>\". Le numéro d'emplacement peut être n'importe quel emplacement du jeu valide.",
+    "description": "Plugin.ProcessTextCommand_Help"
+  },
+  "Text Command Response: Help - Place": {
+    "message": "Place les marqueurs prédéfinis enregistrés avec le nom spécifié (si possible). Le nom DOIT être encadré de guillemets. Un numéro d'index peut également être utilisé, sans les guillemets. Utilisation : \"{0} <name>|<index>\". Le nom doit correspondre exactement (à part la casse). L'index peut être celui de n'importe quel groupe de marqueurs existant dans la bibliothèque.",
+    "description": "Plugin.ProcessTextCommand_Help"
+  },
+  "Text Command Response: Help - Import": {
+    "message": "Copie dans la bibliothèque l'une des cinq configurations enregistrées dans les emplacements de sauvegarde du jeu. Utilisation : \"{0} <slot>\". Le numéro de l'emplacement peut être celui de tout emplacement de sauvegarde du jeu valide. L'import en ligne de commande d'une chaîne de caractères formatée n'est pas prise en charge du fait des limitations de la fenêtre de discussion du jeu.",
+    "description": "Plugin.ProcessTextCommand_Help"
+  },
+  "Text Command Response: Help - Export": {
+    "message": "Copie l'une des configurations enregistrées dans la bibliothèque vers l'emplacement de sauvegarde du jeu spécifié *ou* vers le presse-papiers. Utilisation : \"{0} [{1}] [{2}] <slot|index> [slot]\". Le numéro de l'emplacement peut être celui de tout emplacement de sauvegarde du jeu valide. Le numéro d'index est celui de l'un des groupes de marqueurs enregistrés dans la bibliothèque. Le drapeau {3} indique que le premier nombre est un emplacement de jeu et non un index de la bibliothèque. Le drapeau {4} permet d'ajouter la date de dernière modification aux données exportées vers le presse-papier.",
+    "description": "Plugin.ProcessTextCommand_Help"
+  },
+  "Text Command Response: Help - Export All": {
+    "message": "Copie tous les marqueurs prédéfinis de la bibliothèque vers le presse-papiers, un groupe par ligne. Ajouter {0} pour y inclure la date de dernière modification.",
+    "description": "Plugin.ProcessTextCommand_Help"
+  },
+  "Text Command Response: Help": {
+    "message": "Utilisez \"{0}\" pour ouvrir l'IHM. Utilisez \"{1}\" pour une liste de commandes texte.",
+    "description": "Plugin.ProcessTextCommand_Help"
+  },
+  "Text Command Response: Slot Info - Success 1": {
+    "message": "Emplacement {0} Contenu :\n{1}",
+    "description": "Plugin.ProcessTextCommand_SlotInfo"
+  },
+  "Text Command Response: Slot Info - Error 1": {
+    "message": "Une erreur inconnue s'est produite en essayant de lire les données des marqueurs du jeu.",
+    "description": "Plugin.ProcessTextCommand_SlotInfo"
+  },
+  "Text Command Response: Slot Info - Error 2": {
+    "message": "Impossible de lire les données des marqueurs du jeu.",
+    "description": "Plugin.ProcessTextCommand_SlotInfo"
+  },
+  "Text Command Response: Slot Info - Error 3": {
+    "message": "Un numéro d'emplacement de sauvegarde du jeu invalide a été fourni.",
+    "description": "Plugin.ProcessTextCommand_SlotInfo"
+  },
+  "Text Command Response: Place - Error 1": {
+    "message": "Impossible de trouver le groupe de marqueurs \"{0}\".",
+    "description": "Plugin.ProcessTextCommand_Place"
+  },
+  "Text Command Response: Place - Error 2": {
+    "message": "Numéro de groupe de marqueurs invalide \"{0}\".",
+    "description": "Plugin.ProcessTextCommand_Place"
+  },
+  "Text Command Response: Place - Error 3": {
+    "message": "Une erreur inconnue est survenue en plaçant le groupe de marqueurs {0}.",
+    "description": "Plugin.ProcessTextCommand_Place"
+  },
+  "Text Command Response: Place - Error 4": {
+    "message": "Numéro de groupe de marqueurs invalide \"{0}\".",
+    "description": "Plugin.ProcessTextCommand_Place"
+  },
+  "Text Command Response: Place - Error 5": {
+    "message": "Impossible de placer les marqueurs prédéfinis. Cela signifie probablement que le plugin doit être mis à jour pour une nouvelle version de FFXIV.",
+    "description": "Plugin.ProcessTextCommand_Place"
+  },
+  "Text Command Response: Import - Success 1": {
+    "message": "Marqueurs prédéfinis du jeu {0} importés dans la bibliothèque {1}.",
+    "description": "Plugin.ProcessTextCommand_Import"
+  },
+  "Text Command Response: Import - Error 1": {
+    "message": "Une erreur inconnue s'est produite en essayant de lire les données des marqueurs du jeu.",
+    "description": "Plugin.ProcessTextCommand_Import"
+  },
+  "Text Command Response: Import - Error 2": {
+    "message": "Impossible de lire les données des marqueurs. Cela signifie probablement que le plugin doit être mis à jour pour une nouvelle version de FFXIV.",
+    "description": "Plugin.ProcessTextCommand_Import"
+  },
+  "Text Command Response: Import - Error 3": {
+    "message": "Un numéro d'emplacement de sauvegarde du jeu invalide a été fourni : \"{0}\".",
+    "description": "Plugin.ProcessTextCommand_Import"
+  },
+  "Text Command Response: Export - Error 1": {
+    "message": "Aucun emplacement ou numéro d'index n'a été fourni.",
+    "description": "Plugin.ProcessTextCommand_Export"
+  },
+  "Text Command Response: Export - Error 2": {
+    "message": "L'emplacement de sauvegarde du jeu ({0}) est invalide.",
+    "description": "Plugin.ProcessTextCommand_Export"
+  },
+  "Text Command Response: Export - Error 3": {
+    "message": "Un index de bibliothèque invalide ({0}) a été fourni.",
+    "description": "Plugin.ProcessTextCommand_Export"
+  },
+  "Text Command Response: Export - Success 1": {
+    "message": "Copié dans le presse-papier.",
+    "description": "Plugin.ProcessTextCommand_Export"
+  },
+  "Text Command Response: Export - Error 4": {
+    "message": "L'emplacement de sauvegarde du jeu à exporter ({0}) est invalide.",
+    "description": "Plugin.ProcessTextCommand_Export"
+  },
+  "Text Command Response: Export - Error 5": {
+    "message": "Un index de bibliothèque invalide ({0}) a été fourni.",
+    "description": "Plugin.ProcessTextCommand_Export"
+  },
+  "Text Command Response: Export - Success 2": {
+    "message": "Préréglage exporté vers l'emplacement de sauvegarde du jeu {0}.",
+    "description": "Plugin.ProcessTextCommand_Export"
+  },
+  "Text Command Response: Export - Error 6": {
+    "message": "Impossible d'écrire dans l'emplacement de sauvegarde du jeu {0} !",
+    "description": "Plugin.ProcessTextCommand_Export"
+  },
+  "Text Command Response: Export - Error 7": {
+    "message": "L'emplacement de sauvegarde du jeu ({0}) est invalide.",
+    "description": "Plugin.ProcessTextCommand_Export"
+  },
+  "Text Command Response: Export - Error 8": {
+    "message": "Une erreur inconnue est survenue lors de l'export du groupe de marqueurs.",
+    "description": "Plugin.ProcessTextCommand_Export"
+  },
+  "Text Command Response: Export All - Success 1": {
+    "message": "La bibliothèque de marqueurs prédéfinis a été copiée dans le presse-papier.",
+    "description": "Plugin.ProcessTextCommand_ExportAll"
+  },
+  "Text Command Response: Export All - Error 1": {
+    "message": "Une erreur inconnue est survenue lors de la copie du groupe de marqueurs vers le presse-papiers.",
+    "description": "Plugin.ProcessTextCommand_ExportAll"
+  },
+  "Window Title: Debug Tools": {
+    "message": "Outils de débogage",
+    "description": "Window_Debug.Draw"
+  },
+  "Window Title: Preset Editor": {
+    "message": "Éditeur de jeu de marqueurs",
+    "description": "Window_Editor.Draw"
+  },
+  "Edit Window Text: Name": {
+    "message": "Nom : ",
+    "description": "Window_Editor.Draw"
+  },
+  "Edit Window Text: Active Column Header": {
+    "message": "Activé",
+    "description": "Window_Editor.Draw"
+  },
+  "Drag and Drop Preview: Edit Swap Waymark": {
+    "message": "Permuter le marqueur {0} avec...",
+    "description": "Window_Editor.Draw"
+  },
+  "Edit Window Text: Zone Dropdown Label": {
+    "message": "Zone : ",
+    "description": "Window_Editor.Draw"
+  },
+  "Edit Window Text: Zone Search Label": {
+    "message": "Rechercher : ",
+    "description": "Window_Editor.Draw"
+  },
+  "Button: Save": {
+    "message": "Enregistrer",
+    "description": "Window_Editor.Draw"
+  },
+  "Button: Cancel": {
+    "message": "Annuler",
+    "description": "Window_Editor.Draw"
+  },
+  "Button: Map View": {
+    "message": "Voir la carte",
+    "description": "Window_Editor.Draw"
+  },
+  "Window Title: Waymark Help": {
+    "message": "Aide sur les marqueurs",
+    "description": "Window_Help.Draw"
+  },
+  "Help Window Text: General 1": {
+    "message": "Les groupes de marqueurs présents dans ce plugin sont différents de ceux enregistrés par le jeu dans ses emplacements de sauvegarde. Cela permet d'avoir autant de marqueurs prédéfinis que souhaité, de les sauvegarder et de les partager facilement ou même d'importer des groupes de marqueurs que d'autres joueurs ont partagé avec vous.",
+    "description": "Window_Help.DrawHelpWindow_General"
+  },
+  "Help Window Text: General 2": {
+    "message": "Sélectionner un groupe de marqueurs dans la bibliothèque affichera des informations à son sujet dans une fenêtre additionnelle, comme par exemple où les marqueurs sont placés et les actions que vous pouvez effectuer sur eux.",
+    "description": "Window_Help.DrawHelpWindow_General"
+  },
+  "Help Window Text: General 3": {
+    "message": "Sélectionnez un groupe de marqueurs dans la bibliothèque et appuyez sur le bouton avec le numéro de l'emplacement de sauvegarde du jeu pour l'y copier. Pour importer une sauvegarde du jeu dans la bibliothèque, faites défiler vers le bas jusqu'à \"Options d'importation\" et appuyer sur le bouton de l'emplacement de savuegarde que vous souhaitez importer depuis le jeu. C'est également depuis cet endroit qu'il est possible d'importer des marqueurs prédéfinis depuis une source externe.",
+    "description": "Window_Help.DrawHelpWindow_General"
+  },
+  "Help Window Text: General 4": {
+    "message": "Pour partager un groupe de marqueurs, sélectionnez-le dans la bibliothèque et appuyer sur \"Exporter vers le presse-papier\".",
+    "description": "Window_Help.DrawHelpWindow_General"
+  },
+  "Help Window Text: General 5": {
+    "message": "Le plugin vous permet aussi de placer et sauvegarder des marqueurs directement depuis ou vers le champ de bataille en utilisant les boutons \"Placer\" et \"Sauvegarder les marqueurs actuels\". Veuillez noter que cela n'est possible que dans les zones où le jeu vous permet déjà de sauvegarder des marqueurs avec son système intégré. Si vous sauvegardez des marqueurs dans toute autre zone, le groupe de marqueurs prédifini résultant sera assigné à une zone inconnue. Tenter de placer des marqueurs prédéfinis en dehors des missions où cela est permis ne fonctionnera pas.",
+    "description": "Window_Help.DrawHelpWindow_General"
+  },
+  "Help Window Text: General 6": {
+    "message": "Il est possible de changer l'ordre des groupes de marqueurs dans la bibliothèque en les faisant glisser à l'endroit souhaité. Par défaut, les missions sont classées dans la bibliothèque dans le même ordre qu'elles le sont dans les fichiers du jeu, ce qui correspond plus ou moins à l'ordre dans lequel elles ont été ajoutée au jeu. Au besoin, les missions peuvent être réorganisées par glisser-déposer. Si vous changez l'ordre par défaut, les missions nouvellement découvertes seront ajoutées à la fin de la liste.",
+    "description": "Window_Help.DrawHelpWindow_General"
+  },
+  "Help Window Text: Editing 1": {
+    "message": "Le bouton \"Éditer\" dans le volet d'information des marqueurs prédéfinis ouvre une fenêtre vous permettant de modifier des marqueurs. Vous pouvez ajuster tous les paramètres disponibles et glisser-déposer des marqueurs par dessus d'autres marqueurs pour permuter leurs positions. Vous pouvez également faire glisser des points depuis le calculateur de cercles sur un marqueur dans la fenêtre d'édition pour remplacer ses coordonnées par celles du calculateur.",
+    "description": "Window_Help.DrawHelpWindow_Editing"
+  },
+  "Help Window Text: Editing 2": {
+    "message": "Les modifications apportées dans la fenêtre d'édition ne sont appliquées qu'après avoir cliqué sur le bouton \"Sauvegarder\".",
+    "description": "Window_Help.DrawHelpWindow_Editing"
+  },
+  "Help Window Text: Maps 1": {
+    "message": "La fenêtre \"Vue de la carte\" affiche une copie de la ou des cartes disponibles pour la mission sélectionnée. Tous les marqueurs placés sont affichés sur la carte. Si une zone a plusieurs sous-carte, vous pouvez basculer entre elles grâce au menu déroulant en bas à droite de la fenêtre. Les coordonnées du monde correspondant à la position de votre curseur sur la carte sont affichées en bas à droite de la fenêtre. Merci de lire l'onglet \"Coordonnées\" ce cette fenêtre d'aide si vous souhaitez en savoir plus sur le système de coordonnées du jeu et comment elles sont présentées en jeu au joueur.",
+    "description": "Window_Help.DrawHelpWindow_Maps"
+  },
+  "Help Window Text: Maps 2": {
+    "message": "Lors de l'édition d'un group de marqueurs, vous pouvez faire glisser les icônes de marqueurs sur la carte pour ajuster leurs positions. Pendant cette opération, les coordonnées affichées sont celles du marqueurs et non celle de la souris. Veuillez noter qu'il n'est pas recommandé d'utiliser cette méthode pour modifier les marqueurs dans les zones dont le sol n'est pas plan, car il est impossible d'ajuster automatiquement la coordonnée Y pour correspondre à l'élévation du terrain.",
+    "description": "Window_Help.DrawHelpWindow_Maps"
+  },
+  "Help Window Text: Maps 3": {
+    "message": "Veuiilez noter également que le plugin ne peut pas pour le moment déterminer quels marqueurs correspondent à quelle sous-carte. Tous les marqueurs sont donc affichés à leur position sur toutes les sous-cartes (à condition qu'ils se trouvent dans les limites de la carte). Pour certains cas exceptionnels (comme par exemple e12s), la sous-carte par défaut n'est pas celle sur laquelle vous entrez en commençant la mission. Il faudra donc choisir manuellement la bonne sous-carte.",
+    "description": "Window_Help.DrawHelpWindow_Maps"
+  },
+  "Help Window Text: Coordinates 1": {
+    "message": "Systèmes de coordonnées :",
+    "description": "Window_Help.DrawHelpWindow_Coordinates"
+  },
+  "Help Window Text: Coordinates 2": {
+    "message": "Le système de coordonnées 3D du jeu utilise la règle de la main droite, l'axe X allant de l'ouest à l'est, l'axe Y du bas vers le haut et l'axe Z du nord au sud. Le système de coordonnées utilisé sur les cartes est une projection en 2D du plan XZ, avec l'axe X orienté d'ouest en est et l'axe Y du nord au sud. Ce plugin utilise le système de coordonnées du jeu, comme indiqué sur le schéma ci-dessous :",
+    "description": "Window_Help.DrawHelpWindow_Coordinates"
+  },
+  "Circle Computer Text: Instructions 1": {
+    "message": "Ce calculateur détermine les points équidistants sur un cercle à partir des paramètres fournis. Vous pouvez ensuite faire glisser ces points vers l'éditeur de marqueurs prédéfinis pour remplacer tous les marqueurs par les points calculés ou utiliser les boutons en bas de ce panneau.",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Circle Computer Text: Center Position": {
+    "message": "Position du centre",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Circle Computer Text: Radius": {
+    "message": "Rayon (y)",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Circle Computer Text: Number of Points": {
+    "message": "Nombre de points",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Circle Computer Text: Angle Offset": {
+    "message": "Angle de décalage (deg)",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Drag and Drop Preview: Circle Computer Waymark": {
+    "message": "Copier les coordonnées vers...",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Button: Copy Points from Circle Computer": {
+    "message": "Copier ces points dans l'éditeur",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Button: Create Preset from Circle Computer": {
+    "message": "Créer un nouveau jeu de marqueurs utilisant ces points",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Default Preset Name - Circle Computer": {
+    "message": "Importé depuis le Calculateur de Cercles",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
+  },
+  "Header: Help Window Page - General": {
+    "message": "Général",
+    "description": "HelpWindowPageExtensions.GetTranslatedName"
+  },
+  "Header: Help Window Page - Editing": {
+    "message": "Édition",
+    "description": "HelpWindowPageExtensions.GetTranslatedName"
+  },
+  "Header: Help Window Page - Maps": {
+    "message": "Cartes",
+    "description": "HelpWindowPageExtensions.GetTranslatedName"
+  },
+  "Header: Help Window Page - Coordinates": {
+    "message": "Coordonnées",
+    "description": "HelpWindowPageExtensions.GetTranslatedName"
+  },
+  "Header: Help Window Page - Circle Calculator": {
+    "message": "Calculateur de cercle",
+    "description": "HelpWindowPageExtensions.GetTranslatedName"
+  },
+  "Window Title: Preset Info": {
+    "message": "Informations sur les marqueurs prédéfinis",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Copy to Slot Label": {
+    "message": "Copier vers l'emplacement :",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: Place": {
+    "message": "Placer",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Preset Info Label": {
+    "message": "Informations sur les marqueurs prédéfinis :",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Waymark Column Header": {
+    "message": "Marqueur",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Unused Waymark": {
+    "message": "Non utilisé",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Zone Label": {
+    "message": "Zone : {0}",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Last Modified Label": {
+    "message": "Dernière modification : {0}",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: Export to Clipboard": {
+    "message": "Exporter vers le presse-papier",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: Edit": {
+    "message": "Modifier",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: Delete": {
+    "message": "Supprimer",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: Confirm Delete Label": {
+    "message": "Confirmer la suppression : ",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: Yes": {
+    "message": "Oui",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Button: No": {
+    "message": "Non",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Info Pane Text: No Preset Selected": {
+    "message": "Aucun groupe de marqueurs prédéfinis sélectionné.",
+    "description": "Window_InfoPane.Draw"
+  },
+  "Window Title: Waymark Library": {
+    "message": "Bibliothèque de marqueurs",
+    "description": "Window_Library.Draw"
+  },
+  "Config Option: Filter on Current Zone": {
+    "message": "Filtrer sur la zone actuelle",
+    "description": "Window_Library.Draw"
+  },
+  "Button: Save Current Waymarks": {
+    "message": "Enregistrer les marqueurs actifs",
+    "description": "Window_Library.Draw"
+  },
+  "Library Window Text: Zone Search Label": {
+    "message": "Rechercher une zone",
+    "description": "Window_Library.Draw"
+  },
+  "Main Window Text: No Presets Found": {
+    "message": "Aucun groupe de marqueurs ne correspond au filtre actuel.",
+    "description": "Window_Library.Draw"
+  },
+  "Header: Presets": {
+    "message": "Marqueurs prédéfinis",
+    "description": "Window_Library.Draw"
+  },
+  "Main Window Text: Library Empty": {
+    "message": "Bibliothèque de marqueurs prédéfinis vide !",
+    "description": "Window_Library.Draw"
+  },
+  "Header: Import Options": {
+    "message": "Options d'importation",
+    "description": "Window_Library.Draw"
+  },
+  "Header: Export and Backup Options": {
+    "message": "Options d'exportation/de sauvegarde",
+    "description": "Window_Library.Draw"
+  },
+  "Drag and Drop Preview: Moving Preset": {
+    "message": "Déplacer : ",
+    "description": "Window_Library.DrawPresetsForZone"
+  },
+  "Drag and Drop Preview: Move to Bottom": {
+    "message": "<Placer en dernier>",
+    "description": "Window_Library.DrawPresetsForZone"
+  },
+  "Drag and Drop Preview: Moving Zone": {
+    "message": "Déplacement : ",
+    "description": "Window_Library.DoZoneDragAndDrop"
+  },
+  "Drag and Drop Preview: Move to Top": {
+    "message": "<Déplacer au début>",
+    "description": "Window_Library.DrawZoneDragDropTopOrBottomPlaceholder"
+  },
+  "Text Box Prompt: Import": {
+    "message": "Collez un groupe de marqueurs ici et cliquez sur \"Importer\".",
+    "description": "Window_Library.DrawImportSection"
+  },
+  "Button: Import": {
+    "message": "Importer",
+    "description": "Window_Library.DrawImportSection"
+  },
+  "Main Window Text: Import from Game Slot Label": {
+    "message": "Ou importez depuis un emplacement de sauvegarde du jeu : ",
+    "description": "Window_Library.DrawImportSection"
+  },
+  "Main Window Text: Preset Resources Link": {
+    "message": "Où trouver des jeux de marqueurs pouvant être importés",
+    "description": "Window_Library.DrawImportSection"
+  },
+  "Button: Export All Presets to Clipboard": {
+    "message": "Exporter tous les marqueurs prédéfinis vers le presse-papier",
+    "description": "Window_Library.DrawExportSection"
+  },
+  "Button: Backup Current Config": {
+    "message": "Sauvegarder la configuration actuelle",
+    "description": "Window_Library.DrawExportSection"
+  },
+  "Help: Backup Current Config": {
+    "message": "Copie le fichier de configuration actuel dans un dossier de sauvegarde du répertoire \"pluginConfigs\" de Dalamud.",
+    "description": "Window_Library.DrawExportSection"
+  },
+  "Window Title: Map View": {
+    "message": "Carte",
+    "description": "Window_Map.Draw"
+  },
+  "Window Title: Map View (Editing)": {
+    "message": "Carte - Édition",
+    "description": "Window_Map.Draw"
+  },
+  "Map Window Text: No Maps Available": {
+    "message": "Aucune carte n'est disponible pour cette zone.",
+    "description": "Window_Map.Draw"
+  },
+  "Map Window Text: Unnamed Submap Placeholder": {
+    "message": "Sous-carte sans nom {0}",
+    "description": "Window_Map.Draw"
+  },
+  "Map Window Text: Loading Maps": {
+    "message": "Chargement des cartes de la zone.",
+    "description": "Window_Map.Draw"
+  },
+  "Map Window Text: Unknown Zone": {
+    "message": "Zone inconnue : aucune carte disponible.",
+    "description": "Window_Map.Draw"
+  },
+  "Map Window Text: No Preset Selected": {
+    "message": "Aucun groupe de marqueurs prédéfinis sélectionné",
+    "description": "Window_Map.Draw"
+  },
+  "Window Title: Config": {
+    "message": "Paramètres des marqueurs",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Always Show Info Pane": {
+    "message": "Toujours afficher le panneau d'information des marqueurs prédéfinis.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Clicking Preset Unselects": {
+    "message": "Cliquer sur le groupe de marqueurs sélectionné le désélectionne.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Categorize Presets by Zone": {
+    "message": "Classer les groupes de marqueurs par zone.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Open and Close with Game Window": {
+    "message": "Ouvrir et fermer la bibliothèque en même temps que la fenêtre de marqueurs du jeu.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Attach to Game Window": {
+    "message": "Attacher la fenêtre de la bibliothèque à celle des marqueurs du jeu.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Show ID in Zone Names": {
+    "message": "Affiche l'identifiant des zones à côté de leur nom.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Show ID in Zone Names": {
+    "message": "Affiche à certains endroits l'identifiant de la zone / mission utilisé par l'outil de mission. Utile en général uniquement pour le débogage.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Show Preset Indices": {
+    "message": "Affiche le numéro d'index du groupe de marqueurs dans la bibliothèque.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Show Preset Indices": {
+    "message": "Utile principalement si vous souhaitez connaître l'index d'un group de marqueurs pour l'utiliser dans une commande texte. Vous pouvez laisser cette option désactivée si vous n'utilisez que l'interface graphique.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Allow Preset Drag and Drop": {
+    "message": "Permettre la réorganisation des groupes de marqueurs par glisser-déposer.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Allow Zone Drag and Drop": {
+    "message": "Permettre la réorganisation des zones par glisser-déposer.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Allow Zone Drag and Drop": {
+    "message": "Si cette option est activée, vous pouvez changer l'ordre des dossiers de marqueurs prédéfinis lorsqu'ils sont triés par zone. Les nouvelles zones seront ajoutées à la fin de la liste. Cette option n'a pas d'effet si l'option \"Classer les groupes de marqueurs par zone\" est désactivée.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Sort Zones Descending": {
+    "message": "Trier les zones par ordre décroissant (la plus récente en haut).",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Sort Zones Descending": {
+    "message": "Lorsque cette case est cochée, les zones seront triées grosso modo (le classement des zones par SE n'est pas parfait) de la plus récente à la plus ancienne. Si l'option \"Permettre la réorganisation des zones par glisser-déposer\" est également activée, les nouvelles zones seront ajoutées en haut de la liste (le reste restant dans le même ordre en dessous).",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Show Library Zone Filter Search Box": {
+    "message": "Affiche un champ de recherche pour filtrer l'affichage des zones dans la fenêtre de la bibliothèque.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Show Library Zone Filter Search Box": {
+    "message": "Lorsque cette option est activée, un champ de recherche est affiché en haut de la fenêtre de la bibliothèque permettant de filtrer les zones affichées. Cette option n'a pas d'effet si l'option \"Classer les groupes de marqueurs par zone\" est désactivée.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Autoload Presets from Libarary": {
+    "message": "Charger automatiquement les marqueurs prédéfinis depuis la bibliothèque.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Autoload presets from Library": {
+    "message": "Charge automatiquement les cinq premiers groupes de marqueurs prédéfinis pour une zone lorsque vous y entrez. CECI ÉCRASERA LE CONTENU DES EMPLACEMENTS DE JEU SANS AVERTISSEMENT, merci de n'activer cette option qu'après avoir sauvegardé les données que vous souhaiteriez garder. Envisagez d'activer l'option d'importation automatique ci-dessous pour réduire le risque de perdre de groupes de marqueurs prédéfinis.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Autosave Presets to Library": {
+    "message": "Enregistrer automatiquement les marqueurs prédéfinis dans la bibliothèque.",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Autosave Presets to Library": {
+    "message": "Copie automatiquement les marqueurs des emplacements de sauvegarde du jeu dans la bibliothèque à la sortie d'une instance.",
+    "description": "Window_Settings.Draw"
+  },
+  "Config Option: Suppress Text Command Responses": {
+    "message": "Masque la sortie des commandes texte (sauf celle de \"{0}\").",
+    "description": "Window_Settings.Draw"
+  },
+  "Button: Clear All Map View Data": {
+    "message": "Effacer toutes les données d'affichage des cartes",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Clear All Map View Data": {
+    "message": "Réinitialise les paramètres personnalisés des cartes à leurs valeurs par défaut, incluant leur orientation, leur niveau de zoom et les sous-cartes.",
+    "description": "Window_Settings.Draw"
+  },
+  "Settings Window Text: Confirm Delete Label": {
+    "message": "Confirmer la suppression : ",
+    "description": "Window_Settings.Draw"
+  },
+  "Button: Clear All Zone Sort Data": {
+    "message": "Effacer toutes les données de tri des zones",
+    "description": "Window_Settings.Draw"
+  },
+  "Help: Clear All Zone Sort Data": {
+    "message": "Supprime tout ordre personnalisé des zones dans la fenêtre de la bibliothèque et applique l'ordre de tri par défaut.",
+    "description": "Window_Settings.Draw"
+  },
+  "Button: Save and Close": {
+    "message": "Enregistrer et fermer",
+    "description": "Window_Settings.Draw"
+  },
+  "Button: Show Library": {
+    "message": "Afficher la bibliothèque",
+    "description": "Window_Settings.Draw"
+  },
+  "Waymark Status: Unused": {
+    "message": "Inutilisé",
+    "description": "Waymark.GetWaymarkDataString"
+  },
+  "Preset Info Error: Zone Name 1": {
+    "message": "Erreur lors de la récupération du nom de la zone !",
+    "description": "WaymarkPreset.GetPresetDataString"
+  },
+  "Preset Info Label: Zone": {
+    "message": "Zone : ",
+    "description": "WaymarkPreset.GetPresetDataString"
+  },
+  "Preset Info Label: Last Modified": {
+    "message": "Dernière modification : ",
+    "description": "WaymarkPreset.GetPresetDataString"
+  },
+  "Default Preset Name": {
+    "message": "Nouveau jeu de marqueurs",
+    "description": "WaymarkPreset.get_DefaultPresetName"
+  },
+  "Default Preset Name (Imported)": {
+    "message": "Importé",
+    "description": "WaymarkPresetLibrary.ImportPreset"
+  },
+  "Export Preset Fallback Error": {
+    "message": "Index invalide demandé pour l'exportation des marqueurs. Aucun groupe de marqueurs n'existe à l'index {0}.",
+    "description": "WaymarkPresetLibrary.ExportPreset"
+  }
+}

@@ -58,6 +58,9 @@
 		<None Update="Resources\CoordinateSystemDiagrams.png">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+		<None Update="Resources\Localization\loc_fr.json">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 		<None Update="WaymarkPresetPlugin.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
