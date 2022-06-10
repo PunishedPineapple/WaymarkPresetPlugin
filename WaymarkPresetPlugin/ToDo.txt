@@ -12,15 +12,13 @@ UI Ideas from Other People:
 	- Use whatever tech from this to let dragging by the info pane work?
 - Wrap the zone name text in the info pane.
 	- Probably going to be extra annoying doing the layout for the window with this.
-- Maybe have a context menu option to one-time sort alphabetically?
-	- Maybe this isn't good though, because new stuff will still appear at the bottom and people would have to re-sort frequently.
-	- Maybe at some point in the future, have a context menu with sorting options (Ascending, descending and then By ID, Alphabetical, Custom).
 - People want an option to not show the Info Pane.
 	- Maybe add the context menu to presets in the library with options to place preset, show info, export into slot, edit, show map view, etc.
 	- And then config option to not show info pane when selecting a preset.  Make sure to hide the pane again if a different preset is selected.
 		- Or do we make it a different instance of the info pane that can float and stays on that preset?  Or just open the editor window and bypass the info pane entirely?
 		- Maybe just leave it as it is, and make showing/hiding the info pane a right click option.
 - Double click to place?
+- Add an option to import presets from a text file.
 
 
 Low Priority:
@@ -30,10 +28,8 @@ Low Priority:
 	- Add and Subscribe to name changed events if we ever do alphabetical sorting.
 	- How will the event subscriptions work when first loading up the plugin, since it doesn't use our add preset functions?
 - Look into getting information about multi-map situations from the lgbs in order to only show waymarks on the appropriate maps of a zone.  Starting point information to pick back up on this:
-	- Basic paths to bg lgbs for zones are in Bg column of TerritoryType sheet.
-	- Lumina command line to get basic bg lgb file information for say Pharos Sirius is therefore: Lumina.Cmd.exe file bg/ffxiv/sea_s1/dun/s1d4/level/bg.lgb extract --datapath "C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack"
-	- No idea how to process the lgb for the map boundaries though.
-		- These really looked like sets of floating point coordinates, but didn't seem to be any kind of reasonable bounding boxes.
+	- Tried going through all of the lgbs and drawing applicable coordinates on-screen.  Nothing looked like bounding boxes.
+	- LCB data looked like pairs of coordinates to make a box, but these don't look like any sane bounding box either.
 	- See if Sapphire sends the map change packet and look at how it does it.
 		-Assuming the map change packet is a real thing; someone said line type 40 in ACT is this.
 - Try to constrain the aspect ratio of the map window if possible.
@@ -44,6 +40,9 @@ Low Priority:
 - Replace multiple ImGui.Spacing() lines with better solution.
 	- Scaled Dummies or a single Spacing() and let people change ImGui styles.
 - Can we expand the zone header when we select a preset in a collapsed zone?
+- Maybe have a context menu option to one-time sort alphabetically?
+	- Maybe this isn't good though, because new stuff will still appear at the bottom and people would have to re-sort frequently.
+	- Maybe at some point in the future, have a context menu with sorting options (ascending, descending and then by ID, alphabetical, and custom).
 
 
 New Functionality:
@@ -51,7 +50,7 @@ New Functionality:
 - Look into placing a preset by placing each individual waymark to work around preset restrictions, but this honestly looks like a huge mess, and SE's code is doing timing stuff when placing a preset, so it might be even more weird.
 	- See the WaymarkInfo.txt for some of how this appears to be handled by the game.
 - Add buttons for clear waymarks and placing individual waymarks, as well as a button to open up the game's waymark interface.
-- Once the above is done, look into intercepting the MainCommand for the waymarks button and bypassing the game's window entirely as an option (with an option to open it from the plugin's window).
+	- Once this is done, look into intercepting the MainCommand for the waymarks button and bypassing the game's window entirely as an option (with an option to open it from the plugin's window).
 
 
 Completed (Follow Up):

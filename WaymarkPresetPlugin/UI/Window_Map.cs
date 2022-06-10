@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,9 +35,16 @@ namespace WaymarkPresetPlugin
 			try
 			{
 				string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mMapViewStateDataFileName_v1 );
-				string jsonStr = File.ReadAllText( viewStateDataFilePath );
-				var viewData = JsonConvert.DeserializeObject<Dictionary<uint, MapViewState>>( jsonStr );
-				if( viewData != null ) MapViewStateData = viewData;
+				if( File.Exists( viewStateDataFilePath ) )
+				{
+					string jsonStr = File.ReadAllText( viewStateDataFilePath );
+					var viewData = JsonConvert.DeserializeObject<Dictionary<uint, MapViewState>>( jsonStr );
+					if( viewData != null ) MapViewStateData = viewData;
+				}
+				else
+				{
+					PluginLog.LogInformation( "No map view data file found; using default map view state." );
+				}
 			}
 			catch( Exception e )
 			{
@@ -432,9 +440,12 @@ namespace WaymarkPresetPlugin
 		{
 			try
 			{
-				string jsonStr = JsonConvert.SerializeObject( MapViewStateData, Formatting.Indented );
-				string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mMapViewStateDataFileName_v1 );
-				File.WriteAllText( viewStateDataFilePath, jsonStr );
+				if( MapViewStateData.Any() )
+				{
+					string jsonStr = JsonConvert.SerializeObject( MapViewStateData, Formatting.Indented );
+					string viewStateDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mMapViewStateDataFileName_v1 );
+					File.WriteAllText( viewStateDataFilePath, jsonStr );
+				}
 			}
 			catch( Exception e )
 			{

@@ -38,9 +38,16 @@ namespace WaymarkPresetPlugin
 			try
 			{
 				string zoneSortDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mZoneSortDataFileName_v1 );
-				string jsonStr = File.ReadAllText( zoneSortDataFilePath );
-				var sortData = JsonConvert.DeserializeObject<List<UInt16>>( jsonStr );
-				if( sortData != null ) mConfiguration.PresetLibrary.SetSortOrder( sortData );
+				if( File.Exists( zoneSortDataFilePath ) )
+				{
+					string jsonStr = File.ReadAllText( zoneSortDataFilePath );
+					var sortData = JsonConvert.DeserializeObject<List<UInt16>>( jsonStr );
+					if( sortData != null ) mConfiguration.PresetLibrary.SetCustomSortOrder( sortData );
+				}
+				else
+				{
+					PluginLog.LogInformation( "No zone sort order file found; using default sort order." );
+				}
 			}
 			catch( Exception e )
 			{
@@ -152,8 +159,7 @@ namespace WaymarkPresetPlugin
 					if( mConfiguration.mSortPresetsByZone )
 					{
 						bool anyPresetsVisibleWithCurrentFilters = false;
-						mConfiguration.PresetLibrary.SortZonesDescending( mConfiguration.SortZonesDescending );
-						var dict = mConfiguration.PresetLibrary.GetSortedIndices( true );
+						var dict = mConfiguration.PresetLibrary.GetSortedIndices( ZoneSortType.Custom, mConfiguration.SortZonesDescending );
 						/*if( mConfiguration.SortZonesDescending )
 						{
 							var tempZoneResult = DrawZoneDragDropTopOrBottomPlaceholder( true ); //***** TODO: Not using this for now because having this make the list move down feels pretty bad.
@@ -232,16 +238,16 @@ namespace WaymarkPresetPlugin
 				if( zoneDragDropResult != null )
 				{
 					//	If it's the first time someone is dragging and dropping, set the sort order to what's currently visible.
-					if( !mConfiguration.PresetLibrary.GetSortOrder().Any() )
+					if( !mConfiguration.PresetLibrary.GetCustomSortOrder().Any() )
 					{
 						List<UInt16> baseSortOrder = new();
-						foreach( var zone in mConfiguration.PresetLibrary.GetSortedIndices( mConfiguration.SortZonesDescending ) ) baseSortOrder.Add( zone.Key );
-						mConfiguration.PresetLibrary.SetSortOrder( baseSortOrder, mConfiguration.mSortZonesDescending );
+						foreach( var zone in mConfiguration.PresetLibrary.GetSortedIndices( ZoneSortType.Custom ) ) baseSortOrder.Add( zone.Key );
+						mConfiguration.PresetLibrary.SetCustomSortOrder( baseSortOrder, mConfiguration.SortZonesDescending );
 						PluginLog.LogDebug( "Tried to set up initial zone sort order." );
 					}
 
 					//	Modify the sort entry for the drag and drop.
-					mConfiguration.PresetLibrary.AddOrChangeSortEntry( zoneDragDropResult.Value.Item1, zoneDragDropResult.Value.Item2 );
+					mConfiguration.PresetLibrary.AddOrChangeCustomSortEntry( zoneDragDropResult.Value.Item1, zoneDragDropResult.Value.Item2 );
 					PluginLog.LogDebug( $"Tried to move zone id {zoneDragDropResult.Value.Item1} in front of {zoneDragDropResult.Value.Item2}." );
 				}
 
@@ -707,7 +713,7 @@ namespace WaymarkPresetPlugin
 		{
 			try
 			{
-				var sortData = mConfiguration.PresetLibrary.GetSortOrder();
+				var sortData = mConfiguration.PresetLibrary.GetCustomSortOrder();
 				if( sortData.Any() )
 				{
 					string jsonStr = JsonConvert.SerializeObject( sortData );
@@ -723,7 +729,7 @@ namespace WaymarkPresetPlugin
 
 		internal void ClearAllZoneSortData()
 		{
-			mConfiguration.PresetLibrary.ClearSortOrder();
+			mConfiguration.PresetLibrary.ClearCustomSortOrder();
 			string zoneSortDataFilePath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), mZoneSortDataFileName_v1 );
 			if( File.Exists( zoneSortDataFilePath ) )
 			{

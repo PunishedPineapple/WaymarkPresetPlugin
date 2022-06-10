@@ -10,16 +10,16 @@ using Newtonsoft.Json;
 
 namespace WaymarkPresetPlugin
 {
-	public class WaymarkPresetLibrary
+	public sealed class WaymarkPresetLibrary
 	{
 		//***** TODO: Subscribe/unsubscribe to preset's zone change event on add/remove from library, and update sort stuff based on that.  We really need to make the presets list externally immutable though, because we're just begging for a big issue at this point.
-		public int ImportPreset( WaymarkPreset preset )
+		internal int ImportPreset( WaymarkPreset preset )
 		{
 			WaymarkPreset importedPreset = new( preset );
 			return ImportPreset_Common( importedPreset );
 		}
 
-		public int ImportPreset( GamePreset gamePresetData )
+		internal int ImportPreset( GamePreset gamePresetData )
 		{
 			try
 			{
@@ -34,7 +34,7 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public int ImportPreset( string importStr )
+		internal int ImportPreset( string importStr )
 		{
 			try
 			{
@@ -59,11 +59,11 @@ namespace WaymarkPresetPlugin
 		private int ImportPreset_Common( WaymarkPreset preset )
 		{
 			Presets.Add( preset );
-			if( mZoneSortComparer_Custom.ZoneSortOrder.Any() && !mZoneSortComparer_Custom.ZoneSortOrder.Contains( preset.MapID ) ) AddOrChangeSortEntry( preset.MapID );
+			if( mZoneSortComparer_Custom.ZoneSortOrder.Any() && !mZoneSortComparer_Custom.ZoneSortOrder.Contains( preset.MapID ) ) AddOrChangeCustomSortEntry( preset.MapID );
 			return Presets.Count - 1;
 		}
 
-		public string ExportPreset( int index )
+		internal string ExportPreset( int index )
 		{
 			if( index >= 0 && index < Presets.Count )
 			{
@@ -75,13 +75,13 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public bool DeletePreset( int index )
+		internal bool DeletePreset( int index )
 		{
 			if( index >= 0 && index < Presets.Count )
 			{
 				UInt16 presetZone = Presets[index].MapID;
 				Presets.RemoveAt( index );
-				if( !Presets.Where( ( WaymarkPreset x ) => { return x.MapID == presetZone; } ).Any() ) RemoveSortEntry( presetZone );
+				if( !Presets.Where( ( WaymarkPreset x ) => { return x.MapID == presetZone; } ).Any() ) RemoveCustomSortEntry( presetZone );
 				return true;
 			}
 			else
@@ -90,7 +90,7 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public int MovePreset( int indexToMove, int newPosition, bool placeAfter )
+		internal int MovePreset( int indexToMove, int newPosition, bool placeAfter )
 		{
 			if( newPosition == indexToMove )
 			{
@@ -115,7 +115,7 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public void AddOrChangeSortEntry( UInt16 zone, UInt16 placeBeforeZone = UInt16.MaxValue )
+		internal void AddOrChangeCustomSortEntry( UInt16 zone, UInt16 placeBeforeZone = UInt16.MaxValue )
 		{
 			if( zone == placeBeforeZone ) return;
 
@@ -141,38 +141,47 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public void RemoveSortEntry( UInt16 zone )
+		internal void RemoveCustomSortEntry( UInt16 zone )
 		{
 			int zoneIndex = mZoneSortComparer_Custom.ZoneSortOrder.FindIndex( ( UInt16 x ) => { return x == zone; } );
 			if( zoneIndex != -1 ) mZoneSortComparer_Custom.ZoneSortOrder.RemoveAt( zoneIndex );
 		}
 
-		public void ClearSortOrder()
+		internal void ClearCustomSortOrder()
 		{
 			mZoneSortComparer_Custom.ZoneSortOrder.Clear();
 		}
 
-		public void SetSortOrder( List<UInt16> order, bool isDescending = false )
+		internal void SetCustomSortOrder( List<UInt16> order, bool isDescending = false )
 		{
 			if( isDescending ) order.Reverse();
 			mZoneSortComparer_Custom.ZoneSortOrder.Clear();
 			mZoneSortComparer_Custom.ZoneSortOrder.AddRange( order );
 		}
 
-		public List<UInt16> GetSortOrder()
+		internal List<UInt16> GetCustomSortOrder()
 		{
 			return new( mZoneSortComparer_Custom.ZoneSortOrder );
 		}
 
-		public void SortZonesDescending( bool b )
+		internal void SetZoneSortDescending( bool b )
 		{
 			mZoneSortComparer_Default.SortDescending = b;
+			mZoneSortComparer_Alphabetical.SortDescending = b;
 			mZoneSortComparer_Custom.SortDescending = b;
 		}
 
-		public SortedDictionary<UInt16, List<int>> GetSortedIndices( bool useCustomSort )
+		internal SortedDictionary<UInt16, List<int>> GetSortedIndices( ZoneSortType sortType )
 		{
-			SortedDictionary<UInt16, List<int>> sortedIndices = useCustomSort ? new( mZoneSortComparer_Custom ) : new( mZoneSortComparer_Default );
+			IComparer<UInt16> comparer = sortType switch
+			{
+				ZoneSortType.Basic => mZoneSortComparer_Default,
+				ZoneSortType.Alphabetical => mZoneSortComparer_Alphabetical,
+				ZoneSortType.Custom => mZoneSortComparer_Custom,
+				_ => mZoneSortComparer_Default,
+			};
+
+			SortedDictionary<UInt16, List<int>> sortedIndices = new( comparer );
 
 			for( int i = 0; i < Presets.Count; ++i )
 			{
@@ -187,10 +196,17 @@ namespace WaymarkPresetPlugin
 			return sortedIndices;
 		}
 
-		[JsonProperty( NullValueHandling = NullValueHandling.Ignore )]	//	It shouldn't happen, but never let the deserializer overwrite this with null.
-		public List<WaymarkPreset> Presets { get; protected set; } = new List<WaymarkPreset>();
+		internal SortedDictionary<UInt16, List<int>> GetSortedIndices( ZoneSortType sortType, bool sortDescending )
+		{
+			SetZoneSortDescending( sortDescending );
+			return GetSortedIndices( sortType );
+		}
 
-		private readonly ZoneSortComparer_Basic mZoneSortComparer_Default = new ZoneSortComparer_Basic();
-		private readonly ZoneSortComparer_CustomOrder mZoneSortComparer_Custom = new ZoneSortComparer_CustomOrder();
+		[JsonProperty( NullValueHandling = NullValueHandling.Ignore )]	//	It shouldn't happen, but never let the deserializer overwrite this with null.
+		internal List<WaymarkPreset> Presets { get; private set; } = new List<WaymarkPreset>();
+
+		private readonly ZoneSortComparer_Basic mZoneSortComparer_Default = new();
+		private readonly ZoneSortComparer_Alphabetical mZoneSortComparer_Alphabetical = new();
+		private readonly ZoneSortComparer_CustomOrder mZoneSortComparer_Custom = new();
 	}
 }
