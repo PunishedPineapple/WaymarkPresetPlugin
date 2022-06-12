@@ -206,7 +206,11 @@ namespace WaymarkPresetPlugin
 				ImGui.SameLine();
 				ImGui.Button( Loc.Localize( "Button: Place", "Place" ) + "###Place" );
 				mWindowSize.X = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X;
-				ImGui.Button( "My Width Doesn't Matter" );
+
+				ImGui.Text( Loc.Localize( "Info Pane Text: Preset Info Label", "Preset Info:" ) );
+				ImGui.SameLine();
+				ImGui.Button( Loc.Localize( "Button: Map View", "Map View" ) + "###DummyMapViewButton" );
+				mWindowSize.X = Math.Max( mWindowSize.X, ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X );
 
 				if( ImGui.BeginTable( "Real Fake Tables", 1 ) )
 				{
