@@ -67,7 +67,7 @@ namespace WaymarkPresetPlugin
 					//var gameMapCoords = GetGameMapCoordinates( pos2D, mOffset, (UInt16)mSizeFactor );
 					//ImGui.Text( $"Game Map Coords (1): X: {gameMapCoords.X:F6}, Y: {gameMapCoords.Y:F6}" );
 					var gameMapCoords2 = WorldToMapCoordinates( pos2D, mOffset, (UInt16)mSizeFactor );
-					ImGui.Text( $"Game Map Coords (Correct): X: {gameMapCoords2.X:F6}, Y: {gameMapCoords2.Y:F6}" );
+					ImGui.Text( $"Game Map Coords (Mine): X: {gameMapCoords2.X:F6}, Y: {gameMapCoords2.Y:F6}" );
 					//var otherFormulaX = OtherPeoplesFormulas.ConvertCoordinatesIntoMapPosition( mSizeFactor, mOffset.X, pos2D.X );
 					//var otherFormulaY = OtherPeoplesFormulas.ConvertCoordinatesIntoMapPosition( mSizeFactor, mOffset.Y, pos2D.Y );
 					//var otherFormulaX = OtherPeoplesFormulas.ToMapCoordinate( pos2D.X, mSizeFactor, 41 );
@@ -80,8 +80,11 @@ namespace WaymarkPresetPlugin
 					var otherOffsetFormulaY = OtherPeoplesFormulas.ConvertCoordinatesIntoMapPosition( mSizeFactor, mOffset.Y, pos2D.Y, 41 );
 					var otherOffsetFormulaXCorrected = OtherPeoplesFormulas.ConvertCoordinatesIntoMapPosition( mSizeFactor, mOffset.X, pos2D.X, 40.96 );
 					var otherOffsetFormulaYCorrected = OtherPeoplesFormulas.ConvertCoordinatesIntoMapPosition( mSizeFactor, mOffset.Y, pos2D.Y, 40.96 );
-					ImGui.Text( $"Game Map Coords (Magic Number 41): X: {otherOffsetFormulaX:F6}, Y: {otherOffsetFormulaY:F6}" );
-					ImGui.Text( $"Game Map Coords (Magic Number 40.96): X: {otherOffsetFormulaXCorrected:F6}, Y: {otherOffsetFormulaYCorrected:F6}" );
+					ImGui.Text( $"Game Map Coords (Mappy (41)): X: {otherOffsetFormulaX:F6}, Y: {otherOffsetFormulaY:F6}" );
+					ImGui.Text( $"Game Map Coords (Mappy Modified (40.96)): X: {otherOffsetFormulaXCorrected:F6}, Y: {otherOffsetFormulaYCorrected:F6}" );
+					var KazFormula_X = OtherPeoplesFormulas.ConvertMapXZPositionToCoordinate_Kaz( mSizeFactor, mOffset.X, pos2D.X );
+					var KazFormula_Y = OtherPeoplesFormulas.ConvertMapXZPositionToCoordinate_Kaz( mSizeFactor, mOffset.Y, pos2D.Y );
+					ImGui.Text( $"Game Map Coords (Kaz's): X: {KazFormula_X:F6}, Y: {KazFormula_Y:F6}" );
 				}
 			}
 			ImGui.End();
@@ -120,7 +123,7 @@ namespace WaymarkPresetPlugin
 			{
 				mapID = pathParts[2] + "/" + pathParts[3];
 			}
-			
+
 			return mapID;
 		}
 
@@ -206,6 +209,14 @@ namespace WaymarkPresetPlugin
 			{
 				return Convert.ToInt32( ( value - 1 ) * 50 * scale );
 			}*/
+
+			//	https://gitlab.com/jules/cl_showpos/-/blob/main/cl_showpos/Utils/MapUtil.cs
+			public static float ConvertMapXZPositionToCoordinate_Kaz( float scale, double offset, float value )
+			{
+				var sizeFactor = scale / 100f;
+
+				return (float)( 10 - ( ( value - -offset ) * sizeFactor + 1024f ) * -0.2f / sizeFactor ) / 10;
+			}
 		}
 	}
 }
