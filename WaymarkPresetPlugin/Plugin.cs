@@ -1,19 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
-using CheapLoc;
-
-using Dalamud.Data;
-using Dalamud.Game;
-using Dalamud.Game.ClientState;
+﻿using Dalamud.Plugin;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
+using Dalamud.Game;
+using Dalamud.Data;
 using Dalamud.Logging;
-using Dalamud.Plugin;
-
+using System;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace WaymarkPresetPlugin
@@ -41,65 +35,52 @@ namespace WaymarkPresetPlugin
 			mSigScanner			= sigScanner;
 			mDataManager		= dataManager;
 
-			//	Localization and Command Initialization
-			OnLanguageChanged( mPluginInterface.UiLanguage );
-
 			//	Configuration
 			mConfiguration = mPluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 			mConfiguration.Initialize( mPluginInterface );
 			MemoryHandler.Init( mSigScanner, mClientState, mCondition );
 			ZoneInfoHandler.Init( mDataManager );
 
-			//	UI Initialization
-			mUI = new PluginUI( mConfiguration, mPluginInterface, mDataManager, mGameGui, mClientState );
+			//	Text Command Initialization
+			mCommandManager.AddHandler( mTextCommandName, new CommandInfo( ProcessTextCommand )
+			{
+				HelpMessage = "Performs waymark preset commands.  Use \"/pwaymark help\" for detailed usage information."
+			} );
 
-			//	Event Subscription
+			//	UI Initialization
+			mUI = new PluginUI( mConfiguration, mPluginInterface, mDataManager, mCommandManager, mGameGui, mClientState );
 			mPluginInterface.UiBuilder.Draw += DrawUI;
 			mPluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
-			mPluginInterface.LanguageChanged += OnLanguageChanged;
-			mClientState.TerritoryChanged += OnTerritoryChanged;
+			mUI.SetCurrentTerritoryTypeID( mClientState.TerritoryType );
+			mUI.Initialize();
 
-			//	IPC
-			IpcProvider.RegisterIPC( this, pluginInterface );
+			//	Event Subscription
+			mClientState.TerritoryChanged += OnTerritoryChanged;
+			mClientState.Login += OnLogin;
+
+			//	Tell the user if there's something out of the ordinary.
+			if( !MemoryHandler.FoundSavedPresetSigs() )
+			{
+				mChatGui.Print( "Error initializing WaymarkPresetPlugin: Cannot write to or read from game." );
+			}
+
+			if( mClientState.IsLoggedIn &&
+				( !MemoryHandler.FoundDirectPlacementSigs() || !MemoryHandler.FoundDirectSaveSigs() ) )
+			{
+				mUI.ShowGimpedModeWarningWindow();
+			}
 		}
 
 		//	Cleanup
 		public void Dispose()
 		{
-			IpcProvider.UnregisterIPC();
-			mCommandManager.RemoveHandler( TextCommandName );
-			mPluginInterface.LanguageChanged -= OnLanguageChanged;
-			mClientState.TerritoryChanged -= OnTerritoryChanged;
-			mPluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;
-			mPluginInterface.UiBuilder.Draw -= DrawUI;
-			mUI?.Dispose();
 			MemoryHandler.Uninit();
-		}
-
-		protected void OnLanguageChanged( string langCode )
-		{
-			var allowedLang = new List<string>{ /*"es", "fr", "ja"*/ };
-
-			PluginLog.Information( "Trying to set up Loc for culture {0}", langCode );
-
-			if( allowedLang.Contains( langCode ) )
-			{
-				Loc.Setup( File.ReadAllText( Path.Join( Path.Join( mPluginInterface.AssemblyLocation.DirectoryName, "Resources\\Localization\\" ), $"loc_{langCode}.json" ) ) );
-			}
-			else
-			{
-				Loc.SetupWithFallbacks();
-			}
-
-			//	Set up the command handler with the current language.
-			if( mCommandManager.Commands.ContainsKey( TextCommandName ) )
-			{
-				mCommandManager.RemoveHandler( TextCommandName );
-			}
-			mCommandManager.AddHandler( TextCommandName, new CommandInfo( ProcessTextCommand )
-			{
-				HelpMessage = String.Format( Loc.Localize( "Text Command Description", "Performs waymark preset commands.  Use \"{0}\" for detailed usage information." ), TextCommandName + " " + SubcommandName_Help )
-			} );
+			mUI.Dispose();
+			mClientState.Login -= OnLogin;
+			mClientState.TerritoryChanged -= OnTerritoryChanged;
+			mPluginInterface.UiBuilder.Draw -= DrawUI;
+			mPluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;
+			mCommandManager.RemoveHandler( mTextCommandName );
 		}
 
 		//	Text Commands
@@ -129,37 +110,38 @@ namespace WaymarkPresetPlugin
 			string commandResponse = "";
 			if( subCommand.Length == 0 )
 			{
-				mUI.LibraryWindow.WindowVisible = !mUI.LibraryWindow.WindowVisible;
+				mUI.MainWindowVisible = !mUI.MainWindowVisible;
 			}
-			else if( subCommand.ToLower() == SubcommandName_Config )
+			else if( subCommand.ToLower() == "config" )
 			{
-				mUI.SettingsWindow.WindowVisible = !mUI.SettingsWindow.WindowVisible;
+				mUI.SettingsWindowVisible = !mUI.SettingsWindowVisible;
 			}
-			else if( subCommand.ToLower() == "debug" )
-			{
-				mUI.DebugWindow.WindowVisible = !mUI.DebugWindow.WindowVisible;
-			}
-			else if( subCommand.ToLower() == SubcommandName_SlotInfo )
+			else if( subCommand.ToLower() == "slotinfo" )
 			{
 				commandResponse = ProcessTextCommand_SlotInfo( subCommandArgs );
 			}
-			else if( subCommand.ToLower() == SubcommandName_Place )
+			else if( subCommand.ToLower() == "place" )
 			{
 				commandResponse = ProcessTextCommand_Place( subCommandArgs );
 			}
-			else if( subCommand.ToLower() == SubcommandName_Import )
+			else if( subCommand.ToLower() == "import" )
 			{
 				commandResponse = ProcessTextCommand_Import( subCommandArgs );
 			}
-			else if( subCommand.ToLower() == SubcommandName_Export )
+			else if( subCommand.ToLower() == "export" )
 			{
 				commandResponse = ProcessTextCommand_Export( subCommandArgs );
 			}
-			else if( subCommand.ToLower() == SubcommandName_ExportAll )
+			else if( subCommand.ToLower() == "exportall" )
 			{
 				commandResponse = ProcessTextCommand_ExportAll( subCommandArgs );
 			}
-			else if( subCommand.ToLower() == SubcommandName_Help || subCommand.ToLower() == "?" )
+			else if( subCommand.ToLower() == "debug" )
+			{
+				mUI.mMapTestWindow.ShowWindow = true;
+				commandResponse = "";
+			}
+			else if( subCommand.ToLower() == "help" || subCommand.ToLower() == "?" )
 			{
 				commandResponse = ProcessTextCommand_Help( subCommandArgs );
 				suppressResponse = false;
@@ -178,51 +160,45 @@ namespace WaymarkPresetPlugin
 
 		protected string ProcessTextCommand_Help( string args )
 		{
-			if( args.ToLower() == SubCommandName_Help_Commands )
+			if( args.ToLower() == "commands" )
 			{
-				return String.Format(	Loc.Localize( "Text Command Response: Help - Subcommands", "Valid commands are as follows: {0}, {1}, {2}, {3}, {4}, and {5}.  If no command is provided, the preset library will be opened.  Type \"{6} <command>\" for detailed subcommand information." ),
-										SubcommandName_Place, SubcommandName_Import, SubcommandName_Export, SubcommandName_ExportAll, SubcommandName_SlotInfo, SubcommandName_Config, TextCommandName + " " + SubcommandName_Help );
+				return $"Valid commands are as follows: config, slotinfo, import, export, exportall, and place.  If no command is provided, the GUI will be opened.  Type /pwaymark help <command> for usage information.";
 			}
-			else if( args.ToLower() == SubcommandName_Config )
+			else if( args.ToLower() == "config" )
 			{
-				return Loc.Localize( "Text Command Response: Help - Config", "Opens the settings window." );
+				return "Opens the settings window.";
 			}
-			else if( args.ToLower() == SubcommandName_SlotInfo )
+			else if( args.ToLower() == "slotinfo" )
 			{
-				return String.Format(	Loc.Localize( "Text Command Response: Help - Slot Info", "Prints the data saved in the game's slots to the chat window.  Usage: \"{0} <slot>\".  The slot number can be any valid game slot." ),
-										TextCommandName + " " + SubcommandName_SlotInfo );
+				return "Prints the data saved in the game's slots to the chat window.  Usage \"/pwaymark slotinfo <slot>\".  The slot number can be any valid game slot.";
 			}
-			else if( args.ToLower() == SubcommandName_Place )
+			else if( args.ToLower() == "place" )
 			{
-				return String.Format(	Loc.Localize( "Text Command Response: Help - Place", "Places the preset with the specified name (if possible).  Quotes MUST be used around the name.  May also specify preset index without quotes instead.  Usage: \"{0} <name>|<index>\".  Name must match exactly (besides case).  Index can be any valid libary preset number." ),
-										TextCommandName + " " + SubcommandName_Place );
+				return "Places the preset with the specified name (if possible).  Quotes MUST be used around the name.  May also specify preset index without quotes instead.  Usage \"/pwaymark place \"<name>\"|<index>\".  Name must match exactly (besides case).  Index can be any valid libary preset number.";
 			}
-			else if( args.ToLower() == SubcommandName_Import )
+			else if( args.ToLower() == "import" )
 			{
-				return String.Format(	Loc.Localize( "Text Command Response: Help - Import", "Copies one of the game's five preset slots to the library.  Usage: \"{0} <slot>\".  The slot number can be any valid game slot.  Command-line import of a formatted preset string is not supported due to length restrictions in the game's chat box." ),
-										TextCommandName + " " + SubcommandName_Import );
+				return "Copies one of the game's five preset slots to the library.  Usage \"/pwaymark import <slot>\".  The slot number can be any valid game slot.  Command-line import of a formatted preset string is not supported due to length restrictions in the game's chat box.";
 			}
-			else if( args.ToLower() == SubcommandName_Export )
+			else if( args.ToLower() == "export" )
 			{
-				return String.Format(	Loc.Localize( "Text Command Response: Help - Export", "Copies a preset from the library to the specified game slot *or* copies a preset to the clipboard, depending on flags and parameters.  Usage: \"{0} [{1}] [{2}] <slot|index> [slot]\".  The slot number can be any valid game slot, and index can be any valid library preset number.  Use of the {3} flag specifies that the first number is a game slot, not a library index.  Use of the {4} flag includes the last-modified time in the clipboard export." ),
-										TextCommandName + " " + SubcommandName_Export, SubCommandArg_Export_IncludeTime, SubCommandArg_Export_IsGameSlot, SubCommandArg_Export_IsGameSlot, SubCommandArg_Export_IncludeTime );
+				return "Copies a preset from the library to the specified game slot *or* copies a preset to the clipboard, depending on flags and parameters.  Usage \"/pwaymark export [-t] [-g] <slot|index> [slot]\".  The slot number can be any valid game slot, and index can be any valid library preset number.  Use of the -g flag specifies that the first number is a game slot, not a library index.  Use of the -t flag includes the last-modified time in the clipboard export.";
 			}
-			else if( args.ToLower() == SubcommandName_ExportAll )
+			else if( args.ToLower() == "exportall" )
 			{
-				return String.Format(	Loc.Localize( "Text Command Response: Help - Export All", "Copies all presets in the library to the clipboard, one per line.  Add {0} if you wish to include the last-modified timestamp in the export." ),
-										SubCommandArg_Export_IncludeTime );
+				return "Copies all presets in the library to the clipboard, one per line.  Add -t if you wish to include the last-modified timestamp in the export.";
 			}
 			else
 			{
-				return String.Format(	Loc.Localize( "Text Command Response: Help", "Use \"{0}\" to open the GUI.  Use \"{1}\" for a list of text commands." ),
-										TextCommandName, TextCommandName + " " + SubcommandName_Help + " " + SubCommandName_Help_Commands );
+				return "Use \"/pwaymark\" to open the GUI.  Use \"/pwaymark help commands\" for a list of text commands.";
 			}
 		}
 
 		protected string ProcessTextCommand_SlotInfo( string args )
 		{
+			uint gameSlotToCopy;
 			if( args.Length == 1 &&
-				uint.TryParse( args, out uint gameSlotToCopy ) &&
+				uint.TryParse( args, out gameSlotToCopy ) &&
 				gameSlotToCopy >= 1 &&
 				gameSlotToCopy <= MemoryHandler.MaxPresetSlotNum )
 			{
@@ -231,23 +207,22 @@ namespace WaymarkPresetPlugin
 					try
 					{
 						WaymarkPreset tempPreset = WaymarkPreset.Parse( MemoryHandler.ReadSlot( gameSlotToCopy ) );
-						return String.Format(	Loc.Localize( "Text Command Response: Slot Info - Success 1", "Slot {0} Contents:\r\n{1}" ),
-												gameSlotToCopy, tempPreset.GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames ) );
+						return "Slot " + gameSlotToCopy.ToString() + " Contents:\r\n" + tempPreset.GetPresetDataString( mConfiguration.GetZoneNameDelegate, mConfiguration.ShowIDNumberNextToZoneNames );
 					}
 					catch( Exception e )
 					{
-						PluginLog.Log( $"An unknown error occured while trying to read the game's waymark data:\r\n{e}" );
-						return Loc.Localize( "Text Command Response: Slot Info - Error 1", "An unknown error occured while trying to read the game's waymark data." );
+						PluginLog.Log( $"An unknown error occured while trying to read the game's waymark data: {e}" );
+						return "An unknown error occured while trying to read the game's waymark data.";
 					}
 				}
 				else
 				{
-					return Loc.Localize( "Text Command Response: Slot Info - Error 2", "Unable to read game's waymark data." );
+					return "Unable to read game's waymark data.";
 				}
 			}
 			else
 			{
-				return Loc.Localize( "Text Command Response: Slot Info - Error 3", "An invalid game slot number was provided." );
+				return "An invalid game slot number was provided.";
 			}
 		}
 
@@ -261,50 +236,49 @@ namespace WaymarkPresetPlugin
 				//	If argument is in quotes, search for the preset by name.
 				if( args.Trim().First() == '"' && args.Trim().Last() == '"' )
 				{
-					string presetName = args.Trim()[ 1..^1];
+					string presetName = args.Trim().Substring( 1, args.Trim().Length - 2 );
 					libraryIndex = mConfiguration.PresetLibrary.Presets.FindIndex( ( WaymarkPreset p ) => { return p.Name.Equals( presetName, StringComparison.OrdinalIgnoreCase ); } );
 					if( libraryIndex < 0 || libraryIndex >= mConfiguration.PresetLibrary.Presets.Count )
 					{
-						return String.Format(	Loc.Localize( "Text Command Response: Place - Error 1", "Unable to find preset \"{0}\"." ),
-												presetName );
+						return $"Unable to find preset \"{presetName}\".";
 					}
 				}
 				//	Otherwise, search by index.
 				else if( !int.TryParse( args.Trim(), out libraryIndex ) )
 				{
-					return String.Format(	Loc.Localize( "Text Command Response: Place - Error 2", "Invalid preset number \"{0}\"." ),
-											args );
+					return $"Invalid preset number \"{args}\".";
 				}
 				
 				//	Try to do the actual placement.
 				if( libraryIndex >= 0 && libraryIndex < mConfiguration.PresetLibrary.Presets.Count )
 				{
-					if( InternalCommand_PlacePresetByIndex( libraryIndex ) )
+					try
 					{
+						MemoryHandler.PlacePreset( mConfiguration.PresetLibrary.Presets[libraryIndex].GetAsGamePreset() /*, mConfiguration.AllowClientSidePlacementInOverworldZones*/ );
 						return "";
 					}
-					else
+					catch( Exception e )
 					{
-						return String.Format(	Loc.Localize( "Text Command Response: Place - Error 3", "An unknown error occured placing preset {0}." ),
-												libraryIndex );
+						PluginLog.Log( $"An unknown error occured while attempting to place preset {libraryIndex} : {e}" );
+						return $"An unknown error occured placing preset {libraryIndex}.";
 					}
 				}
 				else
 				{
-					return String.Format(	Loc.Localize( "Text Command Response: Place - Error 4", "Invalid preset number \"{0}\"." ),
-											libraryIndex );
+					return $"Invalid preset number \"{libraryIndex}\".";
 				}
 			}
 			else
 			{
-				return Loc.Localize( "Text Command Response: Place - Error 5", "Unable to place preset.  This probably means that the plugin needs to be updated for a new version of FFXIV." );
+				return "Unable to place preset; direct placement signatures were not found.  This probably means that the plugin needs to be updated for a new version of FFXIV.";
 			}
 		}
 
 		protected string ProcessTextCommand_Import( string args )
 		{
+			uint gameSlotToCopy;
 			if( args.Length == 1 &&
-				uint.TryParse( args, out uint gameSlotToCopy ) &&
+				uint.TryParse( args, out gameSlotToCopy ) &&
 				gameSlotToCopy >= 1 &&
 				gameSlotToCopy <= MemoryHandler.MaxPresetSlotNum )
 			{
@@ -315,39 +289,39 @@ namespace WaymarkPresetPlugin
 						WaymarkPreset tempPreset = WaymarkPreset.Parse( MemoryHandler.ReadSlot( gameSlotToCopy ) );
 						int importedIndex = mConfiguration.PresetLibrary.ImportPreset( tempPreset );
 						mConfiguration.Save();
-						return String.Format( Loc.Localize( "Text Command Response: Import - Success 1", "Imported game preset {0} as library preset {1}." ),
-												gameSlotToCopy, importedIndex );
+						return $"Imported game preset {gameSlotToCopy} as library preset {importedIndex}.";
 					}
 					catch( Exception e )
 					{
-						PluginLog.Log( $"An unknown error occured while trying to read the game's waymark data:\r\n{e}" );
-						return Loc.Localize( "Text Command Response: Import - Error 1", "An unknown error occured while trying to read the game's waymark data." );
+						PluginLog.Log( $"An unknown error occured while trying to read the game's waymark data: {e}" );
+						return "An unknown error occured while trying to read the game's waymark data.";
 					}
 				}
 				else
 				{
-					return Loc.Localize( "Text Command Response: Import - Error 2", "Unable to read game's waymark data.  This probably means that the plugin needs to be updated for a new version of FFXIV." );
+					return "Unable to read game's waymark data.";
 				}
 			}
 			else
 			{
-				return String.Format( Loc.Localize( "Text Command Response: Import - Error 3", "An invalid game slot number was provided: \"{0}\"." ), args );
+				return $"An invalid game slot number was provided.";
 			}
 		}
 
 		protected string ProcessTextCommand_Export( string args )
 		{
 			var parameters = args.Split();
-			bool includeTimestamp = parameters.Contains( SubCommandArg_Export_IncludeTime );
-			bool useGameSlot = parameters.Contains( SubCommandArg_Export_IsGameSlot );
-			var slotIndexNumbers = parameters.Where( x => int.TryParse( x, out int scratchVal ) ).ToList();
+			bool includeTimestamp = parameters.Contains( "-t" );
+			bool useGameSlot = parameters.Contains( "-g" );
+			int scratchVal;
+			var slotIndexNumbers = parameters.Where( x => int.TryParse( x, out scratchVal ) ).ToList();
 			WaymarkPreset presetToExport = null;
 
 			try
 			{
 				if( slotIndexNumbers.Count < 1 )
 				{
-					return Loc.Localize( "Text Command Response: Export - Error 1", "No slot or index numbers were provided." );
+					return "No slot or index numbers were provided.";
 				}
 				else if( slotIndexNumbers.Count == 1 )
 				{
@@ -360,8 +334,7 @@ namespace WaymarkPresetPlugin
 						}
 						else
 						{
-							return String.Format(	Loc.Localize( "Text Command Response: Export - Error 2", "An invalid game slot number ({0}) was provided." ),
-													indexToExport );
+							return $"An invalid game slot number ({indexToExport}) was provided.";
 						}
 					}
 					else
@@ -372,8 +345,7 @@ namespace WaymarkPresetPlugin
 						}
 						else
 						{
-							return String.Format(	Loc.Localize( "Text Command Response: Export - Error 3", "An invalid library index ({0}) was provided." ),
-													indexToExport );
+							return $"An invalid library index ({indexToExport}) was provided.";
 						}
 					}
 
@@ -389,7 +361,7 @@ namespace WaymarkPresetPlugin
 
 					Win32Clipboard.CopyTextToClipboard( exportStr );
 
-					return Loc.Localize( "Text Command Response: Export - Success 1", "Copied to clipboard." );
+					return "Copied to clipboard.";
 				}
 				else
 				{
@@ -403,8 +375,7 @@ namespace WaymarkPresetPlugin
 						}
 						else
 						{
-							return String.Format(	Loc.Localize( "Text Command Response: Export - Error 4", "An invalid game slot number to export ({0}) was provided." ),
-													indexToExport );
+							return $"An invalid game slot number to export ({indexToExport}) was provided.";
 						}
 					}
 					else
@@ -415,8 +386,7 @@ namespace WaymarkPresetPlugin
 						}
 						else
 						{
-							return String.Format(	Loc.Localize( "Text Command Response: Export - Error 5", "An invalid library index ({0}) was provided." ),
-													indexToExport );
+							return $"An invalid library index ({indexToExport}) was provided.";
 						}
 					}
 
@@ -424,26 +394,23 @@ namespace WaymarkPresetPlugin
 					{
 						if( MemoryHandler.WriteSlot( (uint)exportTargetIndex, presetToExport.GetAsGamePreset() ) )
 						{
-							return String.Format(	Loc.Localize( "Text Command Response: Export - Success 2", "Preset exported to game slot {0}." ),
-													exportTargetIndex );
+							return $"Preset exported to game slot {exportTargetIndex}.";
 						}
 						else
 						{
-							return String.Format(	Loc.Localize( "Text Command Response: Export - Error 6", "Unable to write to game slot {0}!" ),
-													exportTargetIndex );
+							return $"Unable to write to game slot {exportTargetIndex}!";
 						}
 					}
 					else
 					{
-						return String.Format(	Loc.Localize( "Text Command Response: Export - Error 7", "An invalid game slot number ({0}) was provided as the target." ),
-												exportTargetIndex );
+						return $"An invalid game slot number({exportTargetIndex}) was provided as the target.";
 					}
 				}
 			}
 			catch( Exception e )
 			{
-				PluginLog.Log( $"Unknown error occured while export the preset:\r\n{e}" );
-				return Loc.Localize( "Text Command Response: Export - Error 8", "An unknown error occured while trying to export the preset." );
+				PluginLog.Log( $"Unknown error occured while export the preset: {e}" );
+				return "Unknown error occured while trying to export the preset.";
 			}
 		}
 
@@ -452,7 +419,7 @@ namespace WaymarkPresetPlugin
 			try
 			{
 				string str = "";
-				if( args.ToLower().Trim() == SubCommandArg_Export_IncludeTime )
+				if( args.ToLower().Trim() == "-t" )
 				{
 					foreach( var preset in mConfiguration.PresetLibrary.Presets )
 					{
@@ -469,106 +436,13 @@ namespace WaymarkPresetPlugin
 
 				Win32Clipboard.CopyTextToClipboard( str );
 
-				return Loc.Localize( "Text Command Response: Export All - Success 1", "Waymark library copied to clipboard." );
+				return "Waymark library copied to clipboard.";
 			}
 			catch( Exception e )
 			{
-				PluginLog.Log( $"Unknown error occured while trying to copy presets to clipboard:\r\n{e}" );
-				return Loc.Localize( "Text Command Response: Export All - Error 1", "An unknown error occured while trying to copy presets to clipboard." );
+				PluginLog.Log( $"Unknown error occured while trying to copy presets to clipboard: {e}" );
+				return "Unknown error occured while trying to copy presets to clipboard.";
 			}
-		}
-
-		internal List<int> InternalCommand_GetPresetsForContentFinderCondition( UInt16 contentFinderCondition )
-		{
-			List<int> foundPresets = new();
-
-			if( contentFinderCondition != 0 )
-			{
-				for( int i = 0; i < mConfiguration.PresetLibrary.Presets.Count; ++i )
-				{
-					if( mConfiguration.PresetLibrary.Presets[i].MapID == contentFinderCondition ) foundPresets.Add( i );
-				}
-			}
-
-			return foundPresets;
-		}
-
-		internal List<int> InternalCommand_GetPresetsForTerritoryType( UInt32 territoryType )
-		{
-			UInt16 contentFinderCondition = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( territoryType );
-			return InternalCommand_GetPresetsForContentFinderCondition( contentFinderCondition );
-		}
-
-		internal List<int> InternalCommand_GetPresetsForCurrentArea()
-		{
-			return InternalCommand_GetPresetsForTerritoryType( mClientState.TerritoryType );
-		}
-
-		internal bool InternalCommand_PlacePresetByIndex( int index, bool requireZoneMatch = true )
-		{
-			if( !MemoryHandler.FoundDirectPlacementSigs() ) return false;
-			if( index < 0 || index >= mConfiguration.PresetLibrary.Presets.Count ) return false;
-			if( requireZoneMatch && mConfiguration.PresetLibrary.Presets[index].MapID != ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType ) ) return false;
-
-			try
-			{
-				MemoryHandler.PlacePreset( mConfiguration.PresetLibrary.Presets[index].GetAsGamePreset() );
-				return true;
-			}
-			catch( Exception e )
-			{
-				PluginLog.Log( $"An unknown error occured while attempting to place preset {index}:\r\n{e}" );
-				return false;
-			}
-		}
-
-		internal bool InternalCommand_PlacePresetByName( string name )
-		{
-			int libraryIndex = mConfiguration.PresetLibrary.Presets.FindIndex( p =>
-			{
-				return p.Name.Equals( name, StringComparison.OrdinalIgnoreCase );
-			} );
-
-			if( libraryIndex < 0 )
-			{
-				return false;
-			}
-			else
-			{
-				return InternalCommand_PlacePresetByIndex( libraryIndex );
-			}
-		}
-
-		internal bool InternalCommand_PlacePresetByNameAndContentFinderCondition( string name, UInt16 contentFinderCondition )
-		{
-			if( contentFinderCondition == 0 ) return false;
-
-			int libraryIndex = mConfiguration.PresetLibrary.Presets.FindIndex( p =>
-			{
-				return	p.MapID == contentFinderCondition &&
-						p.Name.Equals( name, StringComparison.OrdinalIgnoreCase );
-			} );
-
-			if( libraryIndex < 0 )
-			{
-				return false;
-			}
-			else
-			{
-				return InternalCommand_PlacePresetByIndex( libraryIndex );
-			}
-		}
-
-		internal bool InternalCommand_PlacePresetByNameAndTerritoryType( string name, UInt32 territoryType )
-		{
-			UInt16 contentFinderCondition = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( territoryType );
-			return InternalCommand_PlacePresetByNameAndContentFinderCondition( name, contentFinderCondition );
-		}
-
-		internal string GetLibraryPresetName( int index )
-		{
-			if( index < 0 || index >= mConfiguration.PresetLibrary.Presets.Count ) return null;
-			else return mConfiguration.PresetLibrary.Presets[index].Name;
 		}
 
 		protected void DrawUI()
@@ -578,7 +452,7 @@ namespace WaymarkPresetPlugin
 
 		protected void DrawConfigUI()
 		{
-			mUI.SettingsWindow.WindowVisible = true;
+			mUI.SettingsWindowVisible = true;
 		}
 
 		protected void OnTerritoryChanged( object sender, UInt16 ID )
@@ -586,6 +460,7 @@ namespace WaymarkPresetPlugin
 			ZoneInfo prevTerritoryTypeInfo = ZoneInfoHandler.GetZoneInfoFromTerritoryTypeID( CurrentTerritoryTypeID );
 			ZoneInfo newTerritoryTypeInfo = ZoneInfoHandler.GetZoneInfoFromTerritoryTypeID( ID );
 			CurrentTerritoryTypeID = ID;
+			mUI.SetCurrentTerritoryTypeID( ID );
 
 			//	Auto-save presets on leaving instance.
 			if( mConfiguration.AutoSavePresetsOnInstanceLeave && ZoneInfoHandler.IsKnownContentFinderID( prevTerritoryTypeInfo.ContentFinderConditionID ) )
@@ -603,7 +478,7 @@ namespace WaymarkPresetPlugin
 					}
 					catch( Exception e )
 					{
-						PluginLog.Log( $"Error while attempting to auto-import game slot {i}:\r\n{e}" );
+						PluginLog.Log( $"Error while attempting to auto-import game slot {i}: {e}" );
 					}
 				}
 
@@ -616,7 +491,7 @@ namespace WaymarkPresetPlugin
 				var presetsToAutoLoad = mConfiguration.PresetLibrary.Presets.Where( x => x.MapID == newTerritoryTypeInfo.ContentFinderConditionID ).Take( MemoryHandler.MaxPresetSlotNum ).ToList();
 				for( int i = 0; i < MemoryHandler.MaxPresetSlotNum; ++i )
 				{
-					GamePreset gamePresetData = new();
+					GamePreset gamePresetData = new GamePreset();
 
 					if( i < presetsToAutoLoad.Count )
 					{
@@ -630,25 +505,23 @@ namespace WaymarkPresetPlugin
 					}
 					catch( Exception e )
 					{
-						PluginLog.Log( $"Error while auto copying preset data to game slot {i}:\r\n{e}" );
+						PluginLog.Log( $"Error while auto copying preset data to game slot {i}: {e}" );
 					}
 				}
 			}
 		}
 
-		internal const string InternalName = "WaymarkPresetPlugin";
-		public string Name => "Waymark Preset Plugin";
-		internal static string TextCommandName => "/pwaymark";
-		internal static string SubcommandName_Config => "config";
-		internal static string SubcommandName_SlotInfo => "slotinfo";
-		internal static string SubcommandName_Place => "place";
-		internal static string SubcommandName_Import => "import";
-		internal static string SubcommandName_Export => "export";
-		internal static string SubcommandName_ExportAll => "exportall";
-		internal static string SubcommandName_Help => "help";
-		internal static string SubCommandName_Help_Commands => "commands";
-		internal static string SubCommandArg_Export_IncludeTime => "-t";
-		internal static string SubCommandArg_Export_IsGameSlot => "-g";
+		protected void OnLogin( object sender, EventArgs e )
+		{
+			if( !MemoryHandler.FoundDirectPlacementSigs() ||
+				!MemoryHandler.FoundDirectSaveSigs() )
+			{
+				mUI.ShowGimpedModeWarningWindow();
+			}
+		}
+
+		public string Name => "WaymarkPresetPlugin";
+		protected const string mTextCommandName = "/pwaymark";
 
 		public UInt16 CurrentTerritoryTypeID { get; protected set; }
 

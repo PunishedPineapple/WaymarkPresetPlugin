@@ -7,7 +7,7 @@ namespace WaymarkPresetPlugin
 	{
 		public ZoneSearcher()
 		{
-			RebuildFoundZonesList();
+			RebuildFoundZonesList( "" );
 		}
 
 		public UInt16[] GetMatchingZones( string searchString )
@@ -15,13 +15,13 @@ namespace WaymarkPresetPlugin
 			if( !searchString.Trim().Equals( LastSearchString, StringComparison.OrdinalIgnoreCase ) )
 			{
 				LastSearchString = searchString.Trim().ToLower();
-				RebuildFoundZonesList();
+				RebuildFoundZonesList( searchString );
 			}
 
 			return FoundZones.ToArray();
 		}
 
-		protected void RebuildFoundZonesList()
+		protected void RebuildFoundZonesList( string searchString )
 		{
 			FoundZones.Clear();
 			foreach( var zone in ZoneInfoHandler.GetAllZoneInfo() )
@@ -39,6 +39,6 @@ namespace WaymarkPresetPlugin
 		}
 
 		protected string LastSearchString { get; set; } = "";
-		protected List<UInt16> FoundZones { get; set; } = new();
+		protected List<UInt16> FoundZones { get; set; } = new List<UInt16>();
 	}
 }

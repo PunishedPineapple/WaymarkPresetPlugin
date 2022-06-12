@@ -50,7 +50,7 @@ namespace WaymarkPresetPlugin
 							string dutyName = contentRow.Name.ToDalamudString().ToString().Trim();
 							if( dutyName.Length > 0 )
 							{
-								dutyName = dutyName.First().ToString().ToUpper() + dutyName[1..];
+								dutyName = dutyName.First().ToString().ToUpper() + dutyName.Substring( 1 );
 							}
 							mZoneInfoDict.Add( (UInt16)zone.ContentFinderCondition.Row, new ZoneInfo( dutyName, zone.PlaceName.Value.Name.ToDalamudString().ToString(), zone.RowId, zone.Map.Value.Id.ToString().Split( '/' )[0], (UInt16)zone.ContentFinderCondition.Row, contentRow.Content ) );
 						}
@@ -135,19 +135,19 @@ namespace WaymarkPresetPlugin
 			}
 			else
 			{
-				return Array.Empty<MapInfo>();
+				return new MapInfo[0];
 			}
 		}
 
-		private static readonly Dictionary<UInt16, ZoneInfo> mZoneInfoDict = new();
-		private static readonly Dictionary<uint, UInt16> mTerritoryTypeIDToContentFinderIDDict = new();
-		private static readonly Dictionary<string, List<MapInfo>> mMapInfoDict = new();
+		private static Dictionary<UInt16, ZoneInfo> mZoneInfoDict = new Dictionary<ushort, ZoneInfo>();
+		private static Dictionary<uint, UInt16> mTerritoryTypeIDToContentFinderIDDict = new Dictionary<uint, ushort>();
+		private static Dictionary<string, List<MapInfo>> mMapInfoDict = new Dictionary<string, List<MapInfo>>();
 
 		//	This is to hard-code that some zones should be included, even if they don't otherwise meet the criteria.  There are a small handful of
 		//	ContentFinderCondition IDs that support waymark presets, but are content link type #3, and don't otherwise distinguish themselves in the
 		//	sheets in any way that I have found.  There is a separate function that gets called at runtime that determines whether presets are allowed
 		//	based on some flag about the current duty, but it doesn't seem to have something in the sheets that corresponds to it perfectly.
-		private static readonly List<UInt16> mBodgeIncludeContentFinderConditionIDs = new(){
+		private static List<UInt16> mBodgeIncludeContentFinderConditionIDs = new List<UInt16>{
 			760,	// Delubrum Reginae
 			761		// Delubrum Reginae (Savage)
 		};
@@ -165,7 +165,7 @@ namespace WaymarkPresetPlugin
 			ContentLinkID = contentLinkID;
 		}
 
-		public static readonly ZoneInfo Unknown = new( "Unknown Duty", "Unknown Zone", 0, "default", 0, 0 );
+		public static readonly ZoneInfo Unknown = new ZoneInfo( "Unknown Duty", "Unknown Zone", 0, "default", 0, 0 );
 
 		public string ZoneName { get; set; }
 		public string DutyName { get; set; }
@@ -185,7 +185,7 @@ namespace WaymarkPresetPlugin
 			PlaceNameSub = placeNameSub;
 		}
 
-		public static readonly MapInfo Unknown = new( "default/00", 100, 0, 0, "" );
+		public static readonly MapInfo Unknown = new MapInfo( "default/00", 100, 0, 0, "" );
 
 		public string MapID { get; set; }
 		public UInt16 SizeFactor { get; set; }

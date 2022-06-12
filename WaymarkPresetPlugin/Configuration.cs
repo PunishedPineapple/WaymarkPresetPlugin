@@ -1,10 +1,9 @@
-﻿using System;
-using System.IO;
-
-using Dalamud.Configuration;
+﻿using Dalamud.Configuration;
 using Dalamud.Plugin;
-
 using Newtonsoft.Json;
+using System;
+using System.IO;
+using System.Globalization;
 
 namespace WaymarkPresetPlugin
 {
@@ -104,34 +103,6 @@ namespace WaymarkPresetPlugin
 			set { mAttachLibraryToFieldMarkerAddon = value; }
 		}
 
-		public bool mAllowPresetDragAndDropOrdering = true;
-		public bool AllowPresetDragAndDropOrdering
-		{
-			get { return mAllowPresetDragAndDropOrdering; }
-			set { mAllowPresetDragAndDropOrdering = value; }
-		}
-
-		public bool mAllowZoneDragAndDropOrdering = true;
-		public bool AllowZoneDragAndDropOrdering
-		{
-			get { return mAllowZoneDragAndDropOrdering; }
-			set { mAllowZoneDragAndDropOrdering = value; }
-		}
-
-		public bool mSortZonesDescending = false;
-		public bool SortZonesDescending
-		{
-			get { return mSortZonesDescending; }
-			set { mSortZonesDescending = value; }
-		}
-
-		public bool mShowLibraryZoneFilterBox = true;
-		public bool ShowLibraryZoneFilterBox
-		{
-			get { return mShowLibraryZoneFilterBox; }
-			set { mShowLibraryZoneFilterBox = value; }
-		}
-
 		public string GetZoneName( UInt16 ID )
 		{
 			return GetZoneNameDelegate( ID, ShowIDNumberNextToZoneNames );
@@ -160,35 +131,17 @@ namespace WaymarkPresetPlugin
 
 		public void BackupConfigFile()
 		{
-			string backupFolderPath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), "Backups" );
+			string backupFolderPath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"\\Backups\\" );
 			Directory.CreateDirectory( backupFolderPath );
-			string backupFilePath = GetBackupFilePath( backupFolderPath, "PluginConfig", "json" );
-			mPluginInterface.ConfigFile.CopyTo( backupFilePath );
-		}
-
-		internal void BackupConfigFolderFile( string fileName, string extension )
-		{
-			string backupFolderPath = Path.Join( mPluginInterface.GetPluginConfigDirectory(), "Backups" );
-			Directory.CreateDirectory( backupFolderPath );
-			if( File.Exists( Path.Join( mPluginInterface.GetPluginConfigDirectory(), $"{fileName}.{extension}" ) ) )
-			{
-				string backupFilePath = GetBackupFilePath( backupFolderPath, fileName, extension );
-				var fileToCopy = new FileInfo( Path.Combine( mPluginInterface.GetPluginConfigDirectory(), $"{fileName}.{extension}" ) );
-				fileToCopy?.CopyTo( backupFilePath );
-			}
-		}
-
-		internal static string GetBackupFilePath( string folderPath, string fileName, string extension )
-		{
-			string fileBasePath = Path.Join( folderPath, $"{fileName}_{DateTimeOffset.UtcNow:yyyy-MM-dd_HH.mm.ssZ}" );
-			string filePath = fileBasePath + $".{extension}";
+			string backupFileBasePath = Path.Join( backupFolderPath, $"\\PluginConfig_{DateTimeOffset.UtcNow.ToString( "yyyy-MM-dd_HH.mm.ssZ" )}" );
+			string backupFilePath = backupFileBasePath + ".json";
 			int i = 2;
-			while( File.Exists( filePath ) )
+			while( File.Exists( backupFilePath ) )
 			{
-				filePath = fileBasePath + $"_{i}.{extension}";
+				backupFilePath = backupFileBasePath + $"_{i}.json";
 				++i;
 			}
-			return filePath;
+			mPluginInterface.ConfigFile.CopyTo( backupFilePath );
 		}
 
 		[NonSerialized]

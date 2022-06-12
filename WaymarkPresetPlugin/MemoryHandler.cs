@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-using Dalamud.Game;
-using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState;
+using Dalamud.Game;
 using Dalamud.Logging;
+using Dalamud.Hooking;
 
 namespace WaymarkPresetPlugin
 {
@@ -86,6 +87,19 @@ namespace WaymarkPresetPlugin
 
 				//	Write this address to log to help with digging around in memory if we need to.
 				PluginLog.LogInformation( $"Waymarks object address: 0x{mpWaymarksObj:X}" );
+
+				IntPtr fpHandleWaymarkPlace = sigScanner.ScanText( "48 89 ?? ?? ?? ?? 89 ?? ?? ?? 57 48 83 ?? ?? 8D ?? ?? 49 8B ?? 8B DA 48 8B ?? 83 F8 ?? 77 ?? FF" );
+				if( fpHandleWaymarkPlace != IntPtr.Zero )
+				{
+					mHandleWaymarkPlaceHook = new Hook<HandleWaymarkPlaceDelegate>( fpHandleWaymarkPlace, mdHandleWaymarkPlace );
+					mHandleWaymarkPlaceHook.Enable();
+				}
+				IntPtr fpSingleWaymarkPlace = sigScanner.ScanText( "48 89 ?? ?? ?? 57 48 83 ?? ?? 8B F2 48 8B ?? 83 FA ?? 72" );
+				if( fpSingleWaymarkPlace != IntPtr.Zero )
+				{
+					mSingleWaymarkPlaceHook = new Hook<SingleWaymarkPlaceDelegate>( fpSingleWaymarkPlace, mdSingleWaymarkPlace );
+					mSingleWaymarkPlaceHook.Enable();
+				}
 			}
 			catch( Exception e )
 			{
@@ -103,6 +117,14 @@ namespace WaymarkPresetPlugin
 			mdGetCurrentContentFinderLinkType	= null;
 			mdDirectPlacePreset					= null;
 			mdGetCurrentWaymarkData				= null;
+
+			mHandleWaymarkPlaceHook.Disable();
+			mHandleWaymarkPlaceHook.Dispose();
+			mHandleWaymarkPlaceHook = null;
+
+			mSingleWaymarkPlaceHook.Disable();
+			mSingleWaymarkPlaceHook.Dispose();
+			mSingleWaymarkPlaceHook = null;
 		}
 
 		public static bool FoundSavedPresetSigs()
@@ -133,12 +155,11 @@ namespace WaymarkPresetPlugin
 		public static GamePreset ReadSlot( uint slotNum )
 		{
 			IntPtr pWaymarkData = GetGameWaymarkDataPointerForSlot( slotNum );
-			GamePreset preset = new();
+			GamePreset preset = new GamePreset();
 			if( pWaymarkData != IntPtr.Zero )
 			{
 				//	Don't catch exceptions here; better to have the caller do it probably.
 				lock( mPresetMemoryLockObject ) preset = (GamePreset)Marshal.PtrToStructure( pWaymarkData, typeof( GamePreset ) );
-				PluginLog.LogDebug( $"Read game preset in slot {slotNum} at address 0x{pWaymarkData:X} with data:\r\n{preset}" );
 			}
 			else
 			{
@@ -153,15 +174,12 @@ namespace WaymarkPresetPlugin
 			IntPtr pWaymarkData = GetGameWaymarkDataPointerForSlot( slotNum );
 			if( pWaymarkData != IntPtr.Zero )
 			{
-				PluginLog.LogDebug( $"Attempting to write slot {slotNum} with data:\r\n{preset}" );
-
 				//	Don't catch exceptions here; better to have the caller do it probably.
 				lock( mPresetMemoryLockObject ) Marshal.StructureToPtr( preset, pWaymarkData, false );
 				return true;
 			}
 			else
 			{
-				PluginLog.LogWarning( $"Error in MemoryHandler.WriteSlot: Unable to obtain pointer to slot {slotNum}!" );
 				return false;
 			}
 		}
@@ -213,8 +231,7 @@ namespace WaymarkPresetPlugin
 		{
 			if( IsSafeToDirectPlacePreset() )
 			{
-				GamePreset_Placement placementStruct = new( preset );
-				PluginLog.LogDebug( $"Attempting to place waymark preset with data:\r\n{placementStruct}" );
+				GamePreset_Placement placementStruct = new GamePreset_Placement( preset );
 				unsafe
 				{
 					mdDirectPlacePreset.Invoke( mpWaymarksObj, new IntPtr( &placementStruct ) );
@@ -229,30 +246,17 @@ namespace WaymarkPresetPlugin
 				byte currentContentLinkType = mdGetCurrentContentFinderLinkType.Invoke();
 				if( currentContentLinkType >= 0 && currentContentLinkType < 4 )	//	Same as the game check, but let it do overworld maps too.
 				{
-					GamePreset_Placement rawWaymarkData = new();
+					GamePreset_Placement rawWaymarkData = new GamePreset_Placement();
 					unsafe
 					{
 						mdGetCurrentWaymarkData.Invoke( mpWaymarksObj, new IntPtr( &rawWaymarkData ) );
 					}
 
-					rPresetData = new( rawWaymarkData );
+					rPresetData = new GamePreset( rawWaymarkData );
 					rPresetData.ContentFinderConditionID = ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType );	//*****TODO: How do we get this as a territory type for non-instanced zones? The return type might need to be changed, or pass in another ref paramter or something. *****
 					rPresetData.UnixTime = (Int32)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-					PluginLog.LogDebug( $"Obtained current waymarks with the following data:\r\n" +
-										$"Territory: {mClientState.TerritoryType}\r\n" +
-										$"ContentFinderCondition: {rPresetData.ContentFinderConditionID}\r\n" +
-										$"Waymark Struct:\r\n{rawWaymarkData}" );
 					return true;
 				}
-				else
-				{
-					PluginLog.LogWarning( $"Error in MemoryHandler.GetCurrentWaymarksAsPresetData: Disallowed ContentLinkType: {currentContentLinkType}" );
-				}
-			}
-			else
-			{
-				PluginLog.LogWarning( $"Error in MemoryHandler.GetCurrentWaymarksAsPresetData: Missing sigs or null ClientState." );
 			}
 
 			return false;
@@ -284,7 +288,7 @@ namespace WaymarkPresetPlugin
 			if( !IsSafeToClientPlace() ) return;
 
 			//	Find where we will be overwriting the waymarks.
-			IntPtr pClientSideWaymarks = new( mpWaymarksObj.ToInt64() + mClientSideWaymarksOffset.ToInt64() );
+			IntPtr pClientSideWaymarks = new IntPtr( mpWaymarksObj.ToInt64() + mClientSideWaymarksOffset.ToInt64() );
 
 			//*****TODO: Should we instead read in the extant data and only overwrite the floats?
 			//GameWaymarks waymarkData = (GameWaymarks)Marshal.PtrToStructure( pClientSideWaymarks, typeof( GameWaymarks ) );
@@ -295,10 +299,24 @@ namespace WaymarkPresetPlugin
 			Marshal.StructureToPtr( new GameWaymarks( preset ), pClientSideWaymarks, false );
 		}
 
+		private static IntPtr HandleWaymarkPlaceDetour( IntPtr pThis, int waymarkIndex, IntPtr pParam3 )
+		{
+			IntPtr retVal = mHandleWaymarkPlaceHook.Original( pThis, waymarkIndex, pParam3 );
+			PluginLog.LogDebug( $"Waymark Placement Command Function called: pThis: 0x{pThis:X}, waymarkIndex: {waymarkIndex}, pParam3: 0x{pParam3:X}, return: 0x{retVal:X}" );
+			return retVal;
+		}
+
+		private static IntPtr SingleWaymarkPlaceDetour( IntPtr pParam1, uint param2 )
+		{
+			IntPtr retVal = mSingleWaymarkPlaceHook.Original( pParam1, param2 );
+			PluginLog.LogDebug( $"Single Waymark Place Function called: pParam1: 0x{pParam1:X}, param2: {param2}, return: 0x{retVal:X}" );
+			return retVal;
+		}
+
 		//	Magic Numbers
 		public static readonly int MaxPresetSlotNum = 5;
 		private static readonly byte mFMARKERDATIndex = 0x11;
-		private static IntPtr mClientSideWaymarksOffset = new( 0x1B0 );  //*****TODO: Feels bad initializing this with a magic number.  Not sure best thing to do.*****
+		private static IntPtr mClientSideWaymarksOffset = new IntPtr( 0x1B0 );  //*****TODO: Feels bad initializing this with a magic number.  Not sure best thing to do.*****
 
 		//	Misc.
 		private static ClientState mClientState;
@@ -318,6 +336,14 @@ namespace WaymarkPresetPlugin
 		private static DirectPlacePresetDelegate mdDirectPlacePreset;
 		private static GetCurrentWaymarkDataDelegate mdGetCurrentWaymarkData;
 
-		private static readonly object mPresetMemoryLockObject = new();
+		private delegate IntPtr HandleWaymarkPlaceDelegate( IntPtr pThis, int waymarkIndex, IntPtr pParam3 );
+		private static readonly HandleWaymarkPlaceDelegate mdHandleWaymarkPlace = new( HandleWaymarkPlaceDetour );
+		private static Hook<HandleWaymarkPlaceDelegate> mHandleWaymarkPlaceHook;
+
+		private delegate IntPtr SingleWaymarkPlaceDelegate( IntPtr pParam1, uint param2 );
+		private static readonly SingleWaymarkPlaceDelegate mdSingleWaymarkPlace = new( SingleWaymarkPlaceDetour );
+		private static Hook<SingleWaymarkPlaceDelegate> mSingleWaymarkPlaceHook;
+
+		private static readonly object mPresetMemoryLockObject = new object();
 	}
 }

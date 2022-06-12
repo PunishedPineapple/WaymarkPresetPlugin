@@ -1,48 +1,19 @@
 ﻿High Priority:
 
-- See if it's still being weird when unloading with the map window open and take a second look at that if so.
-- Verify layout with translated strings.
-
-
-UI Ideas from Other People:
-
-- Option to lock height to height of in-game waymark window when they're docked.
-	- Make sure to take into account both game's window scaling and ImGui global scale.
-- Have dragging the plugin window move the game's window position to follow it.
-	- Use whatever tech from this to let dragging by the info pane work?
-- Wrap the zone name text in the info pane.
-	- Probably going to be extra annoying doing the layout for the window with this.
-- People want an option to not show the Info Pane.
-	- Maybe add the context menu to presets in the library with options to place preset, show info, export into slot, edit, show map view, etc.
-	- And then config option to not show info pane when selecting a preset.  Make sure to hide the pane again if a different preset is selected.
-		- Or do we make it a different instance of the info pane that can float and stays on that preset?  Or just open the editor window and bypass the info pane entirely?
-		- Maybe just leave it as it is, and make showing/hiding the info pane a right click option.
-- Double click to place?
-- Add an option to import presets from a text file.
+- Replace gimped mode popup with just help markers in the locations of missing buttons.
 
 
 Low Priority:
 
-- Make the library enumerable and protect the presets list.  This doesn't completely solve the potential for untracked changes (names and zone IDs can change), but it helps.
-	- Subscribe to the presets' zone changed events.
-	- Add and Subscribe to name changed events if we ever do alphabetical sorting.
-	- How will the event subscriptions work when first loading up the plugin, since it doesn't use our add preset functions?
+- Add options to sort both zones and presets by name alphabetically (GitHub Issue #3).  We should probably do the next thing first:
+- Make the library enumerable and protect the presets list.  This doesn't completely solve the potential for untracked changes (names and zone IDs can change), but it helps.  To be able to fully remove sorting the presets each frame, presets would have to have change events for those fields as well to which the library could subscribe.
+- Give the UI a reference to the actual plugin object itself and see if we can get rid of duplicate functionality between the two parts.
 - Look into getting information about multi-map situations from the lgbs in order to only show waymarks on the appropriate maps of a zone.  Starting point information to pick back up on this:
-	- Tried going through all of the lgbs and drawing applicable coordinates on-screen.  Nothing looked like bounding boxes.
-	- LCB data looked like pairs of coordinates to make a box, but these don't look like any sane bounding box either.
-	- See if Sapphire sends the map change packet and look at how it does it.
-		-Assuming the map change packet is a real thing; someone said line type 40 in ACT is this.
+	- Basic paths to bg lgbs for zones are in Bg column of TerritoryType sheet.
+	- Lumina command line to get basic bg lgb file information for say Pharos Sirius is therefore: Lumina.Cmd.exe file bg/ffxiv/sea_s1/dun/s1d4/level/bg.lgb extract --datapath "C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\game\sqpack"
+	- No idea how to process the lgb for the map boundaries though.
+		- These really looked like sets of floating point coordinates, but didn't seem to be any kind of reasonable bounding boxes.
 - Try to constrain the aspect ratio of the map window if possible.
-- Make "unknown zone" in zone dict reload upon language change?
-- Add in old unreals for the zone dict?
-	- Will be extra annoying for other client languages.
-- The info pane is surprisingly expensive to draw.  Figure out what's going on.
-- Replace multiple ImGui.Spacing() lines with better solution.
-	- Scaled Dummies or a single Spacing() and let people change ImGui styles.
-- Can we expand the zone header when we select a preset in a collapsed zone?
-- Maybe have a context menu option to one-time sort alphabetically?
-	- Maybe this isn't good though, because new stuff will still appear at the bottom and people would have to re-sort frequently.
-	- Maybe at some point in the future, have a context menu with sorting options (ascending, descending and then by ID, alphabetical, and custom).
 
 
 New Functionality:
@@ -50,12 +21,15 @@ New Functionality:
 - Look into placing a preset by placing each individual waymark to work around preset restrictions, but this honestly looks like a huge mess, and SE's code is doing timing stuff when placing a preset, so it might be even more weird.
 	- See the WaymarkInfo.txt for some of how this appears to be handled by the game.
 - Add buttons for clear waymarks and placing individual waymarks, as well as a button to open up the game's waymark interface.
-	- Once this is done, look into intercepting the MainCommand for the waymarks button and bypassing the game's window entirely as an option (with an option to open it from the plugin's window).
+- Once the above is done, look into intercepting the MainCommand for the waymarks button and bypassing the game's window entirely as an option (with an option to open it from the plugin's window).
 
 
 Completed (Follow Up):
 
-- Nothing for now.
+- Allow drag and drop (or context menu or something) swap of waymarks when editing?
+	- https://github.com/goatcorp/suggestions/issues/206
+- Option to tie plugin window to main game waymark window.
+	- https://github.com/PunishedPineapple/WaymarkPresetPlugin/issues/17
 
 
 Rejected:
@@ -65,7 +39,3 @@ Rejected:
 	- Added drag and drop reordering, which makes this even less useful.
 - Think about whether ints or possbily even fixed-precision coordinates would be preferable to floats going forward.  Eliminates impact of rounding errors, but makes interop with other existing programs more difficult, and may or may not interfere with any future direct placement/saving features.  Are rounding errors even a potential issue as-is?
 	-This has not been an issue, and is just added complexity.
-- Add options to sort both zones and presets by name alphabetically (GitHub Issue #3).
-	- The user can now drag and drop to whatever custom order they want.
-- Grouping presets by expansion, difficulty, etc.
-	- This is just too much work, and would probably be a maintenance nightmare even after initial implementation.

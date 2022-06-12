@@ -1,6 +1,10 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Numerics;
+using System.Diagnostics;
 
 using ImGuiNET;
 
@@ -10,10 +14,9 @@ namespace WaymarkPresetPlugin
 	{
 		public static void URLLink( string URL, string textToShow = "", bool showTooltip = true, ImFontPtr? iconFont = null )
 		{
-			ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.Button] );
+			ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered] );
 			ImGui.Text( textToShow.Length > 0 ? textToShow : URL );
 			ImGui.PopStyleColor();
-
 			if( ImGui.IsItemHovered() )
 			{
 				ImGui.SetMouseCursor( ImGuiMouseCursor.Hand );
@@ -37,27 +40,6 @@ namespace WaymarkPresetPlugin
 					ImGui.Text( URL );
 					ImGui.EndTooltip();
 				}
-			}
-			else
-			{
-				AddUnderline( ImGui.GetStyle().Colors[(int)ImGuiCol.Button], 1.0f );
-			}
-		}
-
-		public static void TextLink( Action callback, string textToShow = "" )
-		{
-			ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered] );
-			ImGui.Text( textToShow );
-			ImGui.PopStyleColor();
-			if( ImGui.IsItemHovered() )
-			{
-				ImGui.SetMouseCursor( ImGuiMouseCursor.Hand );
-				if( ImGui.IsMouseClicked( ImGuiMouseButton.Left ) )
-				{
-					callback.Invoke();
-				}
-
-				AddUnderline( ImGui.GetStyle().Colors[(int)ImGuiCol.ButtonHovered], 1.0f );
 			}
 			else
 			{
@@ -121,62 +103,12 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		public static void TitleBarHelpButton( Action callback, uint idxFromRight = 1, ImFontPtr? iconFont = null )
-		{
-			var storedCursorPos = ImGui.GetCursorPos();
-			if( iconFont != null ) ImGui.PushFont( iconFont.Value );
-			ImGui.PushClipRect( ImGui.GetWindowPos(), ImGui.GetWindowPos() + ImGui.GetWindowSize(), false );
-			
-			try
-			{
-				string buttonText = iconFont != null ? "\uF059" : "(?)";
-
-				var iconSize = ImGui.CalcTextSize( buttonText );
-				float titlebarHeight = iconSize.Y + ImGui.GetStyle().FramePadding.Y * 2f;
-				Vector2 buttonPos = new(	ImGui.GetWindowSize().X - ( iconSize.X + ImGui.GetStyle().FramePadding.X ) * ( idxFromRight + 1 ) - ImGui.GetStyle().WindowPadding.X + ImGui.GetScrollX(),
-											Math.Max( 0f, ( titlebarHeight - iconSize.Y ) / 2f - 1f ) + ImGui.GetScrollY() );
-
-				ImGui.SetCursorPos( buttonPos );
-				ImGui.PushStyleColor( ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled] );
-				ImGui.Text( buttonText );
-				ImGui.PopStyleColor();
-
-				if( ImGui.IsItemHovered() )
-				{
-					//	Redraw the text in the hovered color
-					ImGui.SetCursorPos( buttonPos );
-					ImGui.Text( buttonText );
-
-					//	Handle the click.
-					if( ImGui.IsMouseClicked( ImGuiMouseButton.Left ) )
-					{
-						callback.Invoke();
-					}
-				}
-			}
-			finally
-			{
-				ImGui.SetCursorPos( storedCursorPos );
-				if( iconFont != null ) ImGui.PopFont();
-				ImGui.PopClipRect();
-			}
-
-		}
-
-		public const ImGuiWindowFlags OverlayWindowFlags =	ImGuiWindowFlags.NoDecoration |
+		public const ImGuiWindowFlags OverlayWindowFlags =  ImGuiWindowFlags.NoDecoration |
 															ImGuiWindowFlags.NoSavedSettings |
 															ImGuiWindowFlags.NoMove |
 															ImGuiWindowFlags.NoMouseInputs |
 															ImGuiWindowFlags.NoFocusOnAppearing |
 															ImGuiWindowFlags.NoBackground |
 															ImGuiWindowFlags.NoNav;
-
-		public const ImGuiWindowFlags LayoutWindowFlags =	ImGuiWindowFlags.NoSavedSettings |
-															ImGuiWindowFlags.NoMove |
-															ImGuiWindowFlags.NoMouseInputs |
-															ImGuiWindowFlags.NoFocusOnAppearing |
-															ImGuiWindowFlags.NoBackground |
-															ImGuiWindowFlags.NoNav |
-															ImGuiWindowFlags.NoScrollbar;
 	}
 }

@@ -1,7 +1,4 @@
 ﻿using System;
-
-using CheapLoc;
-
 using Newtonsoft.Json;
 
 namespace WaymarkPresetPlugin
@@ -11,15 +8,6 @@ namespace WaymarkPresetPlugin
 	{
 		public WaymarkPreset()
 		{
-			Name = DefaultPresetName;
-			A.ID = 0;
-			B.ID = 1;
-			C.ID = 2;
-			D.ID = 3;
-			One.ID = 4;
-			Two.ID = 5;
-			Three.ID = 6;
-			Four.ID = 7;
 		}
 
 		public WaymarkPreset( WaymarkPreset objToCopy )
@@ -42,7 +30,7 @@ namespace WaymarkPresetPlugin
 
 		public static WaymarkPreset Parse( GamePreset gamePreset )
 		{
-			WaymarkPreset newPreset = new();
+			WaymarkPreset newPreset = new WaymarkPreset();
 
 			newPreset.A.X = gamePreset.A.X / 1000.0f;
 			newPreset.A.Y = gamePreset.A.Y / 1000.0f;
@@ -94,14 +82,13 @@ namespace WaymarkPresetPlugin
 
 			newPreset.MapID = gamePreset.ContentFinderConditionID;
 			newPreset.Time = DateTimeOffset.FromUnixTimeSeconds( gamePreset.UnixTime );
-			newPreset.Name = DefaultPresetName;
 
 			return newPreset;
 		}
 
 		public GamePreset GetAsGamePreset()
 		{
-			GamePreset preset = new();
+			GamePreset preset = new GamePreset();
 
 			preset.ActiveMarkers[0] = A.Active;
 			preset.A.X = A.Active ? (int)( A.X * 1000.0 ) : 0;
@@ -161,7 +148,7 @@ namespace WaymarkPresetPlugin
 				}
 				catch
 				{
-					zoneName = Loc.Localize( "Preset Info Error: Zone Name 1", "Error retrieving zone name!" );
+					zoneName = "Error retrieving zone name!";
 				}
 			}
 
@@ -175,8 +162,8 @@ namespace WaymarkPresetPlugin
 			str += "2: " + Two.GetWaymarkDataString() + "\r\n";
 			str += "3: " + Three.GetWaymarkDataString() + "\r\n";
 			str += "4: " + Four.GetWaymarkDataString() + "\r\n";
-			str += Loc.Localize( "Preset Info Label: Zone", "Zone: " ) + zoneName + "\r\n";
-			str += Loc.Localize( "Preset Info Label: Last Modified", "Last Modified: " ) + Time.LocalDateTime.ToString();
+			str += "Zone: " + zoneName + "\r\n";
+			str += "Last Modified: " + Time.LocalDateTime.ToString();
 			return str;
 		}
 
@@ -184,8 +171,6 @@ namespace WaymarkPresetPlugin
 
 		//	This looks gross, but it's easier to be compatible with PP presets if we have each waymark be a named member instead of in a collection :(
 		public string Name { get; set; } = "Unknown";
-
-		protected static string DefaultPresetName => Loc.Localize( "Default Preset Name", "New Preset" );
 
 		//	Don't serialize in order to read older configs properly.
 		[NonSerialized] protected UInt16 mMapID;

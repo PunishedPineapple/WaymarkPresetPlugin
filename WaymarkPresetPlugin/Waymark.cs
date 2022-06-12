@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Numerics;
-
-using CheapLoc;
 
 namespace WaymarkPresetPlugin
 {
@@ -22,17 +19,9 @@ namespace WaymarkPresetPlugin
 				Active = objToCopy.Active;
 			}
 		}
-
 		public string GetWaymarkDataString()
 		{
-			return Active ? ( X.ToString( "0.00" ).PadLeft( 7 ) + ", " + Y.ToString( "0.00" ).PadLeft( 7 ) + ", " + Z.ToString( "0.00" ).PadLeft( 7 ) ) : Loc.Localize( "Waymark Status: Unused", "Unused" );
-		}
-
-		public void SetCoords( Vector3 pos )
-		{
-			X = pos.X;
-			Y = pos.Y;
-			Z = pos.Z;
+			return Active ? ( X.ToString( "0.00" ).PadLeft( 7 ) + ", " + Y.ToString( "0.00" ).PadLeft( 7 ) + ", " + Z.ToString( "0.00" ).PadLeft( 7 ) ) : "Unused";
 		}
 
 		public float X { get; set; } = 0.0f;

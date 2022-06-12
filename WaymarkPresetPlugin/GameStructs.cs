@@ -37,11 +37,6 @@ namespace WaymarkPresetPlugin
 
 			Active = active;
 		}
-
-		public override string ToString()
-		{
-			return $" {Active} | {X_Float}, {Y_Float}, {Z_Float} | {X_Int}, {Y_Int}, {Z_Int}";
-		}
 	}
 
 	//	The representation of all eight waymarks in memory.  Just a sequential array of the above struct.  This is only
@@ -69,18 +64,6 @@ namespace WaymarkPresetPlugin
 			Three = new GameWaymark( preset.Three, preset.ActiveMarkers[6] );
 			Four = new GameWaymark( preset.Four, preset.ActiveMarkers[7] );
 		}
-
-		public override string ToString()
-		{
-			return	$"A: {A}\r\n" +
-					$"B: {B}\r\n" +
-					$"C: {C}\r\n" +
-					$"D: {D}\r\n" +
-					$"1: {One}\r\n" +
-					$"2: {Two}\r\n" +
-					$"3: {Three}\r\n" +
-					$"4: {Four}";
-		}
 	}
 
 	//	Helper structure used to manage individual waymark coordinates as they appear in a preset stored by the game.
@@ -105,11 +88,6 @@ namespace WaymarkPresetPlugin
 				Y = waymark.Y_Int;
 				Z = waymark.Z_Int;
 			}
-		}
-
-		public override string ToString()
-		{
-			return $"{X}, {Y}, {Z}";
 		}
 	}
 
@@ -212,22 +190,6 @@ namespace WaymarkPresetPlugin
 			ContentFinderConditionID = 0;
 			UnixTime = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 		}
-
-		public override string ToString()
-		{
-			return	$"A: {A}\r\n" +
-					$"B: {B}\r\n" +
-					$"C: {C}\r\n" +
-					$"D: {D}\r\n" +
-					$"1: {One}\r\n" +
-					$"2: {Two}\r\n" +
-					$"3: {Three}\r\n" +
-					$"4: {Four}\r\n" +
-					$"Active Flags: {ActiveMarkers}\r\n" +
-					$"Reserved: 0x{_reserved:X}\r\n" +
-					$"ContentFinderCondition: {ContentFinderConditionID}\r\n" +
-					$"Timestamp: {UnixTime}";
-		}
 	}
 
 	//	The layout of the active flags in memory as used when the game is placing a waymark preset.  Just an eight (C++) bool array.
@@ -254,11 +216,6 @@ namespace WaymarkPresetPlugin
 			Three = new FakeBool( activeMarkers[6] );
 			Four = new FakeBool( activeMarkers[7] );
 		}
-
-		public override string ToString()
-		{
-			return $"{A}, {B}, {C}, {D}, {One}, {Two}, {Three}, {Four}";
-		}
 	}
 
 	//	The layout of waymark coordinates per-axis in memory as used when the game is placing a waymark preset.  Just an array of eight ints.
@@ -273,11 +230,6 @@ namespace WaymarkPresetPlugin
 		public int Two;
 		public int Three;
 		public int Four;
-
-		public override string ToString()
-		{
-			return $"{A}, {B}, {C}, {D}, {One}, {Two}, {Three}, {Four}";
-		}
 	}
 
 	//	The actual structure used by the game when calling the function to place a waymark preset.
@@ -329,14 +281,6 @@ namespace WaymarkPresetPlugin
 			Y.Four = preset.Four.Y;
 			Z.Four = preset.Four.Z;
 		}
-
-		public override string ToString()
-		{
-			return	$"Active Flags: {Active}\r\n" +
-					$"X Coords: {X}\r\n" +
-					$"Y Coords: {Y}\r\n" +
-					$"Z Coords: {Z}";
-		}
 	}
 
 	//	A helper struct to facilitate structure marshalling when C++ bools are involved.
@@ -351,11 +295,6 @@ namespace WaymarkPresetPlugin
 		}
 		public static implicit operator bool( FakeBool b ) { return b.BackingVal > 0; }
 		public static implicit operator FakeBool( bool b ) { return new FakeBool( b ); }
-
-		public override string ToString()
-		{
-			return $"{BackingVal}";
-		}
 	}
 
 	//	A helper struct to make working with the active flags in a waymark preset structure easier.
@@ -378,7 +317,7 @@ namespace WaymarkPresetPlugin
 					case 5: return ( Data & 32 ) > 0;
 					case 6: return ( Data & 64 ) > 0;
 					case 7: return ( Data & 128 ) > 0;
-					default: throw new ArgumentOutOfRangeException( nameof( i ), "Array index out of bounds." );
+					default: throw new ArgumentOutOfRangeException( "i", "Array index out of bounds." );
 				}
 			}
 			set
@@ -393,14 +332,9 @@ namespace WaymarkPresetPlugin
 					case 5: Data = (byte)( ( value ? 32 : 0 ) | Data ); break;
 					case 6: Data = (byte)( ( value ? 64 : 0 ) | Data ); break;
 					case 7: Data = (byte)( ( value ? 128 : 0 ) | Data ); break;
-					default: throw new ArgumentOutOfRangeException( nameof( i ), "Array index out of bounds." );
+					default: throw new ArgumentOutOfRangeException( "i", "Array index out of bounds." );
 				}
 			}
-		}
-
-		public override string ToString()
-		{
-			return $"0x{Data:X}";
 		}
 	}
 }
