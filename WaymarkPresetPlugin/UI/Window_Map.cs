@@ -57,21 +57,41 @@ namespace WaymarkPresetPlugin
 			//	Try to save off the view state data.
 			WriteMapViewStateToFile();
 
-			//	Try to do this nicely for a moment, but then just brute force it to clean up as much as we can.
-			mMapTextureDictMutex.WaitOne( 500 );
-
-			//	Clean up all of the map textures that we've loaded.
-			foreach( var mapTexturesList in mMapTextureDict )
+			//	Map texture disposal.
+			try
 			{
-				foreach( var tex in mapTexturesList.Value )
+				//	Try to clean up the maps cooperatively; otherwise force it.
+				bool gotMutex = mMapTextureDictMutex.WaitOne( 5000 );
+				if( !gotMutex ) PluginLog.LogWarning( "Unable to obtain map texture dictionary mutex during dispose.  Attempting brute-force disposal." );
+
+				foreach( var mapTexturesList in mMapTextureDict )
 				{
-					tex?.Dispose();
+					PluginLog.LogDebug( $"Cleaning up map textures for zone {mapTexturesList.Key}." );
+
+					foreach( var tex in mapTexturesList.Value )
+					{
+						tex?.Dispose();
+					}
+
+					mMapTextureDict.Remove( mapTexturesList.Key );
 				}
+
+				if( gotMutex ) mMapTextureDictMutex.ReleaseMutex();
+			}
+			catch( Exception e )
+			{
+				PluginLog.LogError( $"Exception while disposing map data:\r\n{e}" );
 			}
 
-			//	Release the mutex and dispose of it.
-			mMapTextureDictMutex.ReleaseMutex();
-			mMapTextureDictMutex.Dispose();
+			//	Mutex disposal.
+			try
+			{
+				mMapTextureDictMutex.Dispose();
+			}
+			catch( Exception e )
+			{
+				PluginLog.LogError( $"Exception disposing map data mutex:\r\n{e}" );
+			}
 		}
 
 		public void Draw()
@@ -347,73 +367,92 @@ namespace WaymarkPresetPlugin
 		private void LoadMapTextures( UInt16 territoryTypeID )
 		{
 			//	Only add/load stuff that we don't already have.  Callers should be checking this, but we should too.
-			if( !mMapTextureDict.ContainsKey( territoryTypeID ) )
+			if( mMapTextureDict.ContainsKey( territoryTypeID ) ) return;
+
+			//	Add an entry for the desired zone.
+			mMapTextureDict.Add( territoryTypeID, new List<TextureWrap>() );
+
+			//	Do the texture loading.
+			Task.Run( () =>
 			{
-
-				Task.Run( () =>
+				if( mMapTextureDictMutex.WaitOne( 30_000 ) )
 				{
-					//	Add the entry.
-					mMapTextureDict.Add( territoryTypeID, new List<TextureWrap>() );
-
-					//	Grab the texture files for this zone's maps and load them in.
 					foreach( var map in ZoneInfoHandler.GetMapInfoFromTerritoryTypeID( territoryTypeID ) )
 					{
-						//	Lock the mutex.  If we can't get it within ten seconds, just give up.
-						if( mMapTextureDictMutex.WaitOne( 30000 ) )
+						try
 						{
-							//	Get, process, and add the map texture.
-							try
-							{
-								//	TODO: Check for the *m file and/or use the discovery flags to determine whether we need to composite the textures.*****
-								var texFile = mDataManager.GetFile<Lumina.Data.Files.TexFile>( map.GetMapFilePath() );
-								var parchmentTexFile = mDataManager.GetFile<Lumina.Data.Files.TexFile>( map.GetMapParchmentImageFilePath() );
-								if( texFile != null )
-								{
-									byte[] texData = MapTextureBlend( texFile.GetRgbaImageData(), parchmentTexFile?.GetRgbaImageData() );
+							var texFile = mDataManager.GetFile<Lumina.Data.Files.TexFile>( map.GetMapFilePath() );
+							var parchmentTexFile = mDataManager.GetFile<Lumina.Data.Files.TexFile>( map.GetMapParchmentImageFilePath() );
 
-									var tex = mPluginInterface.UiBuilder.LoadImageRaw( texData, texFile.Header.Width, texFile.Header.Height, 4 );
-									if( tex != null && tex.ImGuiHandle != IntPtr.Zero )
+							if( texFile != null )
+							{
+								byte[] texData;
+								if( parchmentTexFile != null )
+								{
+									texData = MapTextureBlend( texFile.GetRgbaImageData(), parchmentTexFile.GetRgbaImageData() );
+								}
+								else
+								{
+									texData = texFile.GetRgbaImageData();
+								}
+
+								var tex = mPluginInterface.UiBuilder.LoadImageRaw( texData, texFile.Header.Width, texFile.Header.Height, 4 );
+								if( tex != null && tex.ImGuiHandle != IntPtr.Zero )
+								{
+									try
 									{
 										mMapTextureDict[territoryTypeID].Add( tex );
 									}
+									catch( Exception e )
+									{
+										tex.Dispose();
+										PluginLog.LogError( $"Exception while inserting map {map.MapID}.  Aborting map loading for this zone:\r\n{e}" );
+										break;
+									}
 								}
 							}
-							catch
-							{
-							}
-
-							//	Release the mutex.
-							mMapTextureDictMutex.ReleaseMutex();
+						}
+						catch( Exception e )
+						{
+							PluginLog.LogError( $"Exception while loading map {map.MapID}.  Aborting map loading for this zone::\r\n{e}" );
+							break;
 						}
 					}
-				} );
-			}
-		}
 
-		private byte[] MapTextureBlend( byte[] mapTex, byte[] parchmentTex = null )
-		{
-			if( parchmentTex == null || parchmentTex.Length != mapTex.Length )
-			{
-				return mapTex;
-			}
-			else
-			{
-				byte[] blendedTex = new byte[mapTex.Length];
-				for( int i = 0; i < blendedTex.Length; ++i )
-				{
-					//	A simple multiply probably gets us close enough for now.
-					blendedTex[i] = (byte)( (float)mapTex[i] * (float)parchmentTex[i] / 255f );
+					try
+					{
+						mMapTextureDictMutex.ReleaseMutex();
+					}
+					catch( Exception e )
+					{
+						PluginLog.LogWarning( $"Unable to release mutex following map texture loading.  If you're seeing this, it probably means " +
+												$"that you unloaded the plugin before requested maps finished loading.  If that's the case, this can be ignored.\r\n{e}" );
+					}
 				}
-
-				return blendedTex;
-			}
+				else
+				{
+					PluginLog.LogWarning( $"Timeout while waiting to load maps for zone {territoryTypeID}." );
+				}
+			} );
 		}
 
-		private float GetDefaultMapZoom( float mapScaleFactor )
+		private static byte[] MapTextureBlend( byte[] mapTex, byte[] parchmentTex )
+		{
+			byte[] blendedTex = new byte[mapTex.Length];
+			
+			for( int i = 0; i < blendedTex.Length; ++i )
+			{
+				blendedTex[i] = (byte)( (float)mapTex[i] * (float)parchmentTex[i] / 255f );
+			}
+
+			return blendedTex;
+		}
+
+		private static float GetDefaultMapZoom( float mapScaleFactor )
 		{
 			//	Lookup Table
 			float[] xValues = { 100, 200, 400, 800 };
-			float[] yValues = { 1.0f, 0.7f, 0.2f, 0.1f};
+			float[] yValues = { 1.0f, 0.7f, 0.2f, 0.1f };
 
 			//	Do the interpolation.
 			if( mapScaleFactor < xValues[0] )
