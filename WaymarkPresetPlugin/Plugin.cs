@@ -78,7 +78,7 @@ namespace WaymarkPresetPlugin
 
 		protected void OnLanguageChanged( string langCode )
 		{
-			var allowedLang = new List<string>{ /*"es", "fr", "ja"*/ };
+			var allowedLang = new List<string>{ "fr", };
 
 			PluginLog.Information( "Trying to set up Loc for culture {0}", langCode );
 
