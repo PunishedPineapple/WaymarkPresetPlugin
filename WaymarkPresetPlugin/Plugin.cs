@@ -279,7 +279,7 @@ namespace WaymarkPresetPlugin
 				//	Try to do the actual placement.
 				if( libraryIndex >= 0 && libraryIndex < mConfiguration.PresetLibrary.Presets.Count )
 				{
-					if( InternalCommand_PlacePresetByIndex( libraryIndex ) )
+					if( InternalCommand_PlacePresetByIndex( libraryIndex, false ) )
 					{
 						return "";
 					}
@@ -522,7 +522,7 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
-		internal bool InternalCommand_PlacePresetByName( string name )
+		internal bool InternalCommand_PlacePresetByName( string name, bool requireZoneMatch = true )
 		{
 			int libraryIndex = mConfiguration.PresetLibrary.Presets.FindIndex( p =>
 			{
@@ -535,7 +535,7 @@ namespace WaymarkPresetPlugin
 			}
 			else
 			{
-				return InternalCommand_PlacePresetByIndex( libraryIndex );
+				return InternalCommand_PlacePresetByIndex( libraryIndex, requireZoneMatch );
 			}
 		}
 
