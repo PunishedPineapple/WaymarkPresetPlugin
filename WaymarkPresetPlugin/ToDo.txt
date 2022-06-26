@@ -1,7 +1,6 @@
 ﻿High Priority:
 
-- See if it's still being weird when unloading with the map window open and take a second look at that if so.
-- Verify layout with translated strings.
+- Look at fixing the width of info pane table instead of making it fit the window.  It does get a bit wide with translated strings.  Not a huge deal, but it looks odd.
 
 
 UI Ideas from Other People:
@@ -43,6 +42,8 @@ Low Priority:
 - Maybe have a context menu option to one-time sort alphabetically?
 	- Maybe this isn't good though, because new stuff will still appear at the bottom and people would have to re-sort frequently.
 	- Maybe at some point in the future, have a context menu with sorting options (ascending, descending and then by ID, alphabetical, and custom).
+		- Implemented in the back end; need to add to the UI.
+			- Test how expensive the sorting is every frame, because it could get ugly.
 
 
 New Functionality:
