@@ -302,6 +302,15 @@ namespace WaymarkPresetPlugin
 						mUI.InfoPaneWindow.CancelPendingDelete();
 					}
 				}
+
+				// Place preset when its entry in the library window is double clicked.
+				if ( ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
+				{
+					var preset = mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset();
+					
+					MemoryHandler.PlacePreset( preset );
+				}
+
 				if( !mUI.EditorWindow.EditingPreset && mConfiguration.AllowPresetDragAndDropOrdering && ImGui.BeginDragDropSource( ImGuiDragDropFlags.SourceNoHoldToOpenOthers ) )
 				{
 					ImGui.SetDragDropPayload( $"PresetIdxZ{zonePresets.Key}", mpLibraryPresetDragAndDropData, sizeof( int ) );
