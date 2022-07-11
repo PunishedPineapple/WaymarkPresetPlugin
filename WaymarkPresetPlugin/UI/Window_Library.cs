@@ -304,10 +304,10 @@ namespace WaymarkPresetPlugin
 				}
 
 				// Place preset when its entry in the library window is double clicked.
-				if ( ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
+				if ( SelectedPreset >= 0 && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
 				{
 					var preset = mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset();
-					
+				
 					MemoryHandler.PlacePreset( preset );
 				}
 
