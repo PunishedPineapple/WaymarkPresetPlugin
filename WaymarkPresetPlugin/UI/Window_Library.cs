@@ -106,7 +106,7 @@ namespace WaymarkPresetPlugin
 				ImGui.Checkbox( Loc.Localize( "Config Option: Filter on Current Zone", "Filter on Current Zone" ) + "###Filter on Current Zone Checkbox", ref mConfiguration.mFilterOnCurrentZone );
 				if( mConfiguration.FilterOnCurrentZone != previouslyFilteredOnZone ) mConfiguration.Save(); //	I'd rather just save the state when the plugin is unloaded, but that's not been feasible in the past.
 				string saveCurrentWaymarksButtonText = Loc.Localize( "Button: Save Current Waymarks", "Save Current Waymarks" );
-				ImGui.SameLine( ImGui.GetWindowContentRegionMax().X - ImGui.CalcTextSize( saveCurrentWaymarksButtonText ).X - ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().WindowPadding.X );
+				ImGui.SameLine( ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize( saveCurrentWaymarksButtonText ).X - ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().WindowPadding.X );
 				if( MemoryHandler.FoundDirectSaveSigs() )
 				{
 					if( ImGui.Button( saveCurrentWaymarksButtonText + "###Save Current Waymarks Button" ) )
@@ -302,7 +302,7 @@ namespace WaymarkPresetPlugin
 						mUI.InfoPaneWindow.CancelPendingDelete();
 					}
 
-					// Place preset when its entry in the library window is double clicked.
+					//	Place preset when its entry in the library window is double clicked.
 					if( SelectedPreset >= 0 && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
 					{
 						var preset = mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset();

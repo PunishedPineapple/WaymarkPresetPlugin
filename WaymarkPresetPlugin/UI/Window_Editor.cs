@@ -163,7 +163,7 @@ namespace WaymarkPresetPlugin
 				{
 					CancelEditing();
 				}
-				ImGui.SameLine( ImGui.GetWindowContentRegionMax().X - ImGui.CalcTextSize( "Map View" ).X - ImGui.GetStyle().FramePadding.X * 2 );
+				ImGui.SameLine( ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize( "Map View" ).X - ImGui.GetStyle().FramePadding.X * 2 );
 				if( ImGui.Button( Loc.Localize( "Button: Map View", "Map View" ) + "###Map View Button" ) )
 				{
 					mUI.MapWindow.WindowVisible = !mUI.MapWindow.WindowVisible;

@@ -113,7 +113,7 @@ namespace WaymarkPresetPlugin
 				}
 
 				string showLibraryButtonString = Loc.Localize( "Button: Show Library", "Show Library" );
-				ImGui.SameLine( ImGui.GetWindowContentRegionMax().X - ImGui.CalcTextSize( showLibraryButtonString ).X - ImGui.GetStyle().FramePadding.X * 2 );
+				ImGui.SameLine( ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize( showLibraryButtonString ).X - ImGui.GetStyle().FramePadding.X * 2 );
 				if( ImGui.Button( showLibraryButtonString + "###Show Library Button" ) )
 				{
 					mUI.LibraryWindow.WindowVisible = true;

@@ -62,7 +62,7 @@ namespace WaymarkPresetPlugin
 
 				if( ImGui.BeginChild( "###Help Text Pane" ) )
 				{
-					ImGui.PushTextWrapPos( ImGui.GetWindowContentRegionMax().X );
+					ImGui.PushTextWrapPos( ImGui.GetContentRegionAvail().X );
 					switch( mCurrentHelpPage )
 					{
 						case HelpWindowPage.General: DrawHelpWindow_General(); break;
@@ -183,9 +183,9 @@ namespace WaymarkPresetPlugin
 			{
 				const float imgWidthScale = 0.75f;
 				const float imguiPaddingScale = 1.0f - imgWidthScale;
-				ImGui.Indent( ImGui.GetWindowContentRegionMax().X * imguiPaddingScale / 2f );
+				ImGui.Indent( ImGui.GetContentRegionAvail().X * imguiPaddingScale / 2f );
 				var size = new Vector2( mCoordinateSystemsDiagram.Width, mCoordinateSystemsDiagram.Height );
-				size *= ImGui.GetWindowContentRegionMax().X / mCoordinateSystemsDiagram.Width * imgWidthScale;
+				size *= ImGui.GetContentRegionAvail().X / mCoordinateSystemsDiagram.Width * imgWidthScale;
 				ImGui.Image( mCoordinateSystemsDiagram.ImGuiHandle, size );
 				ImGui.Unindent();
 			}
