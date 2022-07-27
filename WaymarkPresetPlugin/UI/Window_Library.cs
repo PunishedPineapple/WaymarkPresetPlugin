@@ -106,7 +106,7 @@ namespace WaymarkPresetPlugin
 				ImGui.Checkbox( Loc.Localize( "Config Option: Filter on Current Zone", "Filter on Current Zone" ) + "###Filter on Current Zone Checkbox", ref mConfiguration.mFilterOnCurrentZone );
 				if( mConfiguration.FilterOnCurrentZone != previouslyFilteredOnZone ) mConfiguration.Save(); //	I'd rather just save the state when the plugin is unloaded, but that's not been feasible in the past.
 				string saveCurrentWaymarksButtonText = Loc.Localize( "Button: Save Current Waymarks", "Save Current Waymarks" );
-				ImGui.SameLine( ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize( saveCurrentWaymarksButtonText ).X - ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().WindowPadding.X );
+				ImGui.SameLine( ImGui.GetWindowContentRegionMax().X - ImGui.CalcTextSize( saveCurrentWaymarksButtonText ).X - ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().WindowPadding.X );
 				if( MemoryHandler.FoundDirectSaveSigs() )
 				{
 					if( ImGui.Button( saveCurrentWaymarksButtonText + "###Save Current Waymarks Button" ) )
@@ -285,12 +285,12 @@ namespace WaymarkPresetPlugin
 			var indices = zonePresets.Value;
 			for( int i = 0; i < indices.Count; ++i )
 			{
-				if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[indices[i]].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + indices[i].ToString() + ")" : "" )}###_Preset_{indices[i]}", indices[i] == SelectedPreset ) )
+				if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[indices[i]].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + indices[i].ToString() + ")" : "" )}###_Preset_{indices[i]}", indices[i] == SelectedPreset, ImGuiSelectableFlags.AllowDoubleClick ) )
 				{
 					//	It's probably a bad idea to allow the selection to change when a preset's being edited.
 					if( !mUI.EditorWindow.EditingPreset )
 					{
-						if( mConfiguration.AllowUnselectPreset && indices[i] == SelectedPreset )
+						if( mConfiguration.AllowUnselectPreset && indices[i] == SelectedPreset && !ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
 						{
 							SelectedPreset = -1;
 						}
@@ -301,7 +301,16 @@ namespace WaymarkPresetPlugin
 
 						mUI.InfoPaneWindow.CancelPendingDelete();
 					}
+
+					// Place preset when its entry in the library window is double clicked.
+					if( SelectedPreset >= 0 && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
+					{
+						var preset = mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset();
+
+						MemoryHandler.PlacePreset( preset );
+					}
 				}
+
 				if( !mUI.EditorWindow.EditingPreset && mConfiguration.AllowPresetDragAndDropOrdering && ImGui.BeginDragDropSource( ImGuiDragDropFlags.SourceNoHoldToOpenOthers ) )
 				{
 					ImGui.SetDragDropPayload( $"PresetIdxZ{zonePresets.Key}", mpLibraryPresetDragAndDropData, sizeof( int ) );
