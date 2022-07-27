@@ -386,12 +386,12 @@ namespace WaymarkPresetPlugin
 				if( !mConfiguration.FilterOnCurrentZone || mConfiguration.PresetLibrary.Presets[i].MapID == ZoneInfoHandler.GetContentFinderIDFromTerritoryTypeID( mClientState.TerritoryType ) )
 				{
 					anyPresetsVisibleWithCurrentFilters = true;
-					if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}###_Preset_{i}", i == SelectedPreset ) )
+					if( ImGui.Selectable( $"{mConfiguration.PresetLibrary.Presets[i].Name}{( mConfiguration.ShowLibraryIndexInPresetInfo ? " (" + i.ToString() + ")" : "" )}###_Preset_{i}", i == SelectedPreset, ImGuiSelectableFlags.AllowDoubleClick ) )
 					{
 						//	It's probably a bad idea to allow the selection to change when a preset's being edited.
 						if( !mUI.EditorWindow.EditingPreset )
 						{
-							if( mConfiguration.AllowUnselectPreset && i == SelectedPreset )
+							if( mConfiguration.AllowUnselectPreset && i == SelectedPreset && !ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
 							{
 								SelectedPreset = -1;
 							}
@@ -401,6 +401,14 @@ namespace WaymarkPresetPlugin
 							}
 
 							mUI.InfoPaneWindow.CancelPendingDelete();
+						}
+
+						//	Place preset when its entry in the library window is double clicked.
+						if( SelectedPreset >= 0 && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
+						{
+							var preset = mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset();
+
+							MemoryHandler.PlacePreset( preset );
 						}
 					}
 					if( !mUI.EditorWindow.EditingPreset && mConfiguration.AllowPresetDragAndDropOrdering && ImGui.BeginDragDropSource( ImGuiDragDropFlags.SourceNoHoldToOpenOthers ) )
