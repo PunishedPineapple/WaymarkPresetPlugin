@@ -303,9 +303,9 @@ namespace WaymarkPresetPlugin
 					}
 
 					//	Place preset when its entry in the library window is double clicked.
-					if( SelectedPreset >= 0 && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
+					if( ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
 					{
-						var preset = mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset();
+						var preset = mConfiguration.PresetLibrary.Presets[indices[i]].GetAsGamePreset();
 
 						MemoryHandler.PlacePreset( preset );
 					}
@@ -404,9 +404,9 @@ namespace WaymarkPresetPlugin
 						}
 
 						//	Place preset when its entry in the library window is double clicked.
-						if( SelectedPreset >= 0 && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
+						if( ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked( ImGuiMouseButton.Left ) )
 						{
-							var preset = mConfiguration.PresetLibrary.Presets[SelectedPreset].GetAsGamePreset();
+							var preset = mConfiguration.PresetLibrary.Presets[i].GetAsGamePreset();
 
 							MemoryHandler.PlacePreset( preset );
 						}
