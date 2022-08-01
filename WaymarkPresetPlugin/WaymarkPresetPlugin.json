@@ -10,5 +10,6 @@
     "https://github.com/PunishedPineapple/WaymarkPresetPlugin/raw/master/docs/Images/image2.png",
     "https://github.com/PunishedPineapple/WaymarkPresetPlugin/raw/master/docs/Images/image3.png"
   ],
-  "Tags": [ "Waymark", "Marker", "Preset", "Tool" ]
+  "Tags": [ "Waymark", "Marker", "Preset", "Tool" ],
+  "DalamudApiLevel": 7
 }
