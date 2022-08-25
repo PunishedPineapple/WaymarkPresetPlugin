@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 
 using CheapLoc;
 
@@ -15,6 +16,8 @@ using Dalamud.Logging;
 using Dalamud.Plugin;
 
 using Newtonsoft.Json;
+
+using static WaymarkPresetPlugin.MathUtils;
 
 namespace WaymarkPresetPlugin
 {
@@ -158,6 +161,10 @@ namespace WaymarkPresetPlugin
 			else if( subCommand.ToLower() == SubcommandName_ExportAll )
 			{
 				commandResponse = ProcessTextCommand_ExportAll( subCommandArgs );
+			}
+			else if( subCommand.ToLower() == SubcommandName_QuickPlace )
+			{
+				commandResponse = ProcessTextCommand_QuickPlace( subCommandArgs );
 			}
 			else if( subCommand.ToLower() == SubcommandName_Help || subCommand.ToLower() == "?" )
 			{
@@ -478,6 +485,94 @@ namespace WaymarkPresetPlugin
 			}
 		}
 
+		protected string ProcessTextCommand_QuickPlace( string args )
+        {
+            if (MemoryHandler.FoundDirectPlacementSigs())
+            {
+                var tempPreset = new WaymarkPreset();
+                var shape = args.Trim().ToLower();
+
+
+                //TODO: Use player spawn coordinates to compute arena center
+                var arenaCenter = new Vector3(100, 0, 100);
+				Vector3[] points;
+
+                switch (shape)
+                {
+                    case "circle":
+                        points = ComputeRadialPositions(arenaCenter, 16, 8, 0);
+                        for (int i = 0; i < 8; ++i)
+                        {
+                            tempPreset[i].Active = true;
+                            tempPreset[i].SetCoords(points[i]);
+                        }
+                        break;
+                    case "circleb":
+                        points = ComputeRadialPositions(arenaCenter, 16, 8, 0);
+                        for (int i = 0; i < 8; ++i)
+                        {
+                            var i2 = Mod2(i * 2, 7);
+                            tempPreset[i].Active = true;
+                            tempPreset[i].SetCoords(points[i2]);
+                        }
+                        break;
+                    case "square":
+						points = ComputeSquarePositions(arenaCenter, 16);
+                        for (int i = 0; i < 8; ++i)
+                        {
+                            tempPreset[i].Active = true;
+                            tempPreset[i].SetCoords(points[i]);
+                        }
+                        break;
+					case "squareb":
+                        points = ComputeSquarePositions(arenaCenter, 16);
+                        for (int i = 0; i < 8; ++i)
+                        {
+                            var i2 = Mod2(i * 2, 7);
+                            tempPreset[i].Active = true;
+                            tempPreset[i].SetCoords(points[i2]);
+                        }
+                        break;
+					case "pfline":
+						{
+							var start = arenaCenter + new Vector3(-8, 0, 18);
+							for (int i = 0; i < 8; ++i)
+							{
+								tempPreset[i].Active = true;
+								tempPreset[i].SetCoords(start + new Vector3(2.3f, 0, 0) * i);
+							}
+						}
+						break;
+					case "pfquickmarch":
+						{
+							var startA = arenaCenter + new Vector3(-1.5f, 0, 14);
+							var startB = arenaCenter + new Vector3(1.5f, 0, 14);
+                            for (int i = 0; i < 4; ++i)
+                            {
+                                tempPreset[i].Active = true;
+                                tempPreset[i].SetCoords(startA + new Vector3(0, 0, 1.7f) * i);
+
+                                tempPreset[i + 4].Active = true;
+                                tempPreset[i + 4].SetCoords(startB + new Vector3(0, 0, 1.7f) * i);
+                            }
+                        }
+						break;
+                    default:
+						return $"Unknown shape \"{shape}\" specified";
+				}
+
+                MemoryHandler.PlacePreset(tempPreset.GetAsGamePreset());
+            }
+            else
+            {
+                return Loc.Localize("Text Command Response: Place - Error 5", "Unable to place preset.  This probably means that the plugin needs to be updated for a new version of FFXIV.");
+            }
+
+
+
+            return null;
+		}
+
 		internal List<int> InternalCommand_GetPresetsForContentFinderCondition( UInt16 contentFinderCondition )
 		{
 			List<int> foundPresets = new();
@@ -646,6 +741,7 @@ namespace WaymarkPresetPlugin
 		internal static string SubcommandName_Export => "export";
 		internal static string SubcommandName_ExportAll => "exportall";
 		internal static string SubcommandName_Help => "help";
+		internal static string SubcommandName_QuickPlace => "quickplace";
 		internal static string SubCommandName_Help_Commands => "commands";
 		internal static string SubCommandArg_Export_IncludeTime => "-t";
 		internal static string SubCommandArg_Export_IsGameSlot => "-g";

@@ -13,6 +13,8 @@ using ImGuiNET;
 
 using ImGuiScene;
 
+using static WaymarkPresetPlugin.MathUtils;
+
 namespace WaymarkPresetPlugin
 {
 	internal sealed class Window_Help : IDisposable
@@ -285,30 +287,6 @@ namespace WaymarkPresetPlugin
 					mUI.LibraryWindow.TrySetSelectedPreset( newPresetIndex );
 				}
 			}
-		}
-
-		private Vector3[] ComputeRadialPositions( Vector3 center, float radius_Yalms, int numPoints, float angleOffset_Deg = 0f )
-		{
-			//	Can't have less than one point (even that doesn't make much sense, but it's technically allowable).
-			numPoints = Math.Max( 1, numPoints );
-			var computedPoints = new Vector3[numPoints];
-
-			//	Zero azimuth is facing North (90 degrees)
-			angleOffset_Deg -= 90f;
-			double stepAngle_Deg = 360.0 / numPoints;
-
-			//	Compute the coordinates on the circle about the center point.
-			for( int i = 0; i < numPoints; ++i )
-			{
-				//	Because of FFXIV's coordinate system, we need to go backward in angle.
-				double angle_Rad = ( i * stepAngle_Deg + angleOffset_Deg ) * Math.PI / 180.0;
-				computedPoints[i].X = (float)Math.Cos( angle_Rad );
-				computedPoints[i].Z = (float)Math.Sin( angle_Rad );
-				computedPoints[i] *= radius_Yalms;
-				computedPoints[i] += center;
-			}
-
-			return computedPoints;
 		}
 
 		public void OpenHelpWindow( HelpWindowPage page )
