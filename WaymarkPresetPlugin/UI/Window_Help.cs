@@ -126,7 +126,11 @@ namespace WaymarkPresetPlugin
 
 		private void DrawHelpWindow_Editing()
 		{
-			ImGui.Text( Loc.Localize( "Help Window Text: Editing 1",
+			//***** TODO *****
+			ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
+			ImGui.Text( "The editor has temporarily been disabled out of caution due to actions taken by SE against players placing out of bounds waymarks." );
+			ImGui.PopStyleColor();
+			/*ImGui.Text( Loc.Localize( "Help Window Text: Editing 1",
 						"Clicking the \"Edit\" button in the preset info pane will bring up a window that allows you to " +
 						"edit a preset.  You can adjust any of the available parameters, and you can drag waymarks on to " +
 						"other waymarks to swap their positions.  You can also drag points from the circle calculator tab " +
@@ -135,7 +139,7 @@ namespace WaymarkPresetPlugin
 			ImGui.Spacing();
 			ImGui.Spacing();
 			ImGui.Text( Loc.Localize( "Help Window Text: Editing 2",
-						"Changes made in the editor window will not be applied until the \"Save\" button is clicked." ) );
+						"Changes made in the editor window will not be applied until the \"Save\" button is clicked." ) );*/
 		}
 
 		private void DrawHelpWindow_Maps()
@@ -193,7 +197,11 @@ namespace WaymarkPresetPlugin
 
 		private void DrawHelpWindow_CircleCalculator()
 		{
-			ImGui.Text( Loc.Localize( "Circle Computer Text: Instructions 1",
+			//***** TODO *****
+			ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
+			ImGui.Text( "The editor has temporarily been disabled out of caution due to actions taken by SE against players placing out of bounds waymarks." );
+			ImGui.PopStyleColor();
+			/*ImGui.Text( Loc.Localize( "Circle Computer Text: Instructions 1",
 						"This calculator will compute radially symmetric points (\"clock spots\") with the information that you " +
 						"give it.  You can then drag these into the preset editor to replace any waymarks with the calculated points, " +
 						"or you can use the buttons at the bottom of this pane." ) );
@@ -284,7 +292,7 @@ namespace WaymarkPresetPlugin
 				{
 					mUI.LibraryWindow.TrySetSelectedPreset( newPresetIndex );
 				}
-			}
+			}*/
 		}
 
 		private Vector3[] ComputeRadialPositions( Vector3 center, float radius_Yalms, int numPoints, float angleOffset_Deg = 0f )

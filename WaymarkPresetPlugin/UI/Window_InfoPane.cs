@@ -145,11 +145,12 @@ namespace WaymarkPresetPlugin
 						}
 					}
 					ImGui.SameLine();
-					if( ImGui.Button( Loc.Localize( "Button: Edit", "Edit" ) + "###Edit" ) && !mUI.EditorWindow.EditingPreset )  //Don't want to let people start editing while the edit window is already open.
+					//***** TODO: Disabled for now out of caution due to SE's p7s memorandum.  Might check waymarks before passing to game at some point. *****
+					/*if( ImGui.Button( Loc.Localize( "Button: Edit", "Edit" ) + "###Edit" ) && !mUI.EditorWindow.EditingPreset )  //Don't want to let people start editing while the edit window is already open.
 					{
 						mUI.EditorWindow.TryBeginEditing( mUI.LibraryWindow.SelectedPreset );
 					}
-					ImGui.SameLine();
+					ImGui.SameLine();*/
 					ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
 					if( ImGui.Button( Loc.Localize( "Button: Delete", "Delete" ) + "###Delete" ) && !mUI.EditorWindow.EditingPreset )
 					{
@@ -236,8 +237,8 @@ namespace WaymarkPresetPlugin
 
 				ImGui.Button( Loc.Localize( "Button: Export to Clipboard", "Export to Clipboard" ) + "###Export to Clipboard" );
 				ImGui.SameLine();
-				ImGui.Button( Loc.Localize( "Button: Edit", "Edit" ) + "###Edit" );
-				ImGui.SameLine();
+				/*ImGui.Button( Loc.Localize( "Button: Edit", "Edit" ) + "###Edit" );
+				ImGui.SameLine();*/
 				ImGui.Button( Loc.Localize( "Button: Delete", "Delete" ) + "###Delete" );
 				mWindowSize.X = Math.Max( mWindowSize.X, ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X );
 				if( WantToDeleteSelectedPreset )

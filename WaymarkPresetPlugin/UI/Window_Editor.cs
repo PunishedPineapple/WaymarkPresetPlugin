@@ -37,6 +37,12 @@ namespace WaymarkPresetPlugin
 			{
 				ImGuiUtils.TitleBarHelpButton( () => { mUI.HelpWindow.OpenHelpWindow( HelpWindowPage.Editing ); }, 0, UiBuilder.IconFont );
 
+				//ImGui.PushTextWrapPos();
+				//ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
+				//ImGui.TextWrapped( "SE has banned people for having markers that are outside of normally placeable areas.  Please use the editor responsibly and avoid waymarks outside of walkable areas, or above or below the ground." );
+				//ImGui.PopStyleColor();
+				//ImGui.PopTextWrapPos();
+
 				if( ScratchEditingPreset != null )
 				{
 					ImGui.Text( Loc.Localize( "Edit Window Text: Name", "Name: " ) );
