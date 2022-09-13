@@ -34,6 +34,8 @@ The map view has two major limitations:
 * Dragging waymarks on the map while editing in zones that have uneven ground will generally give undesirable results, in that the height of the waymark will not be constrained to the ground.  You may end up with waymarks that the game won't place, or even with waymarks below the ground or floating in the air.  This is not likely to be addressed due to the immense amount of work for very little payoff.
 
 ## IMPORTANT
+**As of 2022-09-12, SE has taken action against players that have placed out of bounds (OOB) waymarks.  Please exercise judgement when placing presets that may contain OOB waymarks.**
+
 As is the case with all third-party programs and tools, this plugin *does not* operate through an official API; it digs into the game and operates on the best information available inferred from game behavior and structure.  Something could always go wrong, SE could find out and punish you, something unintended and bad could happen, etc.  Use of this plugin is very much at your own risk.  There are no guarantees, express or implied.  I've made my best effort to keep it as safe as I can (I use this myself, after all), and that's it.
 
 ## License
