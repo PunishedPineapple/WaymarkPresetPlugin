@@ -33,15 +33,14 @@ namespace WaymarkPresetPlugin
 				return;
 			}
 
+			ImGui.SetNextWindowSize( new( 100 ), ImGuiCond.Appearing );	//	This is a quick and dirty reset of text wrapping to make things look ok if style has changed.  Not the most elegant solution, but it gets the job done.
 			if( ImGui.Begin( Loc.Localize( "Window Title: Preset Editor", "Preset Editor" ) + "###Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize ) )
 			{
 				ImGuiUtils.TitleBarHelpButton( () => { mUI.HelpWindow.OpenHelpWindow( HelpWindowPage.Editing ); }, 0, UiBuilder.IconFont );
 
-				//ImGui.PushTextWrapPos();
-				//ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
-				//ImGui.TextWrapped( "SE has banned people for having markers that are outside of normally placeable areas.  Please use the editor responsibly and avoid waymarks outside of walkable areas, or above or below the ground." );
-				//ImGui.PopStyleColor();
-				//ImGui.PopTextWrapPos();
+				ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
+				ImGui.TextWrapped( Loc.Localize( "Edit Window Text: OOB Warning Message", "SE has banned people for placing out of bounds waymarks.  Please use caution when manually editing waymark coordinates." ) );
+				ImGui.PopStyleColor();
 
 				if( ScratchEditingPreset != null )
 				{
