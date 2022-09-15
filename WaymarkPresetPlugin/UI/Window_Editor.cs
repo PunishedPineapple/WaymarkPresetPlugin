@@ -41,6 +41,7 @@ namespace WaymarkPresetPlugin
 				ImGui.PushStyleColor( ImGuiCol.Text, 0xee4444ff );
 				ImGui.TextWrapped( Loc.Localize( "Edit Window Text: OOB Warning Message", "SE has banned people for placing out of bounds waymarks.  Please use caution when manually editing waymark coordinates." ) );
 				ImGui.PopStyleColor();
+				ImGui.Spacing();
 
 				if( ScratchEditingPreset != null )
 				{
