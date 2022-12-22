@@ -143,6 +143,10 @@
     "message": "Preset Editor",
     "description": "Window_Editor.Draw"
   },
+  "Edit Window Text: OOB Warning Message": {
+    "message": "SE has banned people for placing out of bounds waymarks.  Please use caution when manually editing waymark coordinates.",
+    "description": "Window_Editor.Draw"
+  },
   "Edit Window Text: Name": {
     "message": "Name: ",
     "description": "Window_Editor.Draw"
@@ -203,6 +207,10 @@
     "message": "Presets can be reordered in the library by dragging and dropping them at the desired spot.  The sorting of duties in the library is by default the same as they are sorted in the game's files, and is approximately the order in which the duties were added to the game.  Duties can be drag and drop reordered if desired.  If you create your own order by doing this, newly-seen duties will appear at the bottom of the list.",
     "description": "Window_Help.DrawHelpWindow_General"
   },
+  "Help Window Text: Editing Warning Message": {
+    "message": "SE has banned people for placing out of bounds waymarks.  Please use caution when manually editing waymark coordinates.",
+    "description": "Window_Help.DrawHelpWindow_Editing"
+  },
   "Help Window Text: Editing 1": {
     "message": "Clicking the \"Edit\" button in the preset info pane will bring up a window that allows you to edit a preset.  You can adjust any of the available parameters, and you can drag waymarks on to other waymarks to swap their positions.  You can also drag points from the circle calculator tab in this help window on to a waymark in the editor window to replace its coordinates with the ones from that calculator.",
     "description": "Window_Help.DrawHelpWindow_Editing"
@@ -230,6 +238,10 @@
   "Help Window Text: Coordinates 2": {
     "message": "The game internally uses a right-handed 3D coordinate system, with X running West to East, Y running down to up, and Z running North to South.  The on-map coordinate system is a 2D projection of the XZ plane, with X running West to East, and Y running North to South.  Please note that the coordinates presented in chat links or on the map widgets in game are scaled to arbitrary values, and the Y and Z axes are swapped.  This plugin uses the game's internal coordinate systems as shown below:",
     "description": "Window_Help.DrawHelpWindow_Coordinates"
+  },
+  "Help Window Text: Circle Computer Warning Message": {
+    "message": "SE has banned people for placing out of bounds waymarks.  Please use caution when creating or editing a preset using this calculator.",
+    "description": "Window_Help.DrawHelpWindow_CircleCalculator"
   },
   "Circle Computer Text: Instructions 1": {
     "message": "This calculator will compute radially symmetric points (\"clock spots\") with the information that you give it.  You can then drag these into the preset editor to replace any waymarks with the calculated points, or you can use the buttons at the bottom of this pane.",
@@ -598,5 +610,17 @@
   "Export Preset Fallback Error": {
     "message": "Invalid index requested for preset export.  No preset exists at index {0}.",
     "description": "WaymarkPresetLibrary.ExportPreset"
+  },
+  "Terminology: Zone Sort Type - Basic": {
+    "message": "Sort by ID",
+    "description": "ZoneSortTypeExtensions.GetTranslatedName"
+  },
+  "Terminology: Zone Sort Type - Alphabetical": {
+    "message": "Sort Alphabetically",
+    "description": "ZoneSortTypeExtensions.GetTranslatedName"
+  },
+  "Terminology: Zone Sort Type - Custom": {
+    "message": "Custom Sort Order",
+    "description": "ZoneSortTypeExtensions.GetTranslatedName"
   }
 }
