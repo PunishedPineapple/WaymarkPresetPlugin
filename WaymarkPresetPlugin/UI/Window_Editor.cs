@@ -34,7 +34,7 @@ namespace WaymarkPresetPlugin
 			}
 
 			ImGui.SetNextWindowSize( new( 100 ), ImGuiCond.Appearing );	//	This is a quick and dirty reset of text wrapping to make things look ok if style has changed.  Not the most elegant solution, but it gets the job done.
-			if( ImGui.Begin( Loc.Localize( "Window Title: Preset Editor", "Preset Editor" ) + "###Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize ) )
+			if( ImGui.Begin( Loc.Localize( "Window Title: Preset Editor", "Preset Editor" ) + "###Preset Editor", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize ) )
 			{
 				ImGuiUtils.TitleBarHelpButton( () => { mUI.HelpWindow.OpenHelpWindow( HelpWindowPage.Editing ); }, 0, UiBuilder.IconFont );
 
