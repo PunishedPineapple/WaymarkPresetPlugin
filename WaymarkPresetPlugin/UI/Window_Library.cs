@@ -585,47 +585,23 @@ namespace WaymarkPresetPlugin
 			}
 			if( MemoryHandler.FoundSavedPresetSigs() )
 			{
-				//ImGui.SameLine();
-				ImGui.Text( Loc.Localize( "Main Window Text: Import from Game Slot Label", "Or import from game slot: " ) );
-				ImGui.SameLine();
-				if( ImGui.Button( "1" ) )
+				if( ImGui.Button( Loc.Localize( "Main Window Text: Import from Game Slot Label", "Or import from game slot: " ) ) )
 				{
-					if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 1 ) ) >= 0 )
+					if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( mGameSlotDropdownSelection ) ) >= 0 )
 					{
 						mConfiguration.Save();
 					}
 				}
 				ImGui.SameLine();
-				if( ImGui.Button( "2" ) )
+				float comboWidth = ImGui.CalcTextSize( $"{MemoryHandler.MaxPresetSlotNum}" ).X + ImGui.GetStyle().FramePadding.X * 3f + ImGui.GetTextLineHeightWithSpacing();
+				ImGui.SetNextItemWidth( comboWidth );
+				if( ImGui.BeginCombo( "###ImportGameSlotNumberDropdown", $"{mGameSlotDropdownSelection}" ) )
 				{
-					if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 2 ) ) >= 0 )
+					for( uint i = 1; i <= MemoryHandler.MaxPresetSlotNum; ++i )
 					{
-						mConfiguration.Save();
+						if( ImGui.Selectable( $"{i}" ) ) mGameSlotDropdownSelection = i;
 					}
-				}
-				ImGui.SameLine();
-				if( ImGui.Button( "3" ) )
-				{
-					if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 3 ) ) >= 0 )
-					{
-						mConfiguration.Save();
-					}
-				}
-				ImGui.SameLine();
-				if( ImGui.Button( "4" ) )
-				{
-					if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 4 ) ) >= 0 )
-					{
-						mConfiguration.Save();
-					}
-				}
-				ImGui.SameLine();
-				if( ImGui.Button( "5" ) )
-				{
-					if( mConfiguration.PresetLibrary.ImportPreset( MemoryHandler.ReadSlot( 5 ) ) >= 0 )
-					{
-						mConfiguration.Save();
-					}
+					ImGui.EndCombo();
 				}
 			}
 			try
@@ -795,6 +771,8 @@ namespace WaymarkPresetPlugin
 		}
 
 		public int SelectedPreset { get; private set; } = -1;
+
+		private uint mGameSlotDropdownSelection = 1;
 
 		private bool FieldMarkerAddonWasOpen { get; set; } = false;
 

@@ -40,37 +40,24 @@ namespace WaymarkPresetPlugin
 			{
 				if( mUI.LibraryWindow.SelectedPreset >= 0 && mUI.LibraryWindow.SelectedPreset < mConfiguration.PresetLibrary.Presets.Count )
 				{
-					ImGui.BeginGroup();
-					ImGui.Text( Loc.Localize( "Info Pane Text: Copy to Slot Label", "Copy to slot:" ) );
-					ImGui.SameLine();
-					ImGui.BeginGroup();
-					if( ImGui.Button( "1" ) )
+					if( ImGui.Button( Loc.Localize( "Info Pane Text: Copy to Slot Label", "Copy to slot:" ) ) )
 					{
-						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[mUI.LibraryWindow.SelectedPreset], 1u );
+						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[mUI.LibraryWindow.SelectedPreset], mGameSlotDropdownSelection );
 					}
 					ImGui.SameLine();
-					if( ImGui.Button( "2" ) )
+					float comboWidth = ImGui.CalcTextSize( $"{MemoryHandler.MaxPresetSlotNum}" ).X + ImGui.GetStyle().FramePadding.X * 3f + ImGui.GetTextLineHeightWithSpacing();
+					ImGui.SetNextItemWidth( comboWidth );
+					if( ImGui.BeginCombo( "###CopyToGameSlotNumberDropdown", $"{mGameSlotDropdownSelection}" ) )
 					{
-						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[mUI.LibraryWindow.SelectedPreset], 2u );
+						for( uint i = 1; i <= MemoryHandler.MaxPresetSlotNum; ++i )
+						{
+							if( ImGui.Selectable( $"{i}" ) ) mGameSlotDropdownSelection = i;
+						}
+						ImGui.EndCombo();
 					}
-					ImGui.SameLine();
-					if( ImGui.Button( "3" ) )
-					{
-						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[mUI.LibraryWindow.SelectedPreset], 3u );
-					}
-					ImGui.SameLine();
-					if( ImGui.Button( "4" ) )
-					{
-						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[mUI.LibraryWindow.SelectedPreset], 4u );
-					}
-					ImGui.SameLine();
-					if( ImGui.Button( "5" ) )
-					{
-						CopyPresetToGameSlot( mConfiguration.PresetLibrary.Presets[mUI.LibraryWindow.SelectedPreset], 5u );
-					}
-					float rightAlignPos;
+					float rightAlignPos = mWindowSize.X;
 					string placeButtonText = Loc.Localize( "Button: Place", "Place" );
-					ImGui.SameLine();
+					ImGui.SameLine( rightAlignPos - ImGui.CalcTextSize( placeButtonText ).X - ImGui.GetStyle().WindowPadding.X - ImGui.GetStyle().FramePadding.X * 2 );
 					if( MemoryHandler.FoundDirectPlacementSigs() )
 					{
 						if( ImGui.Button( placeButtonText + "###Place" ) )
@@ -92,11 +79,7 @@ namespace WaymarkPresetPlugin
 						ImGui.PopStyleColor();
 						ImGui.PopStyleColor();
 					}
-					mWindowSize.X = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().WindowPadding.X;
-					rightAlignPos = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X;
-
-
-					ImGui.EndGroup();
+					
 					ImGui.Text( Loc.Localize( "Info Pane Text: Preset Info Label", "Preset Info:" ) );
 					string mapViewButtonText = Loc.Localize( "Button: Map View", "Map View" );
 					ImGui.SameLine( rightAlignPos - ImGui.CalcTextSize( mapViewButtonText ).X - ImGui.GetStyle().WindowPadding.X - ImGui.GetStyle().FramePadding.X * 2 );
@@ -197,11 +180,17 @@ namespace WaymarkPresetPlugin
 			ImGui.SetNextWindowPos( ImGuiHelpers.MainViewport.Pos + Vector2.One );
 			if( ImGui.Begin( "Preset Info (Layout Pass)", ImGuiUtils.LayoutWindowFlags ) )
 			{
-				ImGui.Text( Loc.Localize( "Info Pane Text: Copy to Slot Label", "Copy to slot:" ) );
-				for( int i = 1; i <= MemoryHandler.MaxPresetSlotNum; ++i )
+				ImGui.Button( Loc.Localize( "Info Pane Text: Copy to Slot Label", "Copy to slot:" ) );
+				ImGui.SameLine();
+				float comboWidth = ImGui.CalcTextSize( $"{MemoryHandler.MaxPresetSlotNum}" ).X + ImGui.GetStyle().FramePadding.X * 3f + ImGui.GetTextLineHeightWithSpacing();
+				ImGui.SetNextItemWidth( comboWidth );
+				if( ImGui.BeginCombo( "###CopyToGameSlotNumberDropdown", $"{mGameSlotDropdownSelection}" ) )
 				{
-					ImGui.SameLine();
-					ImGui.Button( $"{i}" );
+					for( uint i = 1; i <= MemoryHandler.MaxPresetSlotNum; ++i )
+					{
+						if( ImGui.Selectable( $"{i}" ) ) mGameSlotDropdownSelection = i;
+					}
+					ImGui.EndCombo();
 				}
 				ImGui.SameLine();
 				ImGui.Button( Loc.Localize( "Button: Place", "Place" ) + "###Place" );
@@ -272,6 +261,8 @@ namespace WaymarkPresetPlugin
 		}
 
 		private Vector2 mWindowSize;
+
+		private uint mGameSlotDropdownSelection = 1;
 
 		private readonly PluginUI mUI;
 		private readonly DalamudPluginInterface mPluginInterface;
