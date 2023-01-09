@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net6.0-windows</TargetFramework>
+		<TargetFramework>net7.0-windows</TargetFramework>
 		<Platforms>AnyCPU</Platforms>
-		<Version>1.4.4.0</Version>
+		<Version>1.4.4.1</Version>
 		<Authors>PunishedPineapple</Authors>
 		<Product />
-		<Copyright>Copyright © PunishedPineapple 2020-2022</Copyright>
+		<Copyright>Copyright © PunishedPineapple 2020-2023</Copyright>
 		<PackageProjectUrl>https://github.com/PunishedPineapple/WaymarkPresetPlugin</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/PunishedPineapple/WaymarkPresetPlugin</RepositoryUrl>
 	</PropertyGroup>
@@ -24,7 +24,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="DalamudPackager" Version="2.1.7" />
+		<PackageReference Include="DalamudPackager" Version="2.1.10" />
 	</ItemGroup>
 
 	<PropertyGroup>
