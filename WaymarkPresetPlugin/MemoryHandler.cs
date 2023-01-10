@@ -46,7 +46,7 @@ namespace WaymarkPresetPlugin
 					PluginLog.LogInformation( $"FMARKER.DAT address: 0x{mdGetUISAVESectionAddress.Invoke( IntPtr.Zero, mFMARKERDATIndex ):X}" );
 				}
 
-				IntPtr fpGetPresetAddressForSlot = sigScanner.ScanText( "4C 8B C9 85 D2 78 0A 83 FA 08 73 05" );
+				IntPtr fpGetPresetAddressForSlot = sigScanner.ScanText( "4C 8B C9 85 D2 78 0A 83 FA 1E 73 05" );	//	DON'T wildcard this; we WANT it to fail if slots change at all (can't take the slot num in the function at face value, as in the past is hasn't matched the UI).
 				if( fpGetPresetAddressForSlot != IntPtr.Zero )
 				{
 					mdGetPresetAddressForSlot = Marshal.GetDelegateForFunctionPointer<GetPresetAddressForSlotDelegate>( fpGetPresetAddressForSlot );
@@ -296,7 +296,7 @@ namespace WaymarkPresetPlugin
 		}
 
 		//	Magic Numbers
-		public static readonly int MaxPresetSlotNum = 5;
+		public static readonly int MaxPresetSlotNum = 30;
 		private static readonly byte mFMARKERDATIndex = 0x11;
 		private static IntPtr mClientSideWaymarksOffset = new( 0x1B0 );  //*****TODO: Feels bad initializing this with a magic number.  Not sure best thing to do.*****
 
