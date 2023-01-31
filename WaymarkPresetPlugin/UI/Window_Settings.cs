@@ -32,7 +32,7 @@ namespace WaymarkPresetPlugin
 			}
 
 			if( ImGui.Begin( Loc.Localize( "Window Title: Config", "Waymark Settings" ) + "###Waymark Settings", ref mWindowVisible,
-				ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse ) )
+				ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar ) )
 			{
 				ImGui.Checkbox( Loc.Localize( "Config Option: Always Show Info Pane", "Always show preset info pane." ) + "###Always show preset info pane checkbox", ref mConfiguration.mAlwaysShowInfoPane );
 				ImGui.Checkbox( Loc.Localize( "Config Option: Clicking Preset Unselects", "Clicking the selected preset unselects it." ) + "###Clicking the selected preset unselects it checkbox", ref mConfiguration.mAllowUnselectPreset );
