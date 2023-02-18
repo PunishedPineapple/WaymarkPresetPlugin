@@ -34,7 +34,7 @@ namespace WaymarkPresetPlugin
 			//	Get Function Pointers, etc.
 			try
 			{
-				IntPtr fpGetUISAVESectionAddress = sigScanner.ScanText( "40 53 48 83 EC 20 48 8B 0D ?? ?? ?? ?? 0F B7 DA" );
+				IntPtr fpGetUISAVESectionAddress = sigScanner.ScanText( "40 53 48 83 EC 20 48 8B 0D ?? ?? ?? ?? 0F B7 DA E8 ?? ?? ?? ?? 4C 8B C0" );
 				if( fpGetUISAVESectionAddress != IntPtr.Zero )
 				{
 					mdGetUISAVESectionAddress = Marshal.GetDelegateForFunctionPointer<GetConfigSectionDelegate>( fpGetUISAVESectionAddress );
