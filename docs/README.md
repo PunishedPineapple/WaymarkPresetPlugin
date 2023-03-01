@@ -1,5 +1,8 @@
 # WaymarkPresetPlugin
 
+## IMPORTANT
+**This plugin is now being maintained at https://github.com/squidmade/WaymarkPresetPlugin, and this repository will be archived.**
+
 ## Purpose
 This is a plugin for [XIVLauncher/Dalamud](https://github.com/goatcorp/FFXIVQuickLauncher) that stores unlimited waymark presets.
 
